@@ -30,8 +30,28 @@ for (const line of lines) {
   captured.set(record.id, record)
 }
 
+let existingById = new Map()
+try {
+  const existing = JSON.parse(await readFile(outputPath, 'utf8'))
+  existingById = new Map(existing.records.map((record) => [record.postId, record]))
+} catch (error) {
+  if (error.code !== 'ENOENT') throw error
+}
+
 const records = []
 for (const [index, capturedPost] of [...captured.values()].entries()) {
+  const existing = existingById.get(capturedPost.id)
+  if (existing) {
+    records.push({
+      ...existing,
+      captureEvidence: {
+        capturedAt: capturedPost.capturedAt,
+        source: 'authenticated_x_timeline',
+      },
+    })
+    continue
+  }
+
   const post = await fetchPost(capturedPost.id, 'thsottiaux')
   let parent = null
   if (post.replying_to_status) {
