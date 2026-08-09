@@ -219,7 +219,7 @@ Goal 模式应遵守以下工作协议：
 目标：通过近期完整样本及已知历史事件生成固定、可解释的初筛规则。
 
 - [ ] 收集 Tibo 最近 6 个月的原创帖、回复和引用帖，排除纯转推。
-- [ ] 将 codexreset.org 及类似站点仅作为二级线索，回溯到 X、OpenAI Status 或官方帮助页面。
+- [x] 将 codexreset.org 及类似站点仅作为二级线索，回溯到 X、OpenAI Status 或官方帮助页面。
 - [ ] 对无法回溯的一手来源标记 `unverified_secondary`，不得作为强正样本。
 - [ ] 标签：已完成、明确未来、模糊意向、相关但非重置、完全无关。
 - [ ] 额外标签：预计时间、影响范围、确定性、父帖语境、是否反讽/拒绝/玩笑。
@@ -235,6 +235,14 @@ Goal 模式应遵守以下工作协议：
 - 模糊意向可进入 AI 候选，但不得直接建立已确认事件。
 - 研究数据只保存必要短摘录、帖子 ID、时间、标签、理由和原始链接，不打包第三方页面副本。
 - `rules-v1` 在同一输入上输出确定一致的结果。
+
+实施记录（2026-08-09，进行中）：
+
+- 改动文件：`research/sources/README.md`、`research/dataset/README.md`、`research/scripts/collect-reset-leads.mjs`、`research/scripts/validate-provisional-dataset.mjs`、`research/dataset/reset-leads.provisional.json`、`research/reports/provisional-dataset.md`。
+- 数据证据：从二级时间线只提取候选帖子 ID，再逐条使用 FxTwitter Status API 回溯 X 原帖；已核验 35 条最近六个月候选，作者、正文、UTC 时间、帖子类型、原帖链接和正文 SHA-256 均已记录。
+- 验证：`npm run research:validate` 退出 0；35 条记录唯一且均回溯到 `@thsottiaux` 原帖，数据集 SHA-256 为 `6490757ed500bb82be1bbec997e68d1cc80319465875ca1c22a57bc7499a1dde`。
+- 验证：`npm run verify` 退出 0；研究脚本与数据未进入 Electron 构建输入。
+- 未解决风险：当前数据仅是临时正样本线索，不能证明时间线完整，也未完成人工标注；X 访客会话不返回回复时间线，必须在已登录 X 会话收集完整原创、回复、引用帖以及困难负样本后，才能生成和冻结 `rules-v1`。
 
 ### Phase 2：领域模型与文件存储
 
