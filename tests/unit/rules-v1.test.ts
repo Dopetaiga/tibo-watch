@@ -12,7 +12,9 @@ describe('rules-v1', () => {
     expect(RULES_V1_VERSION).toBe('rules-v1.0.0')
     expect(RULES_V1_SCHEMA_VERSION).toBe(1)
     expect(RULES_V1_TEST_SET_HASH).toMatch(/^[a-f0-9]{64}$/)
-    expect(RULES_V1.every((rule) => rule.positiveExampleId && rule.counterExampleId)).toBe(true)
+    expect(
+      RULES_V1.every((rule) => rule.positiveExampleId && rule.counterExampleId),
+    ).toBe(true)
   })
 
   it('is deterministic for identical normalized input', () => {
@@ -27,10 +29,10 @@ describe('rules-v1', () => {
   it('keeps explanatory reset language out of the candidate set', () => {
     const result = evaluateRulesV1({
       postId: 'counterexample',
-      excerpt: 'New poster shows how resets of the Codex usage limits affect our systems.',
+      excerpt:
+        'New poster shows how resets of the Codex usage limits affect our systems.',
       contentHash: 'counterexample-hash',
     })
     expect(result.candidate).toBe(false)
   })
 })
-

@@ -263,13 +263,13 @@ Goal 模式应遵守以下工作协议：
 
 目标：建立不依赖 UI 和网络的核心状态机与可靠文件存储。
 
-- [ ] 实现 Post、Analysis、ResetEvent、Notification、RuntimeState schema。
-- [ ] 实现独立 JSON 记录、JSONL 索引和 Markdown 报告生成器。
-- [ ] 实现单写入队列、原子替换、幂等键和内容哈希。
-- [ ] 实现索引重建、损坏隔离、备份和 JSON 导入导出。
-- [ ] 实现事件状态机，区分候选、预计、已确认、已否定和已过期。
-- [ ] 实现同帖去重和判断版本去重。
-- [ ] 实现固定 `RuleEngine` 加载器和上一版回退接口。
+- [x] 实现 Post、Analysis、ResetEvent、Notification、RuntimeState schema。
+- [x] 实现独立 JSON 记录、JSONL 索引和 Markdown 报告生成器。
+- [x] 实现单写入队列、原子替换、幂等键和内容哈希。
+- [x] 实现索引重建、损坏隔离、备份和 JSON 导入导出。
+- [x] 实现事件状态机，区分候选、预计、已确认、已否定和已过期。
+- [x] 实现同帖去重和判断版本去重。
+- [x] 实现固定 `RuleEngine` 加载器和上一版回退接口。
 
 验收：
 
@@ -277,6 +277,15 @@ Goal 模式应遵守以下工作协议：
 - 删除全部索引后可以从记录文件完整重建。
 - 重复摄入同一帖子不会产生重复分析、事件或通知。
 - Markdown 报告可从 JSON 重新生成且内容一致。
+
+实施记录（2026-08-09）：
+
+- 领域契约：`app/domain/models.ts` 与 `schemas.ts` 定义五类事实记录、运行时校验和稳定幂等键；`event-state.ts` 拒绝从终态回退到活动态。
+- 文件存储：`JsonRecordStore` 使用单写入队列、同目录临时文件、文件同步后原子替换；支持按内容哈希去重、JSONL 索引重建、损坏记录隔离、备份及验证后导入导出。
+- 规则回退：`RuleRegistry` 保留当前版和上一版，安装新版本不覆盖旧引擎，可显式回退。
+- 验证：进程中断遗留的 `.tmp` 文件不会替代事实记录；删除并重建索引、重复摄入、损坏隔离、导入导出、状态迁移和 Markdown 确定性均有单元或集成测试。
+- 验证命令：`npm run typecheck`、`npm run lint`、`npm test`、`npm run build` 均退出 0；当前 7 个测试文件、14 个测试通过，运行时边界检查通过。
+- 阶段结论：Phase 2 验收通过，可进入 Phase 3。
 
 ### Phase 3：数据源和调度器
 

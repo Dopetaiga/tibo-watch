@@ -8,17 +8,22 @@ import {
 } from '../../app/rules/rules-v1.ts'
 
 const positivesPath = path.resolve('research/dataset/reset-leads.reviewed.json')
-const timelinePath = path.resolve('research/dataset/timeline-sample.reviewed.json')
+const timelinePath = path.resolve(
+  'research/dataset/timeline-sample.reviewed.json',
+)
 const reportPath = path.resolve('research/reports/candidate-rules-v1.md')
 
 const positives = JSON.parse(await readFile(positivesPath, 'utf8')).records
 const timelineDocument = JSON.parse(await readFile(timelinePath, 'utf8'))
 const timeline = timelineDocument.records
 if (timelineDocument.testSetHash !== RULES_V1_TEST_SET_HASH) {
-  throw new Error(`冻结测试集哈希不匹配：${RULES_V1_TEST_SET_HASH} != ${timelineDocument.testSetHash}`)
+  throw new Error(
+    `冻结测试集哈希不匹配：${RULES_V1_TEST_SET_HASH} != ${timelineDocument.testSetHash}`,
+  )
 }
 const recordsById = new Map()
-for (const record of [...timeline, ...positives]) recordsById.set(record.postId, record)
+for (const record of [...timeline, ...positives])
+  recordsById.set(record.postId, record)
 const records = [...recordsById.values()]
 
 const rules = [
@@ -33,7 +38,8 @@ const rules = [
   {
     id: 'rv1-continuing-or-targeted-reset-intent',
     description: '持续重置承诺或针对具体对象的模糊重置意向进入候选',
-    pattern: /(?:\bresets?\s+will\s+continue\b|\bin\s+need\s+of\s+a\s+reset\b)/i,
+    pattern:
+      /(?:\bresets?\s+will\s+continue\b|\bin\s+need\s+of\s+a\s+reset\b)/i,
     positiveExampleId: '2079058575440359695',
     counterExampleId: '2055759809698550263',
   },
@@ -41,7 +47,8 @@ const rules = [
     id: 'rv1-contextual-soon-reset',
     description: '回复给出 soon，且父帖明确询问下一次 reset，作为模糊意向候选',
     input: 'context',
-    pattern: /\bquite\s+soon\s+actually\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bnext\s+reset\b/i,
+    pattern:
+      /\bquite\s+soon\s+actually\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bnext\s+reset\b/i,
     positiveExampleId: '2066028715012989281',
     counterExampleId: '2081446159361675631',
   },
@@ -85,21 +92,24 @@ const rules = [
   {
     id: 'rv1-banked-reset',
     description: '明确增加或发放 banked reset',
-    pattern: /\b(?:banked\s+reset|reset\s+bank|reset\s+into\s+(?:the|your)\s+bank)\b/i,
+    pattern:
+      /\b(?:banked\s+reset|reset\s+bank|reset\s+into\s+(?:the|your)\s+bank)\b/i,
     positiveExampleId: '2076735790567338203',
     counterExampleId: '2081096905250259014',
   },
   {
     id: 'rv1-future-manual-resets',
     description: '明确承诺未来提供更多 manual resets',
-    pattern: /\b(?:will|get(?:ting)?)\b[^.!?]{0,100}\bmore\s+manual\s+resets?\b/i,
+    pattern:
+      /\b(?:will|get(?:ting)?)\b[^.!?]{0,100}\bmore\s+manual\s+resets?\b/i,
     positiveExampleId: '2071383430634344902',
     counterExampleId: '2071383696934842498',
   },
   {
     id: 'rv1-vague-limit-reset-intent',
     description: '明确提到 limit reset 的模糊意向，进入 AI 候选但不直接建事件',
-    pattern: /\b(?:feeling\s+like|thinking\s+about|might)\b[^.!?]{0,80}\blimit\s+reset\b/i,
+    pattern:
+      /\b(?:feeling\s+like|thinking\s+about|might)\b[^.!?]{0,80}\blimit\s+reset\b/i,
     positiveExampleId: '2081899343091843463',
     counterExampleId: '2080880254722392506',
   },
@@ -107,7 +117,8 @@ const rules = [
     id: 'rv1-contextual-still-time-reset',
     description: '回复称仍有时间，且父帖明确讨论 reset，作为模糊意向候选',
     input: 'context',
-    pattern: /\bthere\s+is\s+still\s+time\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bresets?\b/i,
+    pattern:
+      /\bthere\s+is\s+still\s+time\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bresets?\b/i,
     positiveExampleId: '2080859954421047341',
     counterExampleId: '2080869898339991732',
   },
@@ -135,13 +146,16 @@ function evaluate(record) {
   const suppressionPattern =
     /(?:should\s+really\s+stop\s+pressing|never\s+ending\s+cycle|poster[^.!?]{0,120}shows\s+how\s+resets|receive[^.!?]{0,120}ask\s+for\s+a\s+reset|might\s+also\s+have\s+reset\s+other\s+rate\s+limits)/i
   const matchedRuleIds = (suppressionPattern.test(record.excerpt) ? [] : rules)
-    .filter(({ input, pattern }) => pattern.test(input === 'context' ? context : record.excerpt))
+    .filter(({ input, pattern }) =>
+      pattern.test(input === 'context' ? context : record.excerpt),
+    )
     .map(({ id }) => id)
   return { candidate: matchedRuleIds.length > 0, matchedRuleIds }
 }
 
 const outcomes = records.map((record) => {
-  const expected = record.label !== '完全无关' && record.label !== '相关但非重置'
+  const expected =
+    record.label !== '完全无关' && record.label !== '相关但非重置'
   const result = evaluate(record)
   const runtimeResult = evaluateRulesV1({
     postId: record.postId,
@@ -154,24 +168,39 @@ const outcomes = records.map((record) => {
     result.candidate !== runtimeResult.candidate ||
     result.matchedRuleIds.join(',') !== runtimeResult.matchedRuleIds.join(',')
   ) {
-    throw new Error(`运行时 ${RULES_V1_VERSION} 与研究评估器不一致：${record.postId}`)
+    throw new Error(
+      `运行时 ${RULES_V1_VERSION} 与研究评估器不一致：${record.postId}`,
+    )
   }
   return { record, expected, result }
 })
 
-const truePositive = outcomes.filter(({ expected, result }) => expected && result.candidate)
-const falseNegative = outcomes.filter(({ expected, result }) => expected && !result.candidate)
-const falsePositive = outcomes.filter(({ expected, result }) => !expected && result.candidate)
-const trueNegative = outcomes.filter(({ expected, result }) => !expected && !result.candidate)
-const precision = truePositive.length / Math.max(1, truePositive.length + falsePositive.length)
-const recall = truePositive.length / Math.max(1, truePositive.length + falseNegative.length)
+const truePositive = outcomes.filter(
+  ({ expected, result }) => expected && result.candidate,
+)
+const falseNegative = outcomes.filter(
+  ({ expected, result }) => expected && !result.candidate,
+)
+const falsePositive = outcomes.filter(
+  ({ expected, result }) => !expected && result.candidate,
+)
+const trueNegative = outcomes.filter(
+  ({ expected, result }) => !expected && !result.candidate,
+)
+const precision =
+  truePositive.length / Math.max(1, truePositive.length + falsePositive.length)
+const recall =
+  truePositive.length / Math.max(1, truePositive.length + falseNegative.length)
 const datasetHash = createHash('sha256')
   .update(JSON.stringify(records), 'utf8')
   .digest('hex')
 const rulesHash = createHash('sha256')
   .update(
     rules
-      .map(({ id, input, pattern }) => `${id}:${input ?? 'post'}:${pattern.source}:${pattern.flags}`)
+      .map(
+        ({ id, input, pattern }) =>
+          `${id}:${input ?? 'post'}:${pattern.source}:${pattern.flags}`,
+      )
       .join('\n'),
     'utf8',
   )
@@ -180,7 +209,10 @@ const rulesHash = createHash('sha256')
 function itemList(items) {
   if (items.length === 0) return '- 无'
   return items
-    .map(({ record }) => `- ${record.postId}（${record.label}）：${record.excerpt}`)
+    .map(
+      ({ record }) =>
+        `- ${record.postId}（${record.label}）：${record.excerpt}`,
+    )
     .join('\n')
 }
 
@@ -233,6 +265,10 @@ console.log(
   `候选规则评估完成：tp=${truePositive.length} fp=${falsePositive.length} fn=${falseNegative.length} tn=${trueNegative.length} precision=${precision.toFixed(4)} recall=${recall.toFixed(4)}`,
 )
 
-if (falseNegative.some(({ record }) => ['已完成', '明确未来'].includes(record.label))) {
+if (
+  falseNegative.some(({ record }) =>
+    ['已完成', '明确未来'].includes(record.label),
+  )
+) {
   process.exitCode = 1
 }

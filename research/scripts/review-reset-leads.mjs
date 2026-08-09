@@ -71,10 +71,14 @@ function scopeFor(text) {
   if (normalized.includes('chatgpt work') && normalized.includes('codex')) {
     return 'Codex、ChatGPT Work'
   }
-  if (normalized.includes('plus') && normalized.includes('pro')) return 'Plus、Pro'
+  if (normalized.includes('plus') && normalized.includes('pro'))
+    return 'Plus、Pro'
   if (normalized.includes('all paid')) return 'Codex 全部付费方案'
   if (normalized.includes('all plans')) return 'Codex 全部方案'
-  if (normalized.includes('all codex') || normalized.includes("everyone's codex")) {
+  if (
+    normalized.includes('all codex') ||
+    normalized.includes("everyone's codex")
+  ) {
     return 'Codex 全部用户'
   }
   return 'Codex（具体方案未知）'
@@ -97,9 +101,11 @@ const records = input.records.map((record) => {
     },
     scope: scopeFor(record.excerpt),
     certainty: label === '模糊意向' ? '中' : '高',
-    ironyOrJoke: ['2048997818673537399', '2081899343091843463', '2083395449814229287'].includes(
-      record.postId,
-    ),
+    ironyOrJoke: [
+      '2048997818673537399',
+      '2081899343091843463',
+      '2083395449814229287',
+    ].includes(record.postId),
     rationale:
       label === '已完成'
         ? '原帖使用 have reset、reset button pressed、added 等完成性表达。'

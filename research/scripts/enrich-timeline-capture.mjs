@@ -3,9 +3,15 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 const rawPath = path.resolve('research/dataset/timeline-capture.raw.jsonl')
-const outputPath = path.resolve('research/dataset/timeline-sample.provisional.json')
-const rangeCoveragePath = path.resolve('research/dataset/fxtwitter-range-coverage.json')
-const searchCoveragePath = path.resolve('research/dataset/fxtwitter-search-coverage.json')
+const outputPath = path.resolve(
+  'research/dataset/timeline-sample.provisional.json',
+)
+const rangeCoveragePath = path.resolve(
+  'research/dataset/fxtwitter-range-coverage.json',
+)
+const searchCoveragePath = path.resolve(
+  'research/dataset/fxtwitter-search-coverage.json',
+)
 const userAgent = 'Tibo-Watch-Research/0.1 (+local-open-source-research)'
 
 async function fetchPostUncached(id, expectedAuthor = null) {
@@ -14,7 +20,8 @@ async function fetchPostUncached(id, expectedAuthor = null) {
   })
   if (!response.ok) throw new Error(`帖子 ${id} 返回 HTTP ${response.status}`)
   const payload = await response.json()
-  if (payload.code !== 200 || !payload.tweet) throw new Error(`无法读取帖子 ${id}`)
+  if (payload.code !== 200 || !payload.tweet)
+    throw new Error(`无法读取帖子 ${id}`)
   if (expectedAuthor && payload.tweet.author?.screen_name !== expectedAuthor) {
     throw new Error(`帖子 ${id} 作者不匹配`)
   }
@@ -45,7 +52,9 @@ for (const line of lines) {
 let existingById = new Map()
 try {
   const existing = JSON.parse(await readFile(outputPath, 'utf8'))
-  existingById = new Map(existing.records.map((record) => [record.postId, record]))
+  existingById = new Map(
+    existing.records.map((record) => [record.postId, record]),
+  )
 } catch (error) {
   if (error.code !== 'ENOENT') throw error
 }
@@ -103,7 +112,9 @@ async function enrichCapturedPost(capturedPost) {
     createdAt: new Date(post.created_timestamp * 1000).toISOString(),
     postKind: post.replying_to ? 'reply' : post.quote ? 'quote' : 'original',
     excerpt: excerpt(post.text),
-    excerptHash: createHash('sha256').update(post.text ?? '', 'utf8').digest('hex'),
+    excerptHash: createHash('sha256')
+      .update(post.text ?? '', 'utf8')
+      .digest('hex'),
     parentContext: parent,
     quotedContext: post.quote
       ? {
@@ -148,7 +159,11 @@ await Promise.all(Array.from({ length: 6 }, () => worker()))
 
 const validIds = new Set(records.map(({ postId }) => postId))
 const normalizedRaw = capturedPosts.filter(({ id }) => validIds.has(id))
-await writeFile(rawPath, `${normalizedRaw.map((record) => JSON.stringify(record)).join('\n')}\n`, 'utf8')
+await writeFile(
+  rawPath,
+  `${normalizedRaw.map((record) => JSON.stringify(record)).join('\n')}\n`,
+  'utf8',
+)
 
 records.sort((left, right) => left.createdAt.localeCompare(right.createdAt))
 let completeSixMonthTimeline = false

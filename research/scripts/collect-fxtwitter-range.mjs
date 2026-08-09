@@ -8,12 +8,17 @@ const rangeStart = process.env.FX_START ?? '2026-02-09'
 const rangeEnd = process.env.FX_END ?? '2026-07-23'
 const rawPath = path.resolve('research/dataset/timeline-capture.raw.jsonl')
 const statePath = path.resolve('research/dataset/fxtwitter-range-state.json')
-const coveragePath = path.resolve('research/dataset/fxtwitter-range-coverage.json')
+const coveragePath = path.resolve(
+  'research/dataset/fxtwitter-range-coverage.json',
+)
 const execFileAsync = promisify(execFile)
 
 function utcDay(value) {
   const date = new Date(`${value}T00:00:00.000Z`)
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== value
+  ) {
     throw new Error(`无效 UTC 日期：${value}`)
   }
   return date
@@ -42,7 +47,9 @@ const start = utcDay(rangeStart)
 const end = utcDay(rangeEnd)
 if (start >= end) throw new Error('FX_START 必须早于 FX_END')
 
-const rawLines = (await readFile(rawPath, 'utf8')).split(/\r?\n/).filter(Boolean)
+const rawLines = (await readFile(rawPath, 'utf8'))
+  .split(/\r?\n/)
+  .filter(Boolean)
 const knownIds = new Set(rawLines.map((line) => JSON.parse(line).id))
 let cursor = null
 let pages = 0
@@ -52,7 +59,11 @@ let outOfRangeResults = 0
 
 try {
   const state = JSON.parse(await readFile(statePath, 'utf8'))
-  if (state.handle === handle && state.rangeStart === rangeStart && state.rangeEnd === rangeEnd) {
+  if (
+    state.handle === handle &&
+    state.rangeStart === rangeStart &&
+    state.rangeEnd === rangeEnd
+  ) {
     if (state.complete) {
       console.log(`范围 ${rangeStart}..${rangeEnd} 已完成，不重复请求`)
       process.exit(0)
@@ -80,9 +91,17 @@ while (true) {
   const capturedAt = new Date().toISOString()
   const pageIds = new Set()
   for (const post of payload.results) {
-    if (post?.type !== 'status' || post.author?.screen_name?.toLowerCase() !== handle.toLowerCase()) continue
+    if (
+      post?.type !== 'status' ||
+      post.author?.screen_name?.toLowerCase() !== handle.toLowerCase()
+    )
+      continue
     const createdAt = new Date(post.created_at)
-    if (Number.isNaN(createdAt.getTime()) || createdAt < start || createdAt >= end) {
+    if (
+      Number.isNaN(createdAt.getTime()) ||
+      createdAt < start ||
+      createdAt >= end
+    ) {
       outOfRangeResults += 1
       continue
     }
@@ -113,17 +132,23 @@ while (true) {
     inRangeUnique,
     outOfRangeResults,
     complete,
-    completionReason: complete ? (payload.results.length === 0 ? 'empty_page' : 'cursor_exhausted') : null,
+    completionReason: complete
+      ? payload.results.length === 0
+        ? 'empty_page'
+        : 'cursor_exhausted'
+      : null,
     failedReason: cursorRepeated ? 'cursor_repeated' : null,
     updatedAt: new Date().toISOString(),
   }
   await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`, 'utf8')
-  console.log(`page=${pages} results=${payload.results.length} inRange=${pageIds.size} added=${added}`)
-  if (cursorRepeated) throw new Error('FxTwitter 游标重复；已停止，避免重复请求')
+  console.log(
+    `page=${pages} results=${payload.results.length} inRange=${pageIds.size} added=${added}`,
+  )
+  if (cursorRepeated)
+    throw new Error('FxTwitter 游标重复；已停止，避免重复请求')
   if (complete) {
     await writeFile(coveragePath, `${JSON.stringify(state, null, 2)}\n`, 'utf8')
     break
   }
   cursor = nextCursor
 }
-

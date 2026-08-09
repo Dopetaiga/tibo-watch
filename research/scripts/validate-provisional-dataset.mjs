@@ -2,7 +2,9 @@ import { createHash } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
-const datasetPath = path.resolve('research/dataset/reset-leads.provisional.json')
+const datasetPath = path.resolve(
+  'research/dataset/reset-leads.provisional.json',
+)
 const reportPath = path.resolve('research/reports/provisional-dataset.md')
 const raw = await readFile(datasetPath, 'utf8')
 const dataset = JSON.parse(raw)
@@ -18,7 +20,8 @@ if (!Array.isArray(dataset.records) || dataset.records.length === 0) {
 }
 
 for (const record of dataset.records) {
-  if (record.author !== 'thsottiaux') throw new Error(`${record.postId} 作者异常`)
+  if (record.author !== 'thsottiaux')
+    throw new Error(`${record.postId} 作者异常`)
   if (ids.has(record.postId)) throw new Error(`重复帖子：${record.postId}`)
   if (record.postUrl !== `https://x.com/thsottiaux/status/${record.postId}`) {
     throw new Error(`${record.postId} 原帖链接异常`)
@@ -42,7 +45,9 @@ for (const record of dataset.records) {
 
 const hash = createHash('sha256').update(raw, 'utf8').digest('hex')
 const rows = (mapping) =>
-  [...mapping.entries()].map(([name, count]) => `| ${name} | ${count} |`).join('\n')
+  [...mapping.entries()]
+    .map(([name, count]) => `| ${name} | ${count} |`)
+    .join('\n')
 
 const report = `# 临时候选数据集报告
 
@@ -75,4 +80,6 @@ ${rows(labels)}
 `
 
 await writeFile(reportPath, report, 'utf8')
-console.log(`临时候选数据集验证通过：records=${dataset.records.length} sha256=${hash}`)
+console.log(
+  `临时候选数据集验证通过：records=${dataset.records.length} sha256=${hash}`,
+)

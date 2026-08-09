@@ -58,10 +58,26 @@
     "appId": "dev.tibowatch.app",
     "productName": "Tibo Watch",
     "asar": true,
-    "files": ["dist/**/*", "dist-electron/**/*", "package.json"],
-    "directories": { "output": "release" },
-    "win": { "target": ["nsis", "portable"] },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
-    "portable": { "artifactName": "${productName}-${version}-portable.${ext}" }
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
+    }
   }
 }

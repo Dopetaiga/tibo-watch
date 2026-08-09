@@ -3,14 +3,28 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 const rawPath = path.resolve('research/dataset/timeline-capture.raw.jsonl')
-const provisionalPath = path.resolve('research/dataset/timeline-sample.provisional.json')
-const reviewedPath = path.resolve('research/dataset/timeline-sample.reviewed.json')
+const provisionalPath = path.resolve(
+  'research/dataset/timeline-sample.provisional.json',
+)
+const reviewedPath = path.resolve(
+  'research/dataset/timeline-sample.reviewed.json',
+)
 const coveragePath = path.resolve('research/dataset/timeline-coverage.json')
-const rangeCoveragePath = path.resolve('research/dataset/fxtwitter-range-coverage.json')
-const searchCoveragePath = path.resolve('research/dataset/fxtwitter-search-coverage.json')
+const rangeCoveragePath = path.resolve(
+  'research/dataset/fxtwitter-range-coverage.json',
+)
+const searchCoveragePath = path.resolve(
+  'research/dataset/fxtwitter-search-coverage.json',
+)
 const reportPath = path.resolve('research/reports/timeline-validation.md')
 
-const allowedLabels = new Set(['已完成', '明确未来', '模糊意向', '相关但非重置', '完全无关'])
+const allowedLabels = new Set([
+  '已完成',
+  '明确未来',
+  '模糊意向',
+  '相关但非重置',
+  '完全无关',
+])
 const raw = (await readFile(rawPath, 'utf8'))
   .split(/\r?\n/)
   .filter(Boolean)
@@ -27,10 +41,16 @@ const rawUniqueIds = new Set(rawIds)
 const provisionalIds = new Set(provisional.records.map(({ postId }) => postId))
 const reviewedIds = new Set(reviewed.records.map(({ postId }) => postId))
 
-if (!provisional.completeSixMonthTimeline || !reviewed.completeSixMonthTimeline) {
+if (
+  !provisional.completeSixMonthTimeline ||
+  !reviewed.completeSixMonthTimeline
+) {
   failures.push('富化集或复核集未声明六个月时间线完整')
 }
-if (!rangeCoverage.complete || rangeCoverage.completionReason !== 'empty_page') {
+if (
+  !rangeCoverage.complete ||
+  rangeCoverage.completionReason !== 'empty_page'
+) {
   failures.push('FxTwitter 连续范围没有空页分页终点证据')
 }
 const allCompletedSearchDates = searchCoverage.slices
@@ -38,10 +58,15 @@ const allCompletedSearchDates = searchCoverage.slices
   .map(({ date }) => date)
   .sort()
 const searchStart = allCompletedSearchDates.at(0)
-const searchEndDate = new Date(`${allCompletedSearchDates.at(-1)}T00:00:00.000Z`)
+const searchEndDate = new Date(
+  `${allCompletedSearchDates.at(-1)}T00:00:00.000Z`,
+)
 searchEndDate.setUTCDate(searchEndDate.getUTCDate() + 1)
 const searchEnd = searchEndDate.toISOString().slice(0, 10)
-if (rangeCoverage.rangeStart !== '2026-02-09' || rangeCoverage.rangeEnd !== searchStart) {
+if (
+  rangeCoverage.rangeStart !== '2026-02-09' ||
+  rangeCoverage.rangeEnd !== searchStart
+) {
   failures.push('连续范围与逐日覆盖范围不连续')
 }
 const expectedSearchDates = []
@@ -67,11 +92,18 @@ if (reviewed.records.at(-1)?.createdAt.slice(0, 10) !== searchEnd) {
   failures.push('逐日搜索终点之后缺少当前日时间线样本')
 }
 for (const slice of searchCoverage.slices) {
-  if (!['empty_page', 'cursor_exhausted', 'cursor_repeated'].includes(slice.completionReason)) {
+  if (
+    !['empty_page', 'cursor_exhausted', 'cursor_repeated'].includes(
+      slice.completionReason,
+    )
+  ) {
     failures.push(`API 搜索分片 ${slice.date} 缺少分页终点证据`)
   }
   const uncaptured = slice.postIds.filter((id) => !rawUniqueIds.has(id))
-  if (uncaptured.length) failures.push(`API 搜索分片 ${slice.date} 存在未捕获 ID：${uncaptured.join(',')}`)
+  if (uncaptured.length)
+    failures.push(
+      `API 搜索分片 ${slice.date} 存在未捕获 ID：${uncaptured.join(',')}`,
+    )
 }
 
 function duplicateIds(ids) {
@@ -84,7 +116,9 @@ function sameIds(left, right, description) {
   const missing = [...left].filter((id) => !right.has(id))
   const extra = [...right].filter((id) => !left.has(id))
   if (missing.length || extra.length) {
-    failures.push(`${description}：missing=${missing.join(',') || '无'} extra=${extra.join(',') || '无'}`)
+    failures.push(
+      `${description}：missing=${missing.join(',') || '无'} extra=${extra.join(',') || '无'}`,
+    )
   }
 }
 
@@ -94,23 +128,37 @@ sameIds(provisionalIds, reviewedIds, '富化集与复核集 ID 不一致')
 for (const [index, slice] of coverage.slices.entries()) {
   const sliceName = `覆盖分片 ${index + 1}`
   if (slice.status !== 'complete_search_slice') continue
-  if (!slice.endEvidence?.atBottom || !slice.endEvidence?.unchangedVisibleSetAfterAdditionalScroll) {
+  if (
+    !slice.endEvidence?.atBottom ||
+    !slice.endEvidence?.unchangedVisibleSetAfterAdditionalScroll
+  ) {
     failures.push(`${sliceName} 缺少滚动终点证据`)
   }
-  if (slice.resultCount !== slice.postIds.length || new Set(slice.postIds).size !== slice.postIds.length) {
+  if (
+    slice.resultCount !== slice.postIds.length ||
+    new Set(slice.postIds).size !== slice.postIds.length
+  ) {
     failures.push(`${sliceName} resultCount 或 postIds 唯一性不一致`)
   }
   const uncaptured = slice.postIds.filter((id) => !rawUniqueIds.has(id))
-  if (uncaptured.length) failures.push(`${sliceName} 存在未进入原始捕获的数据：${uncaptured.join(',')}`)
+  if (uncaptured.length)
+    failures.push(
+      `${sliceName} 存在未进入原始捕获的数据：${uncaptured.join(',')}`,
+    )
 }
 
-const provisionalDuplicates = duplicateIds(provisional.records.map(({ postId }) => postId))
-const reviewedDuplicates = duplicateIds(reviewed.records.map(({ postId }) => postId))
+const provisionalDuplicates = duplicateIds(
+  provisional.records.map(({ postId }) => postId),
+)
+const reviewedDuplicates = duplicateIds(
+  reviewed.records.map(({ postId }) => postId),
+)
 if (provisionalDuplicates.length) failures.push('富化集包含重复 postId')
 if (reviewedDuplicates.length) failures.push('复核集包含重复 postId')
 
 for (const record of reviewed.records) {
-  if (!allowedLabels.has(record.label)) failures.push(`${record.postId} 标签不合法：${record.label}`)
+  if (!allowedLabels.has(record.label))
+    failures.push(`${record.postId} 标签不合法：${record.label}`)
   if (record.labelStatus !== 'reviewed_primary') {
     failures.push(`${record.postId} 尚未完成一手语境复核`)
   }
@@ -118,7 +166,8 @@ for (const record of reviewed.records) {
     failures.push(`${record.postId} 是回复但缺少 parentContext`)
   }
   if (['已完成', '明确未来'].includes(record.label)) {
-    if (!record.scope || record.scope === '未知') failures.push(`${record.postId} 强正样本缺少 scope`)
+    if (!record.scope || record.scope === '未知')
+      failures.push(`${record.postId} 强正样本缺少 scope`)
     if (!record.certainty || record.certainty === '不适用') {
       failures.push(`${record.postId} 强正样本缺少 certainty`)
     }
@@ -126,12 +175,21 @@ for (const record of reviewed.records) {
 }
 
 const byLabel = Object.fromEntries(
-  [...allowedLabels].map((label) => [label, reviewed.records.filter((record) => record.label === label).length]),
+  [...allowedLabels].map((label) => [
+    label,
+    reviewed.records.filter((record) => record.label === label).length,
+  ]),
 )
 const timestamps = reviewed.records.map(({ createdAt }) => createdAt).sort()
-const parentErrors = reviewed.records.filter(({ parentContext }) => parentContext?.error)
-const quotedContexts = reviewed.records.filter(({ quotedContext }) => quotedContext)
-const completeSlices = coverage.slices.filter(({ status }) => status === 'complete_search_slice')
+const parentErrors = reviewed.records.filter(
+  ({ parentContext }) => parentContext?.error,
+)
+const quotedContexts = reviewed.records.filter(
+  ({ quotedContext }) => quotedContext,
+)
+const completeSlices = coverage.slices.filter(
+  ({ status }) => status === 'complete_search_slice',
+)
 const completeApiSlices = searchCoverage.slices.filter(
   ({ status }) => status === 'complete_api_search_slice',
 )

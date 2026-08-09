@@ -40,7 +40,8 @@ export const RULES_V1: readonly FrozenRule[] = [
   {
     id: 'rv1-continuing-or-targeted-reset-intent',
     description: '持续重置承诺或针对具体对象的模糊重置意向进入候选',
-    pattern: /(?:\bresets?\s+will\s+continue\b|\bin\s+need\s+of\s+a\s+reset\b)/i,
+    pattern:
+      /(?:\bresets?\s+will\s+continue\b|\bin\s+need\s+of\s+a\s+reset\b)/i,
     positiveExampleId: '2079058575440359695',
     counterExampleId: '2055759809698550263',
   },
@@ -48,7 +49,8 @@ export const RULES_V1: readonly FrozenRule[] = [
     id: 'rv1-contextual-soon-reset',
     description: '回复给出 soon，且父帖明确询问下一次 reset',
     input: 'context',
-    pattern: /\bquite\s+soon\s+actually\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bnext\s+reset\b/i,
+    pattern:
+      /\bquite\s+soon\s+actually\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bnext\s+reset\b/i,
     positiveExampleId: '2066028715012989281',
     counterExampleId: '2081446159361675631',
   },
@@ -92,21 +94,24 @@ export const RULES_V1: readonly FrozenRule[] = [
   {
     id: 'rv1-banked-reset',
     description: '明确增加或发放 banked reset',
-    pattern: /\b(?:banked\s+reset|reset\s+bank|reset\s+into\s+(?:the|your)\s+bank)\b/i,
+    pattern:
+      /\b(?:banked\s+reset|reset\s+bank|reset\s+into\s+(?:the|your)\s+bank)\b/i,
     positiveExampleId: '2076735790567338203',
     counterExampleId: '2081096905250259014',
   },
   {
     id: 'rv1-future-manual-resets',
     description: '明确承诺未来提供更多 manual resets',
-    pattern: /\b(?:will|get(?:ting)?)\b[^.!?]{0,100}\bmore\s+manual\s+resets?\b/i,
+    pattern:
+      /\b(?:will|get(?:ting)?)\b[^.!?]{0,100}\bmore\s+manual\s+resets?\b/i,
     positiveExampleId: '2071383430634344902',
     counterExampleId: '2071383696934842498',
   },
   {
     id: 'rv1-vague-limit-reset-intent',
     description: '明确提到 limit reset 的模糊意向',
-    pattern: /\b(?:feeling\s+like|thinking\s+about|might)\b[^.!?]{0,80}\blimit\s+reset\b/i,
+    pattern:
+      /\b(?:feeling\s+like|thinking\s+about|might)\b[^.!?]{0,80}\blimit\s+reset\b/i,
     positiveExampleId: '2081899343091843463',
     counterExampleId: '2080880254722392506',
   },
@@ -114,7 +119,8 @@ export const RULES_V1: readonly FrozenRule[] = [
     id: 'rv1-contextual-still-time-reset',
     description: '回复称仍有时间，且父帖明确讨论 reset',
     input: 'context',
-    pattern: /\bthere\s+is\s+still\s+time\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bresets?\b/i,
+    pattern:
+      /\bthere\s+is\s+still\s+time\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bresets?\b/i,
     positiveExampleId: '2080859954421047341',
     counterExampleId: '2080869898339991732',
   },
@@ -143,14 +149,17 @@ export function contextualText(post: NormalizedPost): string {
 export function evaluateRulesV1(post: NormalizedPost): RuleResult {
   const context = contextualText(post)
   const matchedRuleIds = (suppressionPattern.test(post.excerpt) ? [] : RULES_V1)
-    .filter(({ input, pattern }) => pattern.test(input === 'context' ? context : post.excerpt))
+    .filter(({ input, pattern }) =>
+      pattern.test(input === 'context' ? context : post.excerpt),
+    )
     .map(({ id }) => id)
   return {
     candidate: matchedRuleIds.length > 0,
     matchedRuleIds,
-    reasons: RULES_V1.filter(({ id }) => matchedRuleIds.includes(id)).map(({ description }) => description),
+    reasons: RULES_V1.filter(({ id }) => matchedRuleIds.includes(id)).map(
+      ({ description }) => description,
+    ),
     inputHash: post.contentHash,
     ruleVersion: RULES_V1_VERSION,
   }
 }
-

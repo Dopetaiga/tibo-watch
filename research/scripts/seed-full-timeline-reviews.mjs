@@ -2,13 +2,26 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 const provisional = JSON.parse(
-  await readFile(path.resolve('research/dataset/timeline-sample.provisional.json'), 'utf8'),
+  await readFile(
+    path.resolve('research/dataset/timeline-sample.provisional.json'),
+    'utf8',
+  ),
 )
-const leads = JSON.parse(await readFile(path.resolve('research/dataset/reset-leads.reviewed.json'), 'utf8'))
+const leads = JSON.parse(
+  await readFile(
+    path.resolve('research/dataset/reset-leads.reviewed.json'),
+    'utf8',
+  ),
+)
 const existing = JSON.parse(
-  await readFile(path.resolve('research/dataset/timeline-review-overrides.json'), 'utf8'),
+  await readFile(
+    path.resolve('research/dataset/timeline-review-overrides.json'),
+    'utf8',
+  ),
 )
-const outputPath = path.resolve('research/dataset/timeline-review-overrides.json')
+const outputPath = path.resolve(
+  'research/dataset/timeline-review-overrides.json',
+)
 
 const reviews = { ...existing }
 for (const lead of leads.records) {
@@ -44,14 +57,17 @@ const manualSignals = {
   '2086189414292865249': ['明确未来', 'Monday', true],
 }
 
-for (const [postId, [label, expectedTime, ironyOrJoke]] of Object.entries(manualSignals)) {
+for (const [postId, [label, expectedTime, ironyOrJoke]] of Object.entries(
+  manualSignals,
+)) {
   reviews[postId] = {
     label,
     expectedTime,
     scope: 'Codex usage limits（具体范围见原帖）',
     certainty: label === '模糊意向' ? '低' : '高',
     ironyOrJoke,
-    rationale: '完整时间线复核：主帖自身包含重置动作或明确意向；父帖与引用仅用于消歧。',
+    rationale:
+      '完整时间线复核：主帖自身包含重置动作或明确意向；父帖与引用仅用于消歧。',
   }
 }
 
@@ -60,7 +76,11 @@ const relatedPattern =
 
 for (const record of provisional.records) {
   if (reviews[record.postId]) continue
-  const context = [record.excerpt, record.parentContext?.excerpt, record.quotedContext?.excerpt]
+  const context = [
+    record.excerpt,
+    record.parentContext?.excerpt,
+    record.quotedContext?.excerpt,
+  ]
     .filter(Boolean)
     .join(' ')
   const related = relatedPattern.test(context)
