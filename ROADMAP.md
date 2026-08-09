@@ -252,6 +252,8 @@ Goal 模式应遵守以下工作协议：
 - 候选规则限制：报告和脚本仅存在于 `research/`；未创建 `app/rules` 运行时代码，也未将实验结果称为冻结版。六个月全集完成前，当前 1.0000 指标只能描述已复核样本，不能外推。
 - 验证：`npm run research:enrich-timeline`、`npm run research:apply-reviews` 和 `npm run verify` 均退出 0。
 - 验证：`npm run research:evaluate-candidate` 和 `npm run verify` 均退出 0。
+- 数据门禁：`npm run research:verify` 统一验证 35 条正候选、原始/富化/复核时间线 ID 一致性、标签和强正样本字段，以及候选规则混淆矩阵；当前 85 次原始观察对应 68 个唯一帖子，零一致性失败。报告位于 `research/reports/timeline-validation.md`。
+- 数据门禁限制：上述验证不证明 X 分页已到终点；报告中的“六个月完整采集”和“每个日期分片有分页终点证据”保持未勾选。
 - 剩余风险：X 无限滚动在长批次下会使浏览器控制连接超时；采集已改为短批次落盘，但六个月全集仍未完成，以上数据不得提前用于冻结规则。
 - 正样本复核：35 条候选已全部依据 X 原帖正文重新人工标注，其中已完成 20、明确未来 14、模糊意向 1；修正了二级线索把 `will reset`、`incoming`、`lands` 等未来表达误标为已完成的问题，并保留原始时间表达、范围、确定性和玩笑属性。复核集 SHA-256 为 `e6287032ce7afe2c3c895aed5a23f19f7d38a9731f7a7c39ad9f3693484f62a9`。
 - 验证：`npm run research:review-leads` 与后续 `npm run verify` 均退出 0。

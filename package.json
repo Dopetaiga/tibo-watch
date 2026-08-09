@@ -21,6 +21,8 @@
     "research:apply-reviews": "node research/scripts/apply-timeline-reviews.mjs",
     "research:review-leads": "node research/scripts/review-reset-leads.mjs",
     "research:evaluate-candidate": "node research/scripts/evaluate-candidate-rules.mjs",
+    "research:validate-timeline": "node research/scripts/validate-timeline-research.mjs",
+    "research:verify": "npm run research:validate && npm run research:validate-timeline && npm run research:evaluate-candidate",
     "build:renderer": "vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build": "npm run build:renderer && npm run build:electron && node scripts/verify-runtime-boundary.mjs",
