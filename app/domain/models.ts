@@ -63,6 +63,7 @@ export interface Notification extends FactRecord {
   status: 'pending' | 'sent' | 'failed' | 'suppressed'
   attemptedAt: string | null
   errorCode: string | null
+  isTest: boolean
 }
 
 export interface RuntimeState extends FactRecord {
