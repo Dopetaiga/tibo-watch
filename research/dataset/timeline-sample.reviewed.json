@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-09T11:59:45.865Z",
+  "source": "authenticated_x_timeline",
+  "completeSixMonthTimeline": false,
+  "testSetHash": "fc6c406d15f4e5074c44a9434bbe318f870206b4541ab2fd92fd7500a5098789",
+  "records": [
+    {
+      "schemaVersion": 1,
+      "postId": "2080874606714560865",
+      "postUrl": "https://x.com/thsottiaux/status/2080874606714560865",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:35:41.000Z",
+      "postKind": "reply",
+      "excerpt": "@amorriscode Winnie The Pooh",
+      "excerptHash": "a0a8dc783faf0edf5a7883c4c2d8727039acee5c445f4b11d2f90d9ee215de2a",
+      "parentContext": {
+        "postId": "2080358823030841746",
+        "author": "amorriscode",
+        "excerpt": "give me your best utopian sci-fi recommendations",
+        "url": "https://x.com/amorriscode/status/2080358823030841746"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "书籍推荐回复，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080874810511626529",
+      "postUrl": "https://x.com/thsottiaux/status/2080874810511626529",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:36:30.000Z",
+      "postKind": "reply",
+      "excerpt": "@EpochAIResearch Interesting",
+      "excerptHash": "35bcacc6c2e224a7d0e0c2e443c8d9440de764eeb657d44d99903882c603b028",
+      "parentContext": {
+        "postId": "2080862538712199206",
+        "author": "EpochAIResearch",
+        "excerpt": "Claude Opus 5 achieves an ECI of 159, slightly below Fable 5's value of 161. However, looking only at software engineering benchmarks, we find that Opus 5 matches Fable 5's SWE-ECI of 161.",
+        "url": "https://x.com/EpochAIResearch/status/2080862538712199206"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "评价模型基准结果，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080874890539028657",
+      "postUrl": "https://x.com/thsottiaux/status/2080874890539028657",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:36:49.000Z",
+      "postKind": "reply",
+      "excerpt": "@Dimillian Hi",
+      "excerptHash": "4056475fe6f2f1dfb83008f4aaa9f2991e3ac2a1527963e4f55f2ee7cd2b1542",
+      "parentContext": {
+        "postId": "2080200851155476956",
+        "author": "Dimillian",
+        "excerpt": "why do I get ratioed by tibo?",
+        "url": "https://x.com/Dimillian/status/2080200851155476956"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "社交玩笑回复，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080875627599798594",
+      "postUrl": "https://x.com/thsottiaux/status/2080875627599798594",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:39:45.000Z",
+      "postKind": "reply",
+      "excerpt": "@prayag_sonar Also… seems rigged",
+      "excerptHash": "2fc38d8b50ea145a237287eb28c2ffb48155b6137dab348d9a73bd5062b3f7c6",
+      "parentContext": {
+        "postId": "2080673388222407135",
+        "author": "prayag_sonar",
+        "excerpt": "why is this so true about gemini😹",
+        "url": "https://x.com/prayag_sonar/status/2080673388222407135"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "对 Gemini 图片的玩笑回复，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080875937135198374",
+      "postUrl": "https://x.com/thsottiaux/status/2080875937135198374",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:40:58.000Z",
+      "postKind": "reply",
+      "excerpt": "@OpenAGIxd Codex Code Ultra",
+      "excerptHash": "6cdaa27402c53097cd01b868c87ed9360efa0eefdb19ec8525a8c5d90aa95a7a",
+      "parentContext": {
+        "postId": "2080639615418171636",
+        "author": "OpenAGIxd",
+        "excerpt": "Devs, choose one forever",
+        "url": "https://x.com/OpenAGIxd/status/2080639615418171636"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "在工具选择投票中组合产品名，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080877753914761424",
+      "postUrl": "https://x.com/thsottiaux/status/2080877753914761424",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:48:12.000Z",
+      "postKind": "reply",
+      "excerpt": "@Da7_Tech Oh no",
+      "excerptHash": "952f3b5bc856108ba5e9da8433ba6b702096e4afd6b37adb7631a70374b00ee4",
+      "parentContext": {
+        "postId": "2080712901208186970",
+        "author": "Da7_Tech",
+        "excerpt": "This will destroy OpenAI.",
+        "url": "https://x.com/Da7_Tech/status/2080712901208186970"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "对行业观点的简短反应，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080879533864137104",
+      "postUrl": "https://x.com/thsottiaux/status/2080879533864137104",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:55:16.000Z",
+      "postKind": "reply",
+      "excerpt": "@adamlyttleapps I believe at some point the plan is to increment one of them to 5.1 and restore harmony",
+      "excerptHash": "13e9f7b58b49c1f0d5f263946d1d814f8cc5e98b5b414170c5f3cd566a99465d",
+      "parentContext": {
+        "postId": "2080852361627803827",
+        "author": "adamlyttleapps",
+        "excerpt": "I’m confused by Anthropic’s new models So Opus is just as good as Fable? Then why Fable? What’s the point Why is there 2 frontier models at the same time? What one should I be using?",
+        "url": "https://x.com/adamlyttleapps/status/2080852361627803827"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "讨论 Anthropic 模型命名，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080880254722392506",
+      "postUrl": "https://x.com/thsottiaux/status/2080880254722392506",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:58:08.000Z",
+      "postKind": "reply",
+      "excerpt": "@birdabo low chance",
+      "excerptHash": "5fdad8b8653b959f138dce5c711451578b5dd0770f389bf95b17ccfc55da32f0",
+      "parentContext": {
+        "postId": "2080649752212107596",
+        "author": "birdabo",
+        "excerpt": "high chance Claude Opus 5.0 is delayed until next week thursday. anthropic has never launch a model on a friday.",
+        "url": "https://x.com/birdabo/status/2080649752212107596"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "虽包含概率措辞，但父帖讨论 Claude Opus 发布时间，不是重置信号。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080881543267172857",
+      "postUrl": "https://x.com/thsottiaux/status/2080881543267172857",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T05:03:15.000Z",
+      "postKind": "reply",
+      "excerpt": "@betomoedano Who is gonna tell him",
+      "excerptHash": "a8e01e3a2d8564c7b0cc913c35a41042c31ce86b38f0dd432e8016323cb19676",
+      "parentContext": {
+        "postId": "2080777215348724147",
+        "author": "betomoedano",
+        "excerpt": "Opus 5 is now the cheapest frontier model",
+        "url": "https://x.com/betomoedano/status/2080777215348724147"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "回应模型价格观点的玩笑，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080882166033158226",
+      "postUrl": "https://x.com/thsottiaux/status/2080882166033158226",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T05:05:43.000Z",
+      "postKind": "reply",
+      "excerpt": "@blueemi99 Thanks",
+      "excerptHash": "57e4a8cd63e3fc57b67977f7b8bb8d125fcec173f1c760a8f0b5ec66678943b3",
+      "parentContext": {
+        "postId": "2080644053700345904",
+        "author": "blueemi99",
+        "excerpt": "holy shit, t3 code looks so insane right now great job t3 team!",
+        "url": "https://x.com/blueemi99/status/2080644053700345904"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "感谢第三方产品团队，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080886593079144741",
+      "postUrl": "https://x.com/thsottiaux/status/2080886593079144741",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T05:23:19.000Z",
+      "postKind": "reply",
+      "excerpt": "@creedunbound One of the first uses of tech was video games. We’re going to be fine",
+      "excerptHash": "44d69f127ed19b3d142c1946954073d1b3beef6974fdaf118d50d4c2690b3a5f",
+      "parentContext": {
+        "postId": "2080883410784972919",
+        "author": "creedunbound",
+        "excerpt": "@thsottiaux This is where I believe tech fails. We've become so \"soft\" as a society that we're introducing \"pets\" and \"cute animals\" into engineering. This is not the way, Tibo.",
+        "url": "https://x.com/creedunbound/status/2080883410784972919"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "讨论科技与电子游戏，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080886817528930604",
+      "postUrl": "https://x.com/thsottiaux/status/2080886817528930604",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T05:24:12.000Z",
+      "postKind": "reply",
+      "excerpt": "@paulbclark Likewise",
+      "excerptHash": "69ae84c3e92d9ae7717ad0ae1407ec25e21eeff6a167be90f46a8529d7688558",
+      "parentContext": {
+        "postId": "2080884987012792374",
+        "author": "paulbclark",
+        "excerpt": "@thsottiaux you're already on my phone",
+        "url": "https://x.com/paulbclark/status/2080884987012792374"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "社交寒暄回复，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "source": "authenticated_x_timeline"
+      }
+    }
+  ]
+}

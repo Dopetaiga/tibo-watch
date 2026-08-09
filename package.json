@@ -17,6 +17,8 @@
     "test:installer": "node scripts/verify-installer-startup.mjs",
     "research:collect-leads": "node research/scripts/collect-reset-leads.mjs",
     "research:validate": "node research/scripts/validate-provisional-dataset.mjs",
+    "research:enrich-timeline": "node research/scripts/enrich-timeline-capture.mjs",
+    "research:apply-reviews": "node research/scripts/apply-timeline-reviews.mjs",
     "build:renderer": "vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build": "npm run build:renderer && npm run build:electron && node scripts/verify-runtime-boundary.mjs",

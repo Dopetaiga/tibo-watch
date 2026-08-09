@@ -1,0 +1,14 @@
+{
+  "2080874606714560865": { "label": "完全无关", "ironyOrJoke": false, "rationale": "书籍推荐回复，与额度或重置无关。" },
+  "2080874810511626529": { "label": "完全无关", "ironyOrJoke": false, "rationale": "评价模型基准结果，与额度或重置无关。" },
+  "2080874890539028657": { "label": "完全无关", "ironyOrJoke": true, "rationale": "社交玩笑回复，与额度或重置无关。" },
+  "2080875627599798594": { "label": "完全无关", "ironyOrJoke": true, "rationale": "对 Gemini 图片的玩笑回复，与额度或重置无关。" },
+  "2080875937135198374": { "label": "完全无关", "ironyOrJoke": true, "rationale": "在工具选择投票中组合产品名，与额度或重置无关。" },
+  "2080877753914761424": { "label": "完全无关", "ironyOrJoke": true, "rationale": "对行业观点的简短反应，与额度或重置无关。" },
+  "2080879533864137104": { "label": "完全无关", "ironyOrJoke": true, "rationale": "讨论 Anthropic 模型命名，与额度或重置无关。" },
+  "2080880254722392506": { "label": "完全无关", "ironyOrJoke": false, "rationale": "虽包含概率措辞，但父帖讨论 Claude Opus 发布时间，不是重置信号。" },
+  "2080881543267172857": { "label": "完全无关", "ironyOrJoke": true, "rationale": "回应模型价格观点的玩笑，与额度或重置无关。" },
+  "2080882166033158226": { "label": "完全无关", "ironyOrJoke": false, "rationale": "感谢第三方产品团队，与额度或重置无关。" },
+  "2080886593079144741": { "label": "完全无关", "ironyOrJoke": false, "rationale": "讨论科技与电子游戏，与额度或重置无关。" },
+  "2080886817528930604": { "label": "完全无关", "ironyOrJoke": false, "rationale": "社交寒暄回复，与额度或重置无关。" }
+}
