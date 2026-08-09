@@ -206,8 +206,9 @@ Goal 模式应遵守以下工作协议：
 
 - 改动文件：`package.json`、`package-lock.json`、TypeScript/Vite/ESLint/Vitest/Playwright 配置、`app/` 空壳、`tests/`、`scripts/verify-runtime-boundary.mjs`、`.github/workflows/ci.yml` 及基础文档。
 - 验证：`npm run verify` 退出 0；类型检查、lint、1 个单元测试、渲染端与 Electron 编译、运行时边界扫描均通过。
-- 验证：`npm run pack:dir` 与 `npm run dist:win` 均退出 0，electron-builder 到达 `packaging` 步骤。
-- 未解决风险：上述打包命令结束后 `release/` 为空，安装版、便携版及实际启动尚未验收；隐藏启动命令因 Windows 拒绝访问而未执行。Phase 0 验收因此尚未完成，必须继续定位后才能进入 Phase 1。
+- 验证：通过 npmmirror 下载固定的 Electron 43.3.0 与 electron-builder 工具后，`npm run dist:win` 退出 0；生成 NSIS 安装版、便携版和未打包目录，边界由显式 `files` 白名单保证。
+- 验证：`npm run test:e2e` 退出 0，Playwright 实际启动未打包 Windows 应用并确认标题和“暂无可靠预测”空状态。
+- 未解决风险：便携版已生成，但 Playwright 无法穿透 NSIS 便携启动器，直接 GUI 启动又被当前执行环境以“拒绝访问”拦截；安装版和便携版的实际启动仍需在允许 GUI 的 Windows 会话中验收。Phase 0 验收因此尚未全部完成，不能进入 Phase 1。
 
 ### Phase 1：历史样本研究与 rules-v1
 
