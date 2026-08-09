@@ -5,6 +5,7 @@ import path from 'node:path'
 const rawPath = path.resolve('research/dataset/timeline-capture.raw.jsonl')
 const provisionalPath = path.resolve('research/dataset/timeline-sample.provisional.json')
 const reviewedPath = path.resolve('research/dataset/timeline-sample.reviewed.json')
+const coveragePath = path.resolve('research/dataset/timeline-coverage.json')
 const reportPath = path.resolve('research/reports/timeline-validation.md')
 
 const allowedLabels = new Set(['已完成', '明确未来', '模糊意向', '相关但非重置', '完全无关'])
@@ -14,6 +15,7 @@ const raw = (await readFile(rawPath, 'utf8'))
   .map((line) => JSON.parse(line))
 const provisional = JSON.parse(await readFile(provisionalPath, 'utf8'))
 const reviewed = JSON.parse(await readFile(reviewedPath, 'utf8'))
+const coverage = JSON.parse(await readFile(coveragePath, 'utf8'))
 
 const failures = []
 const rawIds = raw.map(({ id }) => id)
@@ -37,6 +39,19 @@ function sameIds(left, right, description) {
 
 sameIds(rawUniqueIds, provisionalIds, '原始捕获与富化集 ID 不一致')
 sameIds(provisionalIds, reviewedIds, '富化集与复核集 ID 不一致')
+
+for (const [index, slice] of coverage.slices.entries()) {
+  const sliceName = `覆盖分片 ${index + 1}`
+  if (slice.status !== 'complete_search_slice') continue
+  if (!slice.endEvidence?.atBottom || !slice.endEvidence?.unchangedVisibleSetAfterAdditionalScroll) {
+    failures.push(`${sliceName} 缺少滚动终点证据`)
+  }
+  if (slice.resultCount !== slice.postIds.length || new Set(slice.postIds).size !== slice.postIds.length) {
+    failures.push(`${sliceName} resultCount 或 postIds 唯一性不一致`)
+  }
+  const uncaptured = slice.postIds.filter((id) => !rawUniqueIds.has(id))
+  if (uncaptured.length) failures.push(`${sliceName} 存在未进入原始捕获的数据：${uncaptured.join(',')}`)
+}
 
 const provisionalDuplicates = duplicateIds(provisional.records.map(({ postId }) => postId))
 const reviewedDuplicates = duplicateIds(reviewed.records.map(({ postId }) => postId))
@@ -65,6 +80,7 @@ const byLabel = Object.fromEntries(
 const timestamps = reviewed.records.map(({ createdAt }) => createdAt).sort()
 const parentErrors = reviewed.records.filter(({ parentContext }) => parentContext?.error)
 const quotedContexts = reviewed.records.filter(({ quotedContext }) => quotedContext)
+const completeSlices = coverage.slices.filter(({ status }) => status === 'complete_search_slice')
 const recordsHash = createHash('sha256')
   .update(JSON.stringify(reviewed.records), 'utf8')
   .digest('hex')
@@ -82,6 +98,8 @@ const report = `# 时间线研究数据验证
 - 最晚 UTC：${timestamps.at(-1) ?? '无'}
 - 含父帖读取错误：${parentErrors.length}
 - 含引用帖语境：${quotedContexts.length}
+- 已完成搜索分片：${completeSlices.length}
+- 已完成分片结果总数：${completeSlices.reduce((sum, slice) => sum + slice.resultCount, 0)}
 - 复核记录 SHA-256：\`${recordsHash}\`
 
 ## 标签分布
@@ -97,7 +115,7 @@ ${failures.length ? failures.map((failure) => `- [ ] ${failure}`).join('\n') : '
 ## 覆盖限制
 
 - [ ] 最近六个月原创、回复和引用帖完整采集。
-- [ ] 每个日期分片均有明确的分页终点证据。
+- [ ] 六个月范围内的每个日期分片均有明确的分页终点证据；当前已完成 ${completeSlices.length} 个分片。
 `
 
 await writeFile(reportPath, report, 'utf8')
