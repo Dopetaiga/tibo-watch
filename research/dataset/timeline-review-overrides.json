@@ -10,5 +10,21 @@
   "2080881543267172857": { "label": "完全无关", "ironyOrJoke": true, "rationale": "回应模型价格观点的玩笑，与额度或重置无关。" },
   "2080882166033158226": { "label": "完全无关", "ironyOrJoke": false, "rationale": "感谢第三方产品团队，与额度或重置无关。" },
   "2080886593079144741": { "label": "完全无关", "ironyOrJoke": false, "rationale": "讨论科技与电子游戏，与额度或重置无关。" },
-  "2080886817528930604": { "label": "完全无关", "ironyOrJoke": false, "rationale": "社交寒暄回复，与额度或重置无关。" }
+  "2080886817528930604": { "label": "完全无关", "ironyOrJoke": false, "rationale": "社交寒暄回复，与额度或重置无关。" },
+  "2081088757923717485": { "label": "完全无关", "ironyOrJoke": false, "rationale": "欢迎用户切回模型；fast 描述切换速度，不是重置时间信号。" },
+  "2081089116239004083": { "label": "完全无关", "ironyOrJoke": true, "rationale": "模型命名玩笑，与额度或重置无关。" },
+  "2081091257821204592": { "label": "完全无关", "ironyOrJoke": false, "rationale": "讨论 OpenAI T 恤，与额度或重置无关。" },
+  "2081094290269511991": { "label": "完全无关", "ironyOrJoke": true, "rationale": "用 ChatGPT Work 修改模型价格对比图，与重置无关。" },
+  "2081096447718723984": { "label": "已完成", "ironyOrJoke": false, "scope": "Codex、ChatGPT Work", "certainty": "高", "rationale": "原帖明确写明 have reset usage limits，属于已完成重置。" },
+  "2081096905250259014": { "label": "完全无关", "ironyOrJoke": true, "rationale": "关于模型 persistence 指标的玩笑，与额度或重置无关。" },
+  "2081151582109044867": { "label": "完全无关", "ironyOrJoke": false, "rationale": "感谢第三方提出产品界面建议，与额度或重置无关。" },
+  "2081184930605023265": { "label": "完全无关", "ironyOrJoke": true, "rationale": "关于个人简介和舆论事件的玩笑，与额度或重置无关。" },
+  "2081198608293187635": { "label": "完全无关", "ironyOrJoke": false, "rationale": "公布 ChatGPT Work 活跃用户超过 Codex；没有重置动作或意向。" },
+  "2081227689965633728": { "label": "完全无关", "ironyOrJoke": true, "rationale": "回复 AI 公司梗图，与额度或重置无关。" },
+  "2081227843921678470": { "label": "完全无关", "ironyOrJoke": true, "rationale": "对 OpenAI 回归说法的简短反应，与额度或重置无关。" },
+  "2081229262452097169": { "label": "完全无关", "ironyOrJoke": false, "rationale": "宣传 ChatGPT Work 登录网站功能，与额度或重置无关。" },
+  "2081253353850540179": { "label": "完全无关", "ironyOrJoke": false, "rationale": "转交 Codex 语音模式模型选择缺陷，与额度或重置无关。" },
+  "2081253722064306595": { "label": "完全无关", "ironyOrJoke": false, "rationale": "讨论给应用重命名，与额度或重置无关。" },
+  "2081253967150075961": { "label": "完全无关", "ironyOrJoke": true, "rationale": "评价模型基准并提及 tied，不是重置或时间表达。" },
+  "2081254182502465981": { "label": "完全无关", "ironyOrJoke": true, "rationale": "宣传语音交互功能；fixed that bug 指产品能力，不是额度补偿。" }
 }

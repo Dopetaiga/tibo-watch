@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-09T11:59:45.865Z",
+  "generatedAt": "2026-08-09T12:12:35.482Z",
   "source": "authenticated_x_timeline",
   "completeSixMonthTimeline": false,
-  "testSetHash": "fc6c406d15f4e5074c44a9434bbe318f870206b4541ab2fd92fd7500a5098789",
+  "testSetHash": "1098e0dd402d6b95e41470a679aca77e3622ab89f0046ed49ce82ca680d7d9d5",
   "records": [
     {
       "schemaVersion": 1,
@@ -253,7 +253,7 @@
       "ironyOrJoke": true,
       "rationale": "回应模型价格观点的玩笑，与额度或重置无关。",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:10:10.495Z",
         "source": "authenticated_x_timeline"
       }
     },
@@ -281,7 +281,7 @@
       "ironyOrJoke": false,
       "rationale": "感谢第三方产品团队，与额度或重置无关。",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:10:10.495Z",
         "source": "authenticated_x_timeline"
       }
     },
@@ -309,7 +309,7 @@
       "ironyOrJoke": false,
       "rationale": "讨论科技与电子游戏，与额度或重置无关。",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:10:10.495Z",
         "source": "authenticated_x_timeline"
       }
     },
@@ -337,7 +337,451 @@
       "ironyOrJoke": false,
       "rationale": "社交寒暄回复，与额度或重置无关。",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081088757923717485",
+      "postUrl": "https://x.com/thsottiaux/status/2081088757923717485",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T18:46:39.000Z",
+      "postKind": "reply",
+      "excerpt": "@yacineMTB Welcome back. That was fast this time",
+      "excerptHash": "100c8dd9bced425701cb8f012a87ff5a6465133b6731a555e5045698f9531896",
+      "parentContext": {
+        "postId": "2080874977998340245",
+        "author": "yacineMTB",
+        "excerpt": "I'm switching back to chatgpt 5.6 sol",
+        "url": "https://x.com/yacineMTB/status/2080874977998340245"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "欢迎用户切回模型；fast 描述切换速度，不是重置时间信号。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081089116239004083",
+      "postUrl": "https://x.com/thsottiaux/status/2081089116239004083",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T18:48:04.000Z",
+      "postKind": "reply",
+      "excerpt": "@0xgaut Big number = good Big celestial object = good Both at the same time = incredible",
+      "excerptHash": "66b8f252922cd8522c7cdde7f93563d0abcaba3ac28a416d6bccc9ebf6400af2",
+      "parentContext": {
+        "postId": "2080812564292796440",
+        "author": "0xgaut",
+        "excerpt": "don't worry bro picking a model is easy bro",
+        "url": "https://x.com/0xgaut/status/2080812564292796440"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "模型命名玩笑，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081091257821204592",
+      "postUrl": "https://x.com/thsottiaux/status/2081091257821204592",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T18:56:35.000Z",
+      "postKind": "reply",
+      "excerpt": "@R2Cdev_ I wear this one quite often",
+      "excerptHash": "1ac780f63adbde82b28d6fad790d09858f993e821171ff2f4737b0e539646867",
+      "parentContext": {
+        "postId": "2080983444641714539",
+        "author": "R2Cdev_",
+        "excerpt": "OpenAI GPT-5 Shirt",
+        "url": "https://x.com/R2Cdev_/status/2080983444641714539"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "讨论 OpenAI T 恤，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081094290269511991",
+      "postUrl": "https://x.com/thsottiaux/status/2081094290269511991",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T19:08:38.000Z",
+      "postKind": "reply",
+      "excerpt": "@icanvardar Here, fixed it. Courtesy of ChatGPT Work",
+      "excerptHash": "46a55a23d0a763098fd654437c562f40ed1929ebcc53a5e8a32cbbed5a27ec5d",
+      "parentContext": {
+        "postId": "2080895860108398853",
+        "author": "icanvardar",
+        "excerpt": "the intelligence of gpt 5.6 sol and opus 5 is nearly identical using opus 5 at 2x the cost feels retarded",
+        "url": "https://x.com/icanvardar/status/2080895860108398853"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "用 ChatGPT Work 修改模型价格对比图，与重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081096447718723984",
+      "postUrl": "https://x.com/thsottiaux/status/2081096447718723984",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T19:17:12.000Z",
+      "postKind": "quote",
+      "excerpt": "We have reset usage limits for all Codex and ChatGPT Work users. Last night around 2am to 4am we suffered an almost global outage. All well and recovered, but you know what comes next. We learn. We reset. Enjoy.",
+      "excerptHash": "269fafa34d141af75aa19595bf2ff82f34e32bc000aa0392a73a86463f7387a8",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2080956723297198218",
+        "author": "blueemi99",
+        "excerpt": "Hey does this mean a reset?? A banked one too maybe?",
+        "url": "https://x.com/blueemi99/status/2080956723297198218"
+      },
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "ironyOrJoke": false,
+      "rationale": "原帖明确写明 have reset usage limits，属于已完成重置。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081096905250259014",
+      "postUrl": "https://x.com/thsottiaux/status/2081096905250259014",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T19:19:01.000Z",
+      "postKind": "reply",
+      "excerpt": "@rezoundous Missing that 0.6 of persistence",
+      "excerptHash": "9793f97d2db06d51876c69993428bd29bc509fd7953ee7cbaf7b61afba2a6411",
+      "parentContext": {
+        "postId": "2080918473027494037",
+        "author": "rezoundous",
+        "excerpt": "Opus 5 is definitely not as persistent as GPT-5.6",
+        "url": "https://x.com/rezoundous/status/2080918473027494037"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "关于模型 persistence 指标的玩笑，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081151582109044867",
+      "postUrl": "https://x.com/thsottiaux/status/2081151582109044867",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T22:56:17.000Z",
+      "postKind": "reply",
+      "excerpt": "@mark_k @SpaceXAI Thanks",
+      "excerptHash": "8a2aa922acc0f1e1fa58c5b55558307937e5765bfcd4dcca311ebca7fa83b96a",
+      "parentContext": {
+        "postId": "2081088310827463151",
+        "author": "mark_k",
+        "excerpt": "The priority for @SpaceXAI should now be to create a GUI for Grok Build. Or, they could use the Cursor Agent window as a base. But Cursor needs a lot of polish to compete with the Codex app. Either way, they need to aim for excellence.",
+        "url": "https://x.com/mark_k/status/2081088310827463151"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "感谢第三方提出产品界面建议，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081184930605023265",
+      "postUrl": "https://x.com/thsottiaux/status/2081184930605023265",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-26T01:08:48.000Z",
+      "postKind": "reply",
+      "excerpt": "@theo Poor guy cleans up his bio and goes to sleep. Wakes up with the world in shambles",
+      "excerptHash": "6b610d606423fc34eacd0893efacf32b6dd8c715c6b11624c11bdb3e21d447d6",
+      "parentContext": {
+        "postId": "2081175044022313347",
+        "author": "theo",
+        "excerpt": null,
+        "url": "https://x.com/i/status/2081175044022313347",
+        "error": "帖子 2081175044022313347 返回 HTTP 404"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "关于个人简介和舆论事件的玩笑，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081198608293187635",
+      "postUrl": "https://x.com/thsottiaux/status/2081198608293187635",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-26T02:03:09.000Z",
+      "postKind": "original",
+      "excerpt": "ChatGPT Work officially has overtaken Codex in number of active users. Way to go.",
+      "excerptHash": "0ae52a9ac5e482d6feb6734510ceb0759c2aec37a9e17dad7efecc2aefde381a",
+      "parentContext": null,
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "公布 ChatGPT Work 活跃用户超过 Codex；没有重置动作或意向。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081227689965633728",
+      "postUrl": "https://x.com/thsottiaux/status/2081227689965633728",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-26T03:58:43.000Z",
+      "postKind": "reply",
+      "excerpt": "@VishalxKodes I think it’s called MAI",
+      "excerptHash": "311d52a6b715ab3ce071d2c977654d3d85fd7172de4e141d36c54d117743a3bb",
+      "parentContext": {
+        "postId": "2080918561397285277",
+        "author": "VishalxKodes",
+        "excerpt": "Ai race in one meme 💀👀",
+        "url": "https://x.com/VishalxKodes/status/2080918561397285277"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "回复 AI 公司梗图，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081227843921678470",
+      "postUrl": "https://x.com/thsottiaux/status/2081227843921678470",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-26T03:59:19.000Z",
+      "postKind": "reply",
+      "excerpt": "@rrbtrades Nice try",
+      "excerptHash": "bc5d6f68c443e67a94c65394785dbbb52419aa42c78d2bc0fd9d0753cdae5426",
+      "parentContext": {
+        "postId": "2081142019510976974",
+        "author": "rrbtrades",
+        "excerpt": "OpenAI might be back",
+        "url": "https://x.com/rrbtrades/status/2081142019510976974"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "对 OpenAI 回归说法的简短反应，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081229262452097169",
+      "postUrl": "https://x.com/thsottiaux/status/2081229262452097169",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-26T04:04:58.000Z",
+      "postKind": "quote",
+      "excerpt": "Game changer when used from mobile. Available in the ChatGPT app already.",
+      "excerptHash": "fcdf5271ff22a3dd238b7349a2018d9a61d8fddf8c88cca96edf97d6e44eddb7",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2080707685448847418",
+        "author": "OpenAIDevs",
+        "excerpt": "Your ChatGPT Work agent can now use websites that require you to sign in. Take over the cloud browser to log in, then let your agent continue the task. Your login persists across sessions, so you only have to sign in once.",
+        "url": "https://x.com/OpenAIDevs/status/2080707685448847418"
+      },
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "宣传 ChatGPT Work 登录网站功能，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:10:10.495Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081253353850540179",
+      "postUrl": "https://x.com/thsottiaux/status/2081253353850540179",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-26T05:40:42.000Z",
+      "postKind": "reply",
+      "excerpt": "@AdamHoltererer cc @jxnlco",
+      "excerptHash": "41fe89c54c05f2298549c6d4bb86b0f03d386528a2b7fdd470297d3c9d3d3f77",
+      "parentContext": {
+        "postId": "2081065124811387267",
+        "author": "AdamHoltererer",
+        "excerpt": "voice mode in Codex switched the model from GPT 5.6 Sol to GPT 5.3 Codex Spark because it didn't know what fast mode was. OpenAI team, please fix.",
+        "url": "https://x.com/AdamHoltererer/status/2081065124811387267"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "转交 Codex 语音模式模型选择缺陷，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:08:39.247Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081253722064306595",
+      "postUrl": "https://x.com/thsottiaux/status/2081253722064306595",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-26T05:42:09.000Z",
+      "postKind": "reply",
+      "excerpt": "@melvynx I named mine Do Things",
+      "excerptHash": "028969bf7b61864750f477a9e0e69dd4fc9910aeb18f370d74c206719d816bc3",
+      "parentContext": {
+        "postId": "2080571440852791680",
+        "author": "melvynx",
+        "excerpt": "Sorry @thsottiaux but i rename ChatGPT app to Codex, it's more natural for me",
+        "url": "https://x.com/melvynx/status/2080571440852791680"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "讨论给应用重命名，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:08:39.247Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081253967150075961",
+      "postUrl": "https://x.com/thsottiaux/status/2081253967150075961",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-26T05:43:08.000Z",
+      "postKind": "reply",
+      "excerpt": "@s_batzoglou Tied with Muse Spark 1.1?!",
+      "excerptHash": "1a5fea4189f0c695575cd6f50452aff0a7d3f67e230946c651fd9a4348179b12",
+      "parentContext": {
+        "postId": "2080982748399911057",
+        "author": "s_batzoglou",
+        "excerpt": "I benchmarked Opus 5 against other new models (Sol, Terra, Luna, Fable 5, Meta Muse Spark 1.1, Grok 4.5) on an induction reasoning task. Opus 5 does reasonably well. Tied with Meta Muse Spark 1.1 on correctness, and somewhat below Fable 5. It does best among top models in finding simple formulas that generalize well. It is quite expensive: 15,895,179 tokens ",
+        "url": "https://x.com/s_batzoglou/status/2080982748399911057"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "评价模型基准并提及 tied，不是重置或时间表达。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:08:39.247Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081254182502465981",
+      "postUrl": "https://x.com/thsottiaux/status/2081254182502465981",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-26T05:43:59.000Z",
+      "postKind": "quote",
+      "excerpt": "It was always possible to speak to your computer. It wouldn’t do much in return. But we fixed that bug.",
+      "excerptHash": "a0ac9376eb4d4b4004d371e0d9ebbcd8d46ee8231f32e8b15fca0d9d70ffd069",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2080718593566949422",
+        "author": "guinnesschen",
+        "excerpt": "Speaking is faster than typing. Reading is faster than listening. The highest bandwidth interface between humans and AI is asymmetric. That’s how we designed ChatGPT Voice on desktop: speak your thoughts and let the model choose the best way to show you its answer.",
+        "url": "https://x.com/guinnesschen/status/2080718593566949422"
+      },
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "宣传语音交互功能；fixed that bug 指产品能力，不是额度补偿。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:08:39.247Z",
         "source": "authenticated_x_timeline"
       }
     }

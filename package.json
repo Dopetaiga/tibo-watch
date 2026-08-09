@@ -20,6 +20,7 @@
     "research:enrich-timeline": "node research/scripts/enrich-timeline-capture.mjs",
     "research:apply-reviews": "node research/scripts/apply-timeline-reviews.mjs",
     "research:review-leads": "node research/scripts/review-reset-leads.mjs",
+    "research:evaluate-candidate": "node research/scripts/evaluate-candidate-rules.mjs",
     "build:renderer": "vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build": "npm run build:renderer && npm run build:electron && node scripts/verify-runtime-boundary.mjs",

@@ -21,9 +21,9 @@ const records = input.records.map((record) => {
     ...record,
     label: review.label,
     labelStatus: 'reviewed_primary',
-    expectedTime: null,
-    scope: '未知',
-    certainty: '不适用',
+    expectedTime: review.expectedTime ?? null,
+    scope: review.scope ?? '未知',
+    certainty: review.certainty ?? (review.label === '完全无关' ? '不适用' : '高'),
     ironyOrJoke: review.ironyOrJoke,
     rationale: review.rationale,
   }
