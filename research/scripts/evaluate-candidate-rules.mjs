@@ -51,6 +51,13 @@ const rules = [
     counterExampleId: '2081096905250259014',
   },
   {
+    id: 'rv1-future-manual-resets',
+    description: '明确承诺未来提供更多 manual resets',
+    pattern: /\b(?:will|get(?:ting)?)\b[^.!?]{0,100}\bmore\s+manual\s+resets?\b/i,
+    positiveExampleId: '2071383430634344902',
+    counterExampleId: '2071383696934842498',
+  },
+  {
     id: 'rv1-vague-limit-reset-intent',
     description: '明确提到 limit reset 的模糊意向，进入 AI 候选但不直接建事件',
     pattern: /\b(?:feeling\s+like|thinking\s+about|might)\b[^.!?]{0,80}\blimit\s+reset\b/i,
@@ -60,28 +67,41 @@ const rules = [
   {
     id: 'rv1-contextual-still-time-reset',
     description: '回复称仍有时间，且父帖明确讨论 reset，作为模糊意向候选',
+    input: 'context',
     pattern: /\bthere\s+is\s+still\s+time\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bresets?\b/i,
     positiveExampleId: '2080859954421047341',
     counterExampleId: '2080869898339991732',
   },
+  {
+    id: 'rv1-quoted-reset-happening',
+    description: '主帖明确表示正在发生，且引用帖说明 Codex reset button 将执行',
+    input: 'context',
+    pattern:
+      /\bit['’]s\s+happening\b[\s\S]{0,240}\[QUOTE\][\s\S]{0,240}\bcodex\s+reset\s+button\s+in\s+action\b/i,
+    positiveExampleId: '2072410623380468190',
+    counterExampleId: '2071710834527523030',
+  },
 ]
-
-function evaluate(text) {
-  const matchedRuleIds = rules.filter(({ pattern }) => pattern.test(text)).map(({ id }) => id)
-  return { candidate: matchedRuleIds.length > 0, matchedRuleIds }
-}
 
 function contextualText(record) {
   return [
     `[POST]\n${record.excerpt ?? ''}`,
     `[PARENT]\n${record.parentContext?.excerpt ?? ''}`,
-    `[QUOTE]\n${record.quoteContext?.excerpt ?? ''}`,
+    `[QUOTE]\n${record.quotedContext?.excerpt ?? ''}`,
   ].join('\n')
+}
+
+function evaluate(record) {
+  const context = contextualText(record)
+  const matchedRuleIds = rules
+    .filter(({ input, pattern }) => pattern.test(input === 'context' ? context : record.excerpt))
+    .map(({ id }) => id)
+  return { candidate: matchedRuleIds.length > 0, matchedRuleIds }
 }
 
 const outcomes = records.map((record) => {
   const expected = record.label !== '完全无关' && record.label !== '相关但非重置'
-  const result = evaluate(contextualText(record))
+  const result = evaluate(record)
   return { record, expected, result }
 })
 
@@ -95,7 +115,12 @@ const datasetHash = createHash('sha256')
   .update(JSON.stringify(records), 'utf8')
   .digest('hex')
 const rulesHash = createHash('sha256')
-  .update(rules.map(({ id, pattern }) => `${id}:${pattern.source}:${pattern.flags}`).join('\n'), 'utf8')
+  .update(
+    rules
+      .map(({ id, input, pattern }) => `${id}:${input ?? 'post'}:${pattern.source}:${pattern.flags}`)
+      .join('\n'),
+    'utf8',
+  )
   .digest('hex')
 
 function itemList(items) {

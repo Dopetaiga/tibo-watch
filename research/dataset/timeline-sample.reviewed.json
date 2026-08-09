@@ -1,10 +1,397 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-09T12:26:42.514Z",
+  "generatedAt": "2026-08-09T12:39:33.882Z",
   "source": "authenticated_x_timeline",
   "completeSixMonthTimeline": false,
-  "testSetHash": "61192b1ae5922e5fa7f765af8fd6dfd1d0339c57807959b45739497ead1c9781",
+  "testSetHash": "67d899bdb5dfb6511e8e2cd9555e1a32461b29ddb5d41953497aaa91f0849fa3",
   "records": [
+    {
+      "schemaVersion": 1,
+      "postId": "2071381664853319742",
+      "postUrl": "https://x.com/thsottiaux/status/2071381664853319742",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T23:54:07.000Z",
+      "postKind": "quote",
+      "excerpt": "As we are still investigating, I have reset everyone's Codex usage limits. This is a hard reset given some users had stacked up to three banked resets already that they can apply on their own schedule. Funnily enough, this week at OpenAI is called the RESET week, which is meant for folks to relax a bit. However it will be a different kind of RESET week. Enjo",
+      "excerptHash": "5a6e2ad9f07053b281d4bf4d57ba3d81a42796e2c3e0331fc16814a7e6bbd83f",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2071357473659707441",
+        "author": "thsottiaux",
+        "excerpt": "Codex team is in a warroom on a Sunday combing through logs and checking whether there is anything that could lead to increased usage drains for some users. Taking it very seriously and won't rest until we get to the bottom of it.",
+        "url": "https://x.com/thsottiaux/status/2071357473659707441"
+      },
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "所有 Codex 用户；hard reset",
+      "certainty": "高",
+      "ironyOrJoke": true,
+      "rationale": "原帖明确写明 I have reset everyone's Codex usage limits，属于已完成 hard reset。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:45:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071383430634344902",
+      "postUrl": "https://x.com/thsottiaux/status/2071383430634344902",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-29T00:01:08.000Z",
+      "postKind": "reply",
+      "excerpt": "If you happened to have used your previous reset in the few hours before and didn't go through your usage, do not worry, you will get more manual resets after we conclude the investigation.",
+      "excerptHash": "b02348444389bba3dfd50c785c752f20e13d5d3a64bc5eaf1f609b80e3edb5f0",
+      "parentContext": {
+        "postId": "2071381664853319742",
+        "author": "thsottiaux",
+        "excerpt": "As we are still investigating, I have reset everyone's Codex usage limits. This is a hard reset given some users had stacked up to three banked resets already that they can apply on their own schedule. Funnily enough, this week at OpenAI is called the RESET week, which is meant for folks to relax a bit. However it will be a different kind of RESET week. Enjo",
+        "url": "https://x.com/thsottiaux/status/2071381664853319742"
+      },
+      "quotedContext": null,
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": "调查结束后",
+      "scope": "此前使用过 reset 且未耗尽 usage 的用户；manual resets",
+      "certainty": "高",
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺调查结束后将提供更多 manual resets。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:45:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071383696934842498",
+      "postUrl": "https://x.com/thsottiaux/status/2071383696934842498",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-29T00:02:12.000Z",
+      "postKind": "reply",
+      "excerpt": "@ShashankDe5535 You'll have to wait a bit to enjoy that",
+      "excerptHash": "9cd9d0e9bdaa89b86c82c99846be1404de831a244d216b51f56c4c7abf127b6f",
+      "parentContext": {
+        "postId": "2071383196332073368",
+        "author": "ShashankDe5535",
+        "excerpt": "@thsottiaux Fuck man I was looking forward to using my banked reset and now I am back to 100%",
+        "url": "https://x.com/ShashankDe5535/status/2071383196332073368"
+      },
+      "quotedContext": null,
+      "label": "相关但非重置",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "高",
+      "ironyOrJoke": true,
+      "rationale": "讨论用户何时可使用已有 banked reset，没有宣布新增或执行重置。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:45:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071389318019482018",
+      "postUrl": "https://x.com/thsottiaux/status/2071389318019482018",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-29T00:24:32.000Z",
+      "postKind": "reply",
+      "excerpt": "@nicdunz Thx!",
+      "excerptHash": "e8c2fc5e25435a954f22b6400a53cb78a1ed93d755ebf39fbbce3750f155f505",
+      "parentContext": {
+        "postId": "2071377837064384765",
+        "author": "nicdunz",
+        "excerpt": "if you see gpt-5.4 usage its from auto review not because theyre routing you to a worse model",
+        "url": "https://x.com/nicdunz/status/2071377837064384765"
+      },
+      "quotedContext": null,
+      "label": "相关但非重置",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "高",
+      "ironyOrJoke": false,
+      "rationale": "父帖解释 GPT-5.4 usage 来自 auto review；回复仅致谢，没有重置信息。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:45:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071636285807059315",
+      "postUrl": "https://x.com/thsottiaux/status/2071636285807059315",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-29T16:45:54.000Z",
+      "postKind": "original",
+      "excerpt": "Advanced Codex users. We shipped a replacement to coarse sandbox modes: reusable, inheritable permission profiles binding OS-enforced file read/write/deny rules (even **/*.env) to per-domain network + Unix sockets. Plus fail-closed admin allowlists. Least privilege per task. https://developers.openai.com/codex/permissions",
+      "excerptHash": "b252ed7a6b21bba67fb0fc441a9dc78a7041c20ccd9322f6936ed77990d18627",
+      "parentContext": null,
+      "quotedContext": null,
+      "label": "相关但非重置",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "高",
+      "ironyOrJoke": false,
+      "rationale": "发布 Codex permission profiles 和 sandbox 权限功能，与额度重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:45:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071636834736574719",
+      "postUrl": "https://x.com/thsottiaux/status/2071636834736574719",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-29T16:48:05.000Z",
+      "postKind": "reply",
+      "excerpt": "@rizaardiyanto What's not good looking about it?",
+      "excerptHash": "f78584c9d0358ed02f1c42664636dad26dd05891cf919b2ad2fa687362dda33a",
+      "parentContext": {
+        "postId": "2071442561068351705",
+        "author": "rizaardiyanto",
+        "excerpt": "@thsottiaux Start from fresh, not a good looking start, but we will see",
+        "url": "https://x.com/rizaardiyanto/status/2071442561068351705"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "父帖中的 fresh 和回复均讨论界面观感，不是额度刷新或重置。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:45:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071710834527523030",
+      "postUrl": "https://x.com/thsottiaux/status/2071710834527523030",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-29T21:42:08.000Z",
+      "postKind": "quote",
+      "excerpt": "Do you think it has a reset button?",
+      "excerptHash": "9fe169d6d51b1a36feb027573afe1a3b0afa0755a07bfface22456af721c2622",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2071639953927438440",
+        "author": "OpenAIDevs",
+        "excerpt": "Your favorite Codex shortcuts are getting an upgrade. July 15th.",
+        "url": "https://x.com/OpenAIDevs/status/2071639953927438440"
+      },
+      "label": "相关但非重置",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "高",
+      "ironyOrJoke": true,
+      "rationale": "围绕 Codex 快捷键产品预告询问是否有 reset button，未宣布额度重置。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:35:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071740419030053227",
+      "postUrl": "https://x.com/thsottiaux/status/2071740419030053227",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-29T23:39:41.000Z",
+      "postKind": "quote",
+      "excerpt": "Codex usage limits will be fully reset again in the next hour and we will credit one additional reset into your bank for your own usage over the next 24 hours. We investigated reports that Codex usage was being consumed faster than expected. There wasn't one central issue, but a few smaller problems compounded for some users. Here's what we found and changed",
+      "excerptHash": "43371603548abaaf54bac5061f38f6adab1ec4dddf956872732f07df0a3b2fcf",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2071357473659707441",
+        "author": "thsottiaux",
+        "excerpt": "Codex team is in a warroom on a Sunday combing through logs and checking whether there is anything that could lead to increased usage drains for some users. Taking it very seriously and won't rest until we get to the bottom of it.",
+        "url": "https://x.com/thsottiaux/status/2071357473659707441"
+      },
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": "下一小时内",
+      "scope": "Codex usage limits；另含一个 banked reset",
+      "certainty": "高",
+      "ironyOrJoke": false,
+      "rationale": "原帖明确写明 usage limits will be fully reset in the next hour，并将增加一个 banked reset。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:35:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071897922510164152",
+      "postUrl": "https://x.com/thsottiaux/status/2071897922510164152",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-30T10:05:33.000Z",
+      "postKind": "reply",
+      "excerpt": "@iamsahaj_xyz I personally DM it to Codex and it stores it into my notes folder all neatly organized. Some things it then just does itself and for the rest it reminds me of things I need to do a few when I have free time based on my calendar",
+      "excerptHash": "f495216669a73287502c10c893eae4ed6d90569a26d427f07761e173bd8b532b",
+      "parentContext": {
+        "postId": "2071742864405799294",
+        "author": "iamsahaj_xyz",
+        "excerpt": "dm'ing yourself on slack is the best way to take notes. fight me",
+        "url": "https://x.com/iamsahaj_xyz/status/2071742864405799294"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "讨论通过 Codex 整理私人笔记和提醒，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:35:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071898323577905636",
+      "postUrl": "https://x.com/thsottiaux/status/2071898323577905636",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-30T10:07:09.000Z",
+      "postKind": "reply",
+      "excerpt": "@ah20im @ah20im absolutely cooked here",
+      "excerptHash": "6836211c03ecd26b051c4091a7396ab11280149b351618c836372c4f9548d480",
+      "parentContext": {
+        "postId": "2071743251556499773",
+        "author": "ah20im",
+        "excerpt": "Team has been working very hard to fix the issues users have been seeing. Keep the feedback coming! Happy reset!",
+        "url": "https://x.com/ah20im/status/2071743251556499773"
+      },
+      "quotedContext": null,
+      "label": "相关但非重置",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "高",
+      "ironyOrJoke": true,
+      "rationale": "父帖提到 Happy reset，但 Tibo 仅作玩笑回应，没有新增或确认重置信息。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:35:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2072140052008702216",
+      "postUrl": "https://x.com/thsottiaux/status/2072140052008702216",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-01T02:07:41.000Z",
+      "postKind": "reply",
+      "excerpt": "@vezmenov @OpenAI @OpenAIDevs It's one of the images from the testimonials. Scroll through the page, you will see it",
+      "excerptHash": "24e45e8d88b8911fccc46608f06b2a3117b593f74de0b912d4b3ceb29864ed13",
+      "parentContext": {
+        "postId": "2072079076601327632",
+        "author": "vezmenov",
+        "excerpt": "I swear this isn’t fake. While browsing http://openai.com/ru-RU/codex, this face suddenly appeared on the page for a moment. I couldn’t reproduce it afterwards. Was this just a rendering bug, or has anyone else seen it? @OpenAI @OpenAIDevs @thsottiaux",
+        "url": "https://x.com/vezmenov/status/2072079076601327632"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "解释 Codex 网页 testimonial 图片来源，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:35:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2072140190919905511",
+      "postUrl": "https://x.com/thsottiaux/status/2072140190919905511",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-01T02:08:14.000Z",
+      "postKind": "reply",
+      "excerpt": "@vezmenov Appreciate you",
+      "excerptHash": "d59eeae2eaa776030dd82ba589a10ab5c6e74e86d50f8b2e5c8cbd7c7d11347c",
+      "parentContext": {
+        "postId": "2071392064252547108",
+        "author": "vezmenov",
+        "excerpt": "I genuinely love how @thsottiaux takes the time to engage with the Codex community. Seeing such a fast feedback is incredibly refreshing.",
+        "url": "https://x.com/vezmenov/status/2071392064252547108"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "感谢社区成员的正面评价，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:35:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2072409369786851678",
+      "postUrl": "https://x.com/thsottiaux/status/2072409369786851678",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-01T19:57:51.000Z",
+      "postKind": "reply",
+      "excerpt": "@ericlim What's ChatGPT?",
+      "excerptHash": "1393a80b52514873425bfb806fb36f4de2a6fd58d520fd875c9d6e5b1a64f613",
+      "parentContext": {
+        "postId": "2072058529226408307",
+        "author": "ericlim",
+        "excerpt": "openai makes good, steerable, safe, efficient models because we have a product called ChatGPT, being used by literally so many poeple in the world. if our models are not efficient and good, we break our own economics. we HAVE to make our models good. 5.6 family of models are absolutely great models. next models we continue to train will be even better.",
+        "url": "https://x.com/ericlim/status/2072058529226408307"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "针对 ChatGPT 产品价值论述的玩笑回复，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:35:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2072410623380468190",
+      "postUrl": "https://x.com/thsottiaux/status/2072410623380468190",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-01T20:02:50.000Z",
+      "postKind": "quote",
+      "excerpt": "It's happening",
+      "excerptHash": "e3b47e1ed7df477cc7080889621ea55c0de9cc9b84f045ea2689215ac1d98227",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2072406923660648757",
+        "author": "romainhuet",
+        "excerpt": "Make your way to the OpenAI booth now if you’re at @aiDotEngineer! 🚨 At 1pm, you’ll get to see the Codex reset button in action. Rumor has it it’s headed back into a top-secret underground vault after today. 🤫",
+        "url": "https://x.com/romainhuet/status/2072406923660648757"
+      },
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": "引用帖所述当日 13:00",
+      "scope": "Codex reset button 现场动作",
+      "certainty": "高",
+      "ironyOrJoke": true,
+      "rationale": "原帖写 It's happening；浏览器捕获的引用帖明确说明当日 13:00 展示 Codex reset button in action。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:35:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
     {
       "schemaVersion": 1,
       "postId": "2080756403493560652",

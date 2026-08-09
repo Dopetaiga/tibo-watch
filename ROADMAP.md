@@ -244,9 +244,10 @@ Goal 模式应遵守以下工作协议：
 - 验证：`npm run verify` 退出 0；研究脚本与数据未进入 Electron 构建输入。
 - 未解决风险：当前数据不能证明时间线完整；必须在已登录 X 会话收集完整原创、回复和引用帖后，候选规则才可晋升和冻结为 `rules-v1`。
 - 登录恢复记录：用户于 2026-08-09 完成 X 登录；已从 `@thsottiaux/with_replies` 捕获一段连续时间线，并将浏览器捕获与单帖 API 回溯分离，避免保存会话或页面副本。
-- 困难样本：已回溯并人工复核 40 条已登录时间线样本及其父帖/引用语境；包含 38 条负样本、1 条与正样本集重复的已完成公告，以及 1 条只能结合父帖识别的模糊意向。时间线复核集 SHA-256 为 `61192b1ae5922e5fa7f765af8fd6dfd1d0339c57807959b45739497ead1c9781`。
+- 困难样本：已回溯并人工复核 54 条已登录时间线样本及其父帖/引用语境，当前日期分片已推进到 2026-06-28 UTC。时间线复核集 SHA-256 为 `67d899bdb5dfb6511e8e2cd9555e1a32461b29ddb5d41953497aaa91f0849fa3`。
 - 上下文证据：帖子 `2080859954421047341` 的正文仅为 `There is still time`，父帖才包含“No Codex or Claude resets today”；候选评估必须显式组合帖子、父帖和引用帖，且父帖中的 `reset` 不得脱离回复意向单独触发。
-- 候选规则：从上述人工数据生成研究区实验规则；74 条去重记录的混淆矩阵为 TP=36、FP=0、FN=0、TN=38，precision=1.0000、recall=1.0000，数据 SHA-256 为 `e82f786d42bff4f623bd56a57dd29676532ac7a260a28216b21d8d53d95f3d89`。每条候选规则均记录正样本和反例，报告位于 `research/reports/candidate-rules-v1.md`。
+- 引用语境修复：评估器已统一读取数据集真实字段 `quotedContext`；普通规则只读取主帖正文，只有显式上下文规则可读取父帖/引用帖，并且必须同时满足主帖意向结构，防止父帖关键词污染预测。
+- 候选规则：从上述人工数据生成研究区实验规则；86 条去重记录的混淆矩阵为 TP=38、FP=0、FN=0、TN=48，precision=1.0000、recall=1.0000，数据 SHA-256 为 `a87a8634c553d46f128d7464381395802d97c8dd21c5854dba3b6c6e7f68603b`。每条候选规则均记录正样本和反例，报告位于 `research/reports/candidate-rules-v1.md`。
 - 候选规则限制：报告和脚本仅存在于 `research/`；未创建 `app/rules` 运行时代码，也未将实验结果称为冻结版。六个月全集完成前，当前 1.0000 指标只能描述已复核样本，不能外推。
 - 验证：`npm run research:enrich-timeline`、`npm run research:apply-reviews` 和 `npm run verify` 均退出 0。
 - 验证：`npm run research:evaluate-candidate` 和 `npm run verify` 均退出 0。
