@@ -208,7 +208,11 @@ Goal 模式应遵守以下工作协议：
 - 验证：`npm run verify` 退出 0；类型检查、lint、1 个单元测试、渲染端与 Electron 编译、运行时边界扫描均通过。
 - 验证：通过 npmmirror 下载固定的 Electron 43.3.0 与 electron-builder 工具后，`npm run dist:win` 退出 0；生成 NSIS 安装版、便携版和未打包目录，边界由显式 `files` 白名单保证。
 - 验证：`npm run test:e2e` 退出 0，Playwright 实际启动未打包 Windows 应用并确认标题和“暂无可靠预测”空状态。
-- 未解决风险：便携版已生成，但 Playwright 无法穿透 NSIS 便携启动器，直接 GUI 启动又被当前执行环境以“拒绝访问”拦截；安装版和便携版的实际启动仍需在允许 GUI 的 Windows 会话中验收。Phase 0 验收因此尚未全部完成，不能进入 Phase 1。
+- 验证：`npm run test:portable` 退出 0，便携启动器成功展开应用，新进程稳定存活后仅清理本次 PID。
+- 验证：`npm run test:installer` 退出 0，在 `release/verification-install` 完成静默安装、应用启动、静默卸载与目录清理闭环。
+- 验证：ASAR 路径扫描退出 0，最终 `app.asar` 不包含 `research` 或 `codexreset.org`。
+- 未解决风险：安装包暂未签名并使用默认 Electron 图标，按路线图分别留待 Phase 7 发布安全与后续视觉资产处理；不影响 Phase 0 工程基线验收。
+- 阶段结论：Phase 0 验收通过，可以进入 Phase 1。
 
 ### Phase 1：历史样本研究与 rules-v1
 
