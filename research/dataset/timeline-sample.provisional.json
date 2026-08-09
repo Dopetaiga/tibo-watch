@@ -1,9 +1,346 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-09T12:11:33.640Z",
+  "generatedAt": "2026-08-09T12:25:50.943Z",
   "source": "authenticated_x_timeline",
   "completeSixMonthTimeline": false,
   "records": [
+    {
+      "schemaVersion": 1,
+      "postId": "2080756403493560652",
+      "postUrl": "https://x.com/thsottiaux/status/2080756403493560652",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-24T20:45:59.000Z",
+      "postKind": "quote",
+      "excerpt": "Show me your pet",
+      "excerptHash": "4b3538d9ec3476ac802f82040c9c363b00a2f6f734890d4e5c0810b534b39fe0",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2080747505474736162",
+        "author": "OpenAIDevs",
+        "excerpt": "Your Pet is ready to meet other builders. On ChatGPT web, create a shareable link for your custom pet and send it to a friend to adopt.",
+        "url": "https://x.com/OpenAIDevs/status/2080747505474736162"
+      },
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080822701799969139",
+      "postUrl": "https://x.com/thsottiaux/status/2080822701799969139",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T01:09:26.000Z",
+      "postKind": "reply",
+      "excerpt": "@chribjel Clearly agentic coding is not that important!",
+      "excerptHash": "a5de8437274ba395afebb917c67b5003a59782c54d67c9d04627291d7288c730",
+      "parentContext": {
+        "postId": "2080713965600903472",
+        "author": "chribjel",
+        "excerpt": "look at how they highlighted the one benchmark that gpt 5.6 sol won. so dishonest",
+        "url": "https://x.com/chribjel/status/2080713965600903472"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080823473090461721",
+      "postUrl": "https://x.com/thsottiaux/status/2080823473090461721",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T01:12:30.000Z",
+      "postKind": "reply",
+      "excerpt": "@claudeai May I propose",
+      "excerptHash": "37e9872aaf34a76ffb5458859aa14769557024295fe77e8761137e65f31f67d3",
+      "parentContext": {
+        "postId": "2080699497064083942",
+        "author": "claudeai",
+        "excerpt": "On several coding and knowledge work evaluations, Opus 5 is the new state-of-the-art:",
+        "url": "https://x.com/claudeai/status/2080699497064083942"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080858863910469662",
+      "postUrl": "https://x.com/thsottiaux/status/2080858863910469662",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T03:33:08.000Z",
+      "postKind": "reply",
+      "excerpt": "@ajambrosino Uhhhhhhrgehg",
+      "excerptHash": "7df939fffb4be646414b3daf332c978088f995ceedbb278ca3ecb0273628f225",
+      "parentContext": {
+        "postId": "2080827154724753676",
+        "author": "ajambrosino",
+        "excerpt": "what should we have Tibothy build to make ChatGPT Work & Codex even better?",
+        "url": "https://x.com/ajambrosino/status/2080827154724753676"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080859954421047341",
+      "postUrl": "https://x.com/thsottiaux/status/2080859954421047341",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T03:37:28.000Z",
+      "postKind": "reply",
+      "excerpt": "@xikhar There is still time",
+      "excerptHash": "3bca8761258e805c28da10b72a702ee3ddea84b2ac437a8afbdf9697e4f7a0c6",
+      "parentContext": {
+        "postId": "2080787300917932360",
+        "author": "xikhar",
+        "excerpt": "No Codex or Claude resets today. The most disappointing last 2 days in AI.",
+        "url": "https://x.com/xikhar/status/2080787300917932360"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080860446824038658",
+      "postUrl": "https://x.com/thsottiaux/status/2080860446824038658",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T03:39:25.000Z",
+      "postKind": "reply",
+      "excerpt": "@trq212 Congrats on a clean launch!",
+      "excerptHash": "9c6f37eac2c0b4610b03d3fb489d55a9ca087a898b913fcc4c179ea389ee7497",
+      "parentContext": {
+        "postId": "2080703339306913985",
+        "author": "trq212",
+        "excerpt": "Opus 5 rounds out our Claude 5 family beautifully. I think it’s an incredible daily driver, pair it with Fable for planning, brainstorming or fixing the hardest bugs.",
+        "url": "https://x.com/trq212/status/2080703339306913985"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:20:22.402Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080867523814420724",
+      "postUrl": "https://x.com/thsottiaux/status/2080867523814420724",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:07:32.000Z",
+      "postKind": "reply",
+      "excerpt": "@DeryaTR_ Hmmmm",
+      "excerptHash": "284ffe0dc286fae547b8e7519d69f655a296267bd8420c35df9381318e49d8c9",
+      "parentContext": {
+        "postId": "2080651064924127633",
+        "author": "DeryaTR_",
+        "excerpt": "It is highly likely that Google will become the first $10 trillion company before the end of this decade. It’s the best-positioned company in the age of AI, and most people still don’t understand this.",
+        "url": "https://x.com/DeryaTR_/status/2080651064924127633"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:20:22.402Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080869898339991732",
+      "postUrl": "https://x.com/thsottiaux/status/2080869898339991732",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:16:59.000Z",
+      "postKind": "reply",
+      "excerpt": "@theo 8 days to go",
+      "excerptHash": "140d24f1286c46d5c42e70e6338652c9bfc1100926af37bfbdcc74883c3c6bd3",
+      "parentContext": {
+        "postId": "2080543765006315905",
+        "author": "thsottiaux",
+        "excerpt": "@theo 9 days to go",
+        "url": "https://x.com/thsottiaux/status/2080543765006315905"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:20:22.402Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080870794935288128",
+      "postUrl": "https://x.com/thsottiaux/status/2080870794935288128",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:20:32.000Z",
+      "postKind": "reply",
+      "excerpt": "@daradoescode Maybe",
+      "excerptHash": "245273c5cc7afca9b8d1de5db0286bdfe4eca5803c081bfc4f59402cb56b5c32",
+      "parentContext": {
+        "postId": "2080605497909215263",
+        "author": "daradoescode",
+        "excerpt": "do i have aura now chat??",
+        "url": "https://x.com/daradoescode/status/2080605497909215263"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:20:22.402Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080870983184072823",
+      "postUrl": "https://x.com/thsottiaux/status/2080870983184072823",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:21:17.000Z",
+      "postKind": "reply",
+      "excerpt": "@MarcosHernanz Can you zoom in more on the y axis please",
+      "excerptHash": "de143dc964b7bf0f996ff226ee760a3091abf8d99900b83d444d372245e1046f",
+      "parentContext": {
+        "postId": "2080720334882525282",
+        "author": "MarcosHernanz",
+        "excerpt": null,
+        "url": "https://x.com/i/status/2080720334882525282",
+        "error": "帖子 2080720334882525282 返回 HTTP 404"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:20:22.402Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080871349678145868",
+      "postUrl": "https://x.com/thsottiaux/status/2080871349678145868",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:22:45.000Z",
+      "postKind": "reply",
+      "excerpt": "@dillon_mulroy This",
+      "excerptHash": "35e9997907066a444dda515d8d142b66544e7f78ddc721235466258e8761eb51",
+      "parentContext": {
+        "postId": "2080836967554527461",
+        "author": "dillon_mulroy",
+        "excerpt": "pretty sure opus 5 is just marketing for subscription users. there’s no world where i’m using opus 5 over sol given the cost difference",
+        "url": "https://x.com/dillon_mulroy/status/2080836967554527461"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:20:22.402Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2080871804638482729",
+      "postUrl": "https://x.com/thsottiaux/status/2080871804638482729",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T04:24:33.000Z",
+      "postKind": "reply",
+      "excerpt": "@cdngdev Wow",
+      "excerptHash": "c5f6184f116954ead1351081cbd38bbacd5cffcf63a37647d0702a9b4aa81b13",
+      "parentContext": {
+        "postId": "2080170246393184560",
+        "author": "cdngdev",
+        "excerpt": "openai is a pretty cool company to work at because if you care about something, you can do it i work on robotics, but filmed + edited my own codex marketing video for fun lol. today it got posted!",
+        "url": "https://x.com/cdngdev/status/2080170246393184560"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:20:22.402Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
     {
       "schemaVersion": 1,
       "postId": "2080874606714560865",
@@ -28,7 +365,7 @@
       "ironyOrJoke": "待复核",
       "rationale": "",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:20:22.402Z",
         "source": "authenticated_x_timeline"
       }
     },
@@ -56,7 +393,7 @@
       "ironyOrJoke": "待复核",
       "rationale": "",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:20:22.402Z",
         "source": "authenticated_x_timeline"
       }
     },
@@ -84,7 +421,7 @@
       "ironyOrJoke": "待复核",
       "rationale": "",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:20:22.402Z",
         "source": "authenticated_x_timeline"
       }
     },
@@ -112,7 +449,7 @@
       "ironyOrJoke": "待复核",
       "rationale": "",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:20:22.402Z",
         "source": "authenticated_x_timeline"
       }
     },
@@ -140,7 +477,7 @@
       "ironyOrJoke": "待复核",
       "rationale": "",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:20:22.402Z",
         "source": "authenticated_x_timeline"
       }
     },
@@ -168,7 +505,7 @@
       "ironyOrJoke": "待复核",
       "rationale": "",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:20:22.402Z",
         "source": "authenticated_x_timeline"
       }
     },
@@ -196,7 +533,7 @@
       "ironyOrJoke": "待复核",
       "rationale": "",
       "captureEvidence": {
-        "capturedAt": "2026-08-09T11:55:51.613Z",
+        "capturedAt": "2026-08-09T12:20:22.402Z",
         "source": "authenticated_x_timeline"
       }
     },

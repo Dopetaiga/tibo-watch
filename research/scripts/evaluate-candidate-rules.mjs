@@ -57,6 +57,13 @@ const rules = [
     positiveExampleId: '2081899343091843463',
     counterExampleId: '2080880254722392506',
   },
+  {
+    id: 'rv1-contextual-still-time-reset',
+    description: '回复称仍有时间，且父帖明确讨论 reset，作为模糊意向候选',
+    pattern: /\bthere\s+is\s+still\s+time\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bresets?\b/i,
+    positiveExampleId: '2080859954421047341',
+    counterExampleId: '2080869898339991732',
+  },
 ]
 
 function evaluate(text) {
@@ -64,9 +71,17 @@ function evaluate(text) {
   return { candidate: matchedRuleIds.length > 0, matchedRuleIds }
 }
 
+function contextualText(record) {
+  return [
+    `[POST]\n${record.excerpt ?? ''}`,
+    `[PARENT]\n${record.parentContext?.excerpt ?? ''}`,
+    `[QUOTE]\n${record.quoteContext?.excerpt ?? ''}`,
+  ].join('\n')
+}
+
 const outcomes = records.map((record) => {
   const expected = record.label !== '完全无关' && record.label !== '相关但非重置'
-  const result = evaluate(record.excerpt)
+  const result = evaluate(contextualText(record))
   return { record, expected, result }
 })
 
