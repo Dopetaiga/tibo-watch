@@ -1,9 +1,402 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-09T12:38:53.520Z",
+  "generatedAt": "2026-08-09T12:52:28.535Z",
   "source": "authenticated_x_timeline",
   "completeSixMonthTimeline": false,
   "records": [
+    {
+      "schemaVersion": 1,
+      "postId": "2071071289247244481",
+      "postUrl": "https://x.com/thsottiaux/status/2071071289247244481",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T03:20:48.000Z",
+      "postKind": "quote",
+      "excerpt": "Tons of improvements landed in Codex. - Handles super long threads smoothly. - Hoverable navigation rail for previewing and jumping between turns that feels just right. - Settings search covers more controls, with clearer appearance and host-filtering options and easier-to-find custom-provider settings. - Zoom-level changes no longer misalign tooltips, dialo",
+      "excerptHash": "a78a1c87dba22a9ff40e60cf8c362d5ef7668403374e96052890be90b886c6fa",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2070922791529091376",
+        "author": "OpenAIDevs",
+        "excerpt": "🆕 Codex quality-of-life updates landed this week Starting with long threads: scrolling is smoother now, and your place stays put as you move through the conversation.",
+        "url": "https://x.com/OpenAIDevs/status/2070922791529091376"
+      },
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:05:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071071458650882526",
+      "postUrl": "https://x.com/thsottiaux/status/2071071458650882526",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T03:21:29.000Z",
+      "postKind": "reply",
+      "excerpt": "@ajambrosino Would you like one right now",
+      "excerptHash": "56c154bf9055c97343115d7192578fd94b1d9ffddfab7b28c59943ddfdd86ebf",
+      "parentContext": {
+        "postId": "2071065456472183217",
+        "author": "ajambrosino",
+        "excerpt": "can we talk about phone calls",
+        "url": "https://x.com/ajambrosino/status/2071065456472183217"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:05:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071073421660660017",
+      "postUrl": "https://x.com/thsottiaux/status/2071073421660660017",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T03:29:17.000Z",
+      "postKind": "reply",
+      "excerpt": "@FintechKristen @ajambrosino Say hi to Andrew",
+      "excerptHash": "a401161efe921e024b5045c3af22657dd9dfe3c1d7a1446c74f483d0e4fb501e",
+      "parentContext": {
+        "postId": "2071071876596777292",
+        "author": "FintechKristen",
+        "excerpt": "@thsottiaux @ajambrosino Please don’t humor him it’s date night and I’m numbering all the ways codex failed me this week",
+        "url": "https://x.com/FintechKristen/status/2071071876596777292"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:05:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071077932244570112",
+      "postUrl": "https://x.com/thsottiaux/status/2071077932244570112",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T03:47:12.000Z",
+      "postKind": "quote",
+      "excerpt": "Talking to your plants isn't weird anymore. You can just codex things.",
+      "excerptHash": "a95777d528a88ada00246e34f8a701c43ffacf296ea1097a20a1de0f8ae30661",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2070208340513411438",
+        "author": "ChatGPT",
+        "excerpt": "Our plants are chatty. Yours can be too. Give your plants a voice with our build guide: https://github.com/openai/planttalk",
+        "url": "https://x.com/ChatGPT/status/2070208340513411438"
+      },
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:05:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071213347849023513",
+      "postUrl": "https://x.com/thsottiaux/status/2071213347849023513",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T12:45:18.000Z",
+      "postKind": "reply",
+      "excerpt": "@rizaardiyanto Three things that can consume usage in the background - automations - memory - suggested prompts and for memory and suggested prompts they use a small percentage, around 1% of the weekly limit each under normal conditions. You can disable all three in the settings if you wish.",
+      "excerptHash": "3ea0417b1572db79649b017911c23dc1d4f9e8525604fa854920717c23b90986",
+      "parentContext": {
+        "postId": "2071151383890551046",
+        "author": "rizaardiyanto",
+        "excerpt": "Look, I'm not trying to bash on OpenAI. I love them. I love @thsottiaux But, this is what happened on my account. Since last big reset from Tibo, I intentionally not using it to see if my limit still reduced itself. And it still did!! I'm not saying OpenAI team didn't do anything, or they didn't care. They said they checked but couldn't find anything off fro",
+        "url": "https://x.com/rizaardiyanto/status/2071151383890551046"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:05:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071217245611491805",
+      "postUrl": "https://x.com/thsottiaux/status/2071217245611491805",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T13:00:47.000Z",
+      "postKind": "reply",
+      "excerpt": "@appsicle_ Just do it",
+      "excerptHash": "d8b31ed01d588649cd615636943e8b35ffc020886cf5a4bdcf041f0f7f0c017d",
+      "parentContext": {
+        "postId": "2071069827687416148",
+        "author": "appsicle_",
+        "excerpt": "seriously thinking of upgrading my plan on codex just because the crazy amount of usage resets you can bank and promotions going on",
+        "url": "https://x.com/appsicle_/status/2071069827687416148"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:55:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071217596179861670",
+      "postUrl": "https://x.com/thsottiaux/status/2071217596179861670",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T13:02:10.000Z",
+      "postKind": "reply",
+      "excerpt": "@R2Cdev_ y",
+      "excerptHash": "a393f4a957e13aee969c3437130833b6cbe25583d96a6ec2caab7bc5bbee8561",
+      "parentContext": {
+        "postId": "2071177841308324231",
+        "author": "R2Cdev_",
+        "excerpt": "They listened to me???",
+        "url": "https://x.com/R2Cdev_/status/2071177841308324231"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:55:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071328893735219327",
+      "postUrl": "https://x.com/thsottiaux/status/2071328893735219327",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T20:24:26.000Z",
+      "postKind": "reply",
+      "excerpt": "@Conor_D_Dart No mate, that is not correct",
+      "excerptHash": "6a8ae05b6d34a94c6ba26b0ad11c952380f98d80652f3d2a87eb06f685f85d2c",
+      "parentContext": {
+        "postId": "2071292713983471894",
+        "author": "Conor_D_Dart",
+        "excerpt": "Just read a post that ChatGPT uses your codex limit, is that correct? 😭",
+        "url": "https://x.com/Conor_D_Dart/status/2071292713983471894"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:55:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071329159037481032",
+      "postUrl": "https://x.com/thsottiaux/status/2071329159037481032",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T20:25:29.000Z",
+      "postKind": "reply",
+      "excerpt": "Three things that can consume usage in the background - automations - memory - suggested prompts and for memory and suggested prompts they use a small percentage, around 1% of the weekly limit each under normal conditions. You can disable all three in the settings if you wish.",
+      "excerptHash": "f5aa78a9cd6c38ce6245c6963ab45d8215670d49dc4a39143f4579eaa686af45",
+      "parentContext": {
+        "postId": "2071199822627864927",
+        "author": "RonanMckinney",
+        "excerpt": "99% sure this is due to these memory features, I turned mine off after 20% of my 5h usage went down without using it once. @thsottiaux @OpenAI",
+        "url": "https://x.com/RonanMckinney/status/2071199822627864927"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:55:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071329580829319493",
+      "postUrl": "https://x.com/thsottiaux/status/2071329580829319493",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T20:27:10.000Z",
+      "postKind": "reply",
+      "excerpt": "Going from pro to plus gets you less usage, so if you already consumed your pro limits, downgrading to plus will not reset things for you. It's like buying a large coffee at starbucks, drinking it and then throwing the cup away and asking for a smaller cup. You wouldn't expect coffee to be in the small cup I think?",
+      "excerptHash": "2c32ab3cec74bb6653e371ab0084313b8e825a380786d10c57cd5dfaaea91b5d",
+      "parentContext": {
+        "postId": "2071327519765098777",
+        "author": "EemeliJarvela",
+        "excerpt": "@thsottiaux I switched from pro to plus and its showing my usage is 0%.",
+        "url": "https://x.com/EemeliJarvela/status/2071327519765098777"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:55:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071350153080959237",
+      "postUrl": "https://x.com/thsottiaux/status/2071350153080959237",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T21:48:54.000Z",
+      "postKind": "reply",
+      "excerpt": "@SAlbahra Do you use \"auto-review\"?",
+      "excerptHash": "d814fd108dc604daf039ac3c1bdcaded7b170211e5832c1d71945e151f8156c2",
+      "parentContext": {
+        "postId": "2071321479342354942",
+        "author": "SAlbahra",
+        "excerpt": "Having the same issues as well. My desktop app is always set to 5.5 yet I see 5.4 as the predominant driver. @thsottiaux any ideas?",
+        "url": "https://x.com/SAlbahra/status/2071321479342354942"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:55:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071357473659707441",
+      "postUrl": "https://x.com/thsottiaux/status/2071357473659707441",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T22:18:00.000Z",
+      "postKind": "quote",
+      "excerpt": "Codex team is in a warroom on a Sunday combing through logs and checking whether there is anything that could lead to increased usage drains for some users. Taking it very seriously and won't rest until we get to the bottom of it.",
+      "excerptHash": "2112073f6e504983b4416a704b9d4c09be4714b28fae9f7a102abd94b1412b31",
+      "parentContext": null,
+      "quotedContext": {
+        "postId": "2071268204157018511",
+        "author": "nicdunz",
+        "excerpt": "i think openai has gotten a bit too loose and funny acting. i think its time to get a little serious",
+        "url": "https://x.com/nicdunz/status/2071268204157018511"
+      },
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:55:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071357780313645541",
+      "postUrl": "https://x.com/thsottiaux/status/2071357780313645541",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T22:19:13.000Z",
+      "postKind": "reply",
+      "excerpt": "@Dimillian Not curating your Youtube enough I see",
+      "excerptHash": "2dac8536eaf5f53dfdc6361be7294126a4a061c697e0ab7cc16fb083113141ce",
+      "parentContext": {
+        "postId": "2071310296321319261",
+        "author": "Dimillian",
+        "excerpt": "I can’t escape",
+        "url": "https://x.com/Dimillian/status/2071310296321319261"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:55:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071360845309714620",
+      "postUrl": "https://x.com/thsottiaux/status/2071360845309714620",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T22:31:24.000Z",
+      "postKind": "reply",
+      "excerpt": "@solipsnitsyn Auto review is using GPT-5.4. We do not route. Do not spread misinformation, thank you.",
+      "excerptHash": "10437edc9aa8f7b84510672ae7e813e7b814d8bcba8a182706f30d2f685924b4",
+      "parentContext": {
+        "postId": "2071357898912157826",
+        "author": "solipsnitsyn",
+        "excerpt": null,
+        "url": "https://x.com/i/status/2071357898912157826",
+        "error": "帖子 2071357898912157826 返回 HTTP 401"
+      },
+      "quotedContext": null,
+      "label": "待复核",
+      "labelStatus": "primary_context_collected",
+      "expectedTime": null,
+      "scope": "待复核",
+      "certainty": "待复核",
+      "ironyOrJoke": "待复核",
+      "rationale": "",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T12:55:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
     {
       "schemaVersion": 1,
       "postId": "2071381664853319742",
