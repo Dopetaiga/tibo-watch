@@ -1,4 +1,11 @@
 {
+  "2070985298486374876": { "label": "完全无关", "ironyOrJoke": true, "rationale": "泛化 Codex 宣传式玩笑，没有额度或重置语义。" },
+  "2070986328376852831": { "label": "完全无关", "ironyOrJoke": false, "rationale": "讨论系统速度与正确性的取舍，与额度或重置无关。" },
+  "2070986924131483891": { "label": "完全无关", "ironyOrJoke": true, "rationale": "讨论 T3 Code 与 Codex 的竞争定位，与额度或重置无关。" },
+  "2070987512261029923": { "label": "已完成", "ironyOrJoke": false, "scope": "Codex usage", "certainty": "高", "rationale": "原帖明确写明 Still did reset the usage，父帖也确认收到 reset。" },
+  "2070988424824094944": { "label": "完全无关", "ironyOrJoke": true, "rationale": "讨论语音功能更新，与额度或重置无关。" },
+  "2070988543132938597": { "label": "完全无关", "ironyOrJoke": true, "rationale": "something is coming 的父帖语境是 ChatGPT 与 Codex 应用能力对比，不是额度重置。" },
+  "2070989711615676447": { "label": "相关但非重置", "ironyOrJoke": false, "rationale": "回应 fast 模式导致 usage 消耗的用户解释，没有新增或执行重置。" },
   "2071071289247244481": { "label": "相关但非重置", "ironyOrJoke": false, "rationale": "发布 Codex 长线程、导航和设置等体验改进，没有额度重置。" },
   "2071071458650882526": { "label": "完全无关", "ironyOrJoke": true, "rationale": "父帖谈电话功能，right now 指电话交互，不是重置时间。" },
   "2071073421660660017": { "label": "完全无关", "ironyOrJoke": true, "rationale": "社交玩笑回复，与额度或重置无关。" },

@@ -1,10 +1,201 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-09T12:54:47.903Z",
+  "generatedAt": "2026-08-09T13:11:15.268Z",
   "source": "authenticated_x_timeline",
   "completeSixMonthTimeline": false,
-  "testSetHash": "ba24387084e9147b99ed61e7d490f03729745aedc672351c5daa22b3ca4d5566",
+  "testSetHash": "6fa31fc1b0b219bd88615475f520ac4e26e27b268c6eced5c127c638df564ce2",
   "records": [
+    {
+      "schemaVersion": 1,
+      "postId": "2070985298486374876",
+      "postUrl": "https://x.com/thsottiaux/status/2070985298486374876",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-27T21:39:06.000Z",
+      "postKind": "original",
+      "excerpt": "The night is young and full of Codex",
+      "excerptHash": "830a90f3bb0bc63e1769cc609ffaca50a02648fef3e057aecb1cfc8365439fe6",
+      "parentContext": null,
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "泛化 Codex 宣传式玩笑，没有额度或重置语义。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2070986328376852831",
+      "postUrl": "https://x.com/thsottiaux/status/2070986328376852831",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-27T21:43:12.000Z",
+      "postKind": "reply",
+      "excerpt": "@charliermarsh Why not both Charlie",
+      "excerptHash": "ad8db0f0a9714b977e1b137854844256ef360a8043d61a0380a946ef0ad98278",
+      "parentContext": {
+        "postId": "2070931440758317072",
+        "author": "charliermarsh",
+        "excerpt": "Would you rather have a system that's fast or correct",
+        "url": "https://x.com/charliermarsh/status/2070931440758317072"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": false,
+      "rationale": "讨论系统速度与正确性的取舍，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2070986924131483891",
+      "postUrl": "https://x.com/thsottiaux/status/2070986924131483891",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-27T21:45:34.000Z",
+      "postKind": "reply",
+      "excerpt": "@theo Oh, you're also working to solve this?",
+      "excerptHash": "4059ad6c77e93887b31c21d5b95839502694c693330e2e06b00a2db6f4dad368",
+      "parentContext": {
+        "postId": "2070436985576300554",
+        "author": "theo",
+        "excerpt": "People think T3 Code is competing with Codex. We're actually competing with this.",
+        "url": "https://x.com/theo/status/2070436985576300554"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "讨论 T3 Code 与 Codex 的竞争定位，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2070987512261029923",
+      "postUrl": "https://x.com/thsottiaux/status/2070987512261029923",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-27T21:47:54.000Z",
+      "postKind": "reply",
+      "excerpt": "@scottstts We had a 2X usage promotion multiplier. Not playing any tricks here but we legitimately are not finding an issue. Still did reset the usage because we can, but we can't find anything that is broken here.",
+      "excerptHash": "d28893483f29c4e74b574b917aab4e49d28691e35e41e3bdcf853b07b8e17d71",
+      "parentContext": {
+        "postId": "2070772031394615454",
+        "author": "scottstts",
+        "excerpt": "Appreciate the reset, not to sound ungrateful, but codex usage does drain visibly faster compared to maybe 1-2 months ago, and so many people reported this, how come you didn’t find any issues? If the usage is reduced officially I think people would understand but plz just communicate that clearly",
+        "url": "https://x.com/scottstts/status/2070772031394615454"
+      },
+      "quotedContext": null,
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "Codex usage",
+      "certainty": "高",
+      "ironyOrJoke": false,
+      "rationale": "原帖明确写明 Still did reset the usage，父帖也确认收到 reset。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2070988424824094944",
+      "postUrl": "https://x.com/thsottiaux/status/2070988424824094944",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-27T21:51:32.000Z",
+      "postKind": "reply",
+      "excerpt": "@nicdunz It was planted there a long time ago",
+      "excerptHash": "b64c52eeb469181135b7273c972cd1abbc7674ecdca326b5952750b207eb733d",
+      "parentContext": {
+        "postId": "2070920027436462216",
+        "author": "nicdunz",
+        "excerpt": "avm is so old that openai forgot about this when the fuck are we getting the new voice update?",
+        "url": "https://x.com/nicdunz/status/2070920027436462216"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "讨论语音功能更新，与额度或重置无关。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2070988543132938597",
+      "postUrl": "https://x.com/thsottiaux/status/2070988543132938597",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-27T21:52:00.000Z",
+      "postKind": "reply",
+      "excerpt": "@justalexoki Hold on to my ChatGPT, something is coming",
+      "excerptHash": "352a7ee1c007197eccdc2111db23535e551fbb815fd376b3f898d9ef66e4802b",
+      "parentContext": {
+        "postId": "2070902584966082680",
+        "author": "justalexoki",
+        "excerpt": "idk why anyone would use the chatgpt app when the codex app is clearly so much better at literally everything. same with claude and their chat",
+        "url": "https://x.com/justalexoki/status/2070902584966082680"
+      },
+      "quotedContext": null,
+      "label": "完全无关",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "不适用",
+      "ironyOrJoke": true,
+      "rationale": "something is coming 的父帖语境是 ChatGPT 与 Codex 应用能力对比，不是额度重置。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2070989711615676447",
+      "postUrl": "https://x.com/thsottiaux/status/2070989711615676447",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-27T21:56:39.000Z",
+      "postKind": "reply",
+      "excerpt": "@Studio17_x @scottstts Makes sense",
+      "excerptHash": "1974dc4f97f06a4c70c7f2b590086e55f7bf6507ef42c15ae4c8947d819d9356",
+      "parentContext": {
+        "postId": "2070988459821720034",
+        "author": "Studio17_x",
+        "excerpt": "@thsottiaux @scottstts Tibo, I myself realized that mine was due to it, defaulting to fast somehow for every session after enabling it briefly.. therefore every sub agent that was sent to a thread also had fast set.. user error, but it was completely by accident. Maybe something worth looking into.. 🤔",
+        "url": "https://x.com/Studio17_x/status/2070988459821720034"
+      },
+      "quotedContext": null,
+      "label": "相关但非重置",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": null,
+      "scope": "未知",
+      "certainty": "高",
+      "ironyOrJoke": false,
+      "rationale": "回应 fast 模式导致 usage 消耗的用户解释，没有新增或执行重置。",
+      "captureEvidence": {
+        "capturedAt": "2026-08-09T13:25:00.000Z",
+        "source": "authenticated_x_timeline"
+      }
+    },
     {
       "schemaVersion": 1,
       "postId": "2071071289247244481",

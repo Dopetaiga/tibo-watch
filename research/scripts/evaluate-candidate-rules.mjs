@@ -37,6 +37,13 @@ const rules = [
     counterExampleId: '2081198608293187635',
   },
   {
+    id: 'rv1-completed-reset-the-usage',
+    description: '明确使用完成式表示已 reset the usage',
+    pattern: /\b(?:did|have|has)\s+reset(?:ted)?\s+(?:the\s+)?usage\b/i,
+    positiveExampleId: '2070987512261029923',
+    counterExampleId: '2071329580829319493',
+  },
+  {
     id: 'rv1-reset-button',
     description: '在 Codex 语境中明确表示 reset button 已按下',
     pattern: /\breset\s+button\s+pressed\b/i,
