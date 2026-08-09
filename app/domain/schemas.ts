@@ -5,7 +5,7 @@ import {
   type Post,
   type ResetEvent,
   type RuntimeState,
-} from './models'
+} from './models.js'
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object'

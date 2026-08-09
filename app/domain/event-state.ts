@@ -1,4 +1,4 @@
-import type { ResetEvent, ResetEventStatus } from './models'
+import type { ResetEvent, ResetEventStatus } from './models.js'
 
 const transitions: Readonly<
   Record<ResetEventStatus, readonly ResetEventStatus[]>

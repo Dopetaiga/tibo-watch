@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, open, readFile, readdir, rename, stat } from 'node:fs/promises'
 import path from 'node:path'
-import type { FactRecord } from '../../domain/models'
+import type { FactRecord } from '../../domain/models.js'
 
 export function contentHash(value: unknown): string {
   return createHash('sha256')
