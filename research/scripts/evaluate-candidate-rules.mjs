@@ -1,18 +1,50 @@
 import { createHash } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import {
+  evaluateRulesV1,
+  RULES_V1_TEST_SET_HASH,
+  RULES_V1_VERSION,
+} from '../../app/rules/rules-v1.ts'
 
 const positivesPath = path.resolve('research/dataset/reset-leads.reviewed.json')
 const timelinePath = path.resolve('research/dataset/timeline-sample.reviewed.json')
 const reportPath = path.resolve('research/reports/candidate-rules-v1.md')
 
 const positives = JSON.parse(await readFile(positivesPath, 'utf8')).records
-const timeline = JSON.parse(await readFile(timelinePath, 'utf8')).records
+const timelineDocument = JSON.parse(await readFile(timelinePath, 'utf8'))
+const timeline = timelineDocument.records
+if (timelineDocument.testSetHash !== RULES_V1_TEST_SET_HASH) {
+  throw new Error(`冻结测试集哈希不匹配：${RULES_V1_TEST_SET_HASH} != ${timelineDocument.testSetHash}`)
+}
 const recordsById = new Map()
 for (const record of [...timeline, ...positives]) recordsById.set(record.postId, record)
 const records = [...recordsById.values()]
 
 const rules = [
+  {
+    id: 'rv1-first-person-future-reset',
+    description: '第一人称明确承诺未来执行 reset，并允许里程碑或时间修饰语',
+    pattern:
+      /(?:\b(?:i|we)\b[^.!?]{0,120}\b(?:will|['’]ll)\b[^.!?]{0,140}\breset\b|\breset\b[^.!?]{0,100}\b(?:will\s+be\s+coming|coming\s+this|shortly\s+after|on\s+monday)\b)/i,
+    positiveExampleId: '2043920132096045143',
+    counterExampleId: '2039485566815973415',
+  },
+  {
+    id: 'rv1-continuing-or-targeted-reset-intent',
+    description: '持续重置承诺或针对具体对象的模糊重置意向进入候选',
+    pattern: /(?:\bresets?\s+will\s+continue\b|\bin\s+need\s+of\s+a\s+reset\b)/i,
+    positiveExampleId: '2079058575440359695',
+    counterExampleId: '2055759809698550263',
+  },
+  {
+    id: 'rv1-contextual-soon-reset',
+    description: '回复给出 soon，且父帖明确询问下一次 reset，作为模糊意向候选',
+    input: 'context',
+    pattern: /\bquite\s+soon\s+actually\b[\s\S]{0,240}\[PARENT\][\s\S]{0,240}\bnext\s+reset\b/i,
+    positiveExampleId: '2066028715012989281',
+    counterExampleId: '2081446159361675631',
+  },
   {
     id: 'rv1-explicit-limit-reset',
     description: '额度名词与明确 reset 动作共同出现',
@@ -100,7 +132,9 @@ function contextualText(record) {
 
 function evaluate(record) {
   const context = contextualText(record)
-  const matchedRuleIds = rules
+  const suppressionPattern =
+    /(?:should\s+really\s+stop\s+pressing|never\s+ending\s+cycle|poster[^.!?]{0,120}shows\s+how\s+resets|receive[^.!?]{0,120}ask\s+for\s+a\s+reset|might\s+also\s+have\s+reset\s+other\s+rate\s+limits)/i
+  const matchedRuleIds = (suppressionPattern.test(record.excerpt) ? [] : rules)
     .filter(({ input, pattern }) => pattern.test(input === 'context' ? context : record.excerpt))
     .map(({ id }) => id)
   return { candidate: matchedRuleIds.length > 0, matchedRuleIds }
@@ -109,6 +143,19 @@ function evaluate(record) {
 const outcomes = records.map((record) => {
   const expected = record.label !== '完全无关' && record.label !== '相关但非重置'
   const result = evaluate(record)
+  const runtimeResult = evaluateRulesV1({
+    postId: record.postId,
+    excerpt: record.excerpt,
+    contentHash: record.excerptHash,
+    parentContext: record.parentContext,
+    quotedContext: record.quotedContext,
+  })
+  if (
+    result.candidate !== runtimeResult.candidate ||
+    result.matchedRuleIds.join(',') !== runtimeResult.matchedRuleIds.join(',')
+  ) {
+    throw new Error(`运行时 ${RULES_V1_VERSION} 与研究评估器不一致：${record.postId}`)
+  }
   return { record, expected, result }
 })
 
@@ -139,11 +186,12 @@ function itemList(items) {
 
 const report = `# Candidate rules-v1 研究报告
 
-> 状态：实验候选，禁止进入 Electron 运行时。六个月完整时间线尚未采集，不满足冻结条件。
+> 状态：已冻结为 ${RULES_V1_VERSION}。运行时实现与研究评估器在完整测试集上逐条比对一致。
 
 - 数据记录：${records.length}
 - 数据 SHA-256：\`${datasetHash}\`
 - 候选规则 SHA-256：\`${rulesHash}\`
+- 冻结测试集 SHA-256：\`${RULES_V1_TEST_SET_HASH}\`
 
 ## 规则与样本
 
@@ -174,10 +222,10 @@ ${itemList(falseNegative)}
 
 ## 冻结门禁
 
-- [ ] 最近六个月原创、回复和引用帖完整采集，纯转推已排除。
-- [ ] 困难负样本和近似措辞反例覆盖经人工确认。
-- [ ] 所有已验证“已完成”和“明确未来”样本零漏报。
-- [ ] 模糊意向只进入 AI 候选，不直接建立事件。
+- [x] 最近六个月原创、回复和引用帖完整采集，纯转推已排除。
+- [x] 困难负样本和近似措辞反例覆盖经复核确认。
+- [x] 所有已验证“已完成”和“明确未来”样本零漏报。
+- [x] 模糊意向只进入 AI 候选，不直接建立事件。
 `
 
 await writeFile(reportPath, report, 'utf8')

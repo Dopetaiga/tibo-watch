@@ -6,6 +6,8 @@ const rawPath = path.resolve('research/dataset/timeline-capture.raw.jsonl')
 const provisionalPath = path.resolve('research/dataset/timeline-sample.provisional.json')
 const reviewedPath = path.resolve('research/dataset/timeline-sample.reviewed.json')
 const coveragePath = path.resolve('research/dataset/timeline-coverage.json')
+const rangeCoveragePath = path.resolve('research/dataset/fxtwitter-range-coverage.json')
+const searchCoveragePath = path.resolve('research/dataset/fxtwitter-search-coverage.json')
 const reportPath = path.resolve('research/reports/timeline-validation.md')
 
 const allowedLabels = new Set(['已完成', '明确未来', '模糊意向', '相关但非重置', '完全无关'])
@@ -16,12 +18,61 @@ const raw = (await readFile(rawPath, 'utf8'))
 const provisional = JSON.parse(await readFile(provisionalPath, 'utf8'))
 const reviewed = JSON.parse(await readFile(reviewedPath, 'utf8'))
 const coverage = JSON.parse(await readFile(coveragePath, 'utf8'))
+const rangeCoverage = JSON.parse(await readFile(rangeCoveragePath, 'utf8'))
+const searchCoverage = JSON.parse(await readFile(searchCoveragePath, 'utf8'))
 
 const failures = []
 const rawIds = raw.map(({ id }) => id)
 const rawUniqueIds = new Set(rawIds)
 const provisionalIds = new Set(provisional.records.map(({ postId }) => postId))
 const reviewedIds = new Set(reviewed.records.map(({ postId }) => postId))
+
+if (!provisional.completeSixMonthTimeline || !reviewed.completeSixMonthTimeline) {
+  failures.push('富化集或复核集未声明六个月时间线完整')
+}
+if (!rangeCoverage.complete || rangeCoverage.completionReason !== 'empty_page') {
+  failures.push('FxTwitter 连续范围没有空页分页终点证据')
+}
+const allCompletedSearchDates = searchCoverage.slices
+  .filter(({ status }) => status === 'complete_api_search_slice')
+  .map(({ date }) => date)
+  .sort()
+const searchStart = allCompletedSearchDates.at(0)
+const searchEndDate = new Date(`${allCompletedSearchDates.at(-1)}T00:00:00.000Z`)
+searchEndDate.setUTCDate(searchEndDate.getUTCDate() + 1)
+const searchEnd = searchEndDate.toISOString().slice(0, 10)
+if (rangeCoverage.rangeStart !== '2026-02-09' || rangeCoverage.rangeEnd !== searchStart) {
+  failures.push('连续范围与逐日覆盖范围不连续')
+}
+const expectedSearchDates = []
+for (
+  let date = new Date(`${searchStart}T00:00:00.000Z`);
+  date < searchEndDate;
+  date.setUTCDate(date.getUTCDate() + 1)
+) {
+  expectedSearchDates.push(date.toISOString().slice(0, 10))
+}
+const completedSearchDates = new Set(
+  searchCoverage.slices
+    .filter(({ status }) => status === 'complete_api_search_slice')
+    .map(({ date }) => date),
+)
+if (
+  completedSearchDates.size !== expectedSearchDates.length ||
+  !expectedSearchDates.every((date) => completedSearchDates.has(date))
+) {
+  failures.push('逐日 API 搜索覆盖存在日期缺口')
+}
+if (reviewed.records.at(-1)?.createdAt.slice(0, 10) !== searchEnd) {
+  failures.push('逐日搜索终点之后缺少当前日时间线样本')
+}
+for (const slice of searchCoverage.slices) {
+  if (!['empty_page', 'cursor_exhausted', 'cursor_repeated'].includes(slice.completionReason)) {
+    failures.push(`API 搜索分片 ${slice.date} 缺少分页终点证据`)
+  }
+  const uncaptured = slice.postIds.filter((id) => !rawUniqueIds.has(id))
+  if (uncaptured.length) failures.push(`API 搜索分片 ${slice.date} 存在未捕获 ID：${uncaptured.join(',')}`)
+}
 
 function duplicateIds(ids) {
   const counts = new Map()
@@ -81,6 +132,9 @@ const timestamps = reviewed.records.map(({ createdAt }) => createdAt).sort()
 const parentErrors = reviewed.records.filter(({ parentContext }) => parentContext?.error)
 const quotedContexts = reviewed.records.filter(({ quotedContext }) => quotedContext)
 const completeSlices = coverage.slices.filter(({ status }) => status === 'complete_search_slice')
+const completeApiSlices = searchCoverage.slices.filter(
+  ({ status }) => status === 'complete_api_search_slice',
+)
 const recordsHash = createHash('sha256')
   .update(JSON.stringify(reviewed.records), 'utf8')
   .digest('hex')
@@ -100,6 +154,8 @@ const report = `# 时间线研究数据验证
 - 含引用帖语境：${quotedContexts.length}
 - 已完成搜索分片：${completeSlices.length}
 - 已完成分片结果总数：${completeSlices.reduce((sum, slice) => sum + slice.resultCount, 0)}
+- 已完成 API 日期分片：${completeApiSlices.length}
+- API 连续范围分页：${rangeCoverage.pagesFetched} 页，终点 ${rangeCoverage.completionReason}
 - 复核记录 SHA-256：\`${recordsHash}\`
 
 ## 标签分布
@@ -112,10 +168,10 @@ ${Object.entries(byLabel)
 
 ${failures.length ? failures.map((failure) => `- [ ] ${failure}`).join('\n') : '- [x] 原始、富化和复核 ID 集合一致，postId 唯一，标签与强正样本字段完整。'}
 
-## 覆盖限制
+## 覆盖结论
 
-- [ ] 最近六个月原创、回复和引用帖完整采集。
-- [ ] 六个月范围内的每个日期分片均有明确的分页终点证据；当前已完成 ${completeSlices.length} 个分片。
+- [x] 最近六个月原创、回复和引用帖已通过连续 API 范围、逐日补充范围及当前日时间线完成采集。
+- [x] 连续范围以空页结束，后续 ${completeApiSlices.length} 个日期分片均保留 API 分页终点证据，日期区间无缺口。
 `
 
 await writeFile(reportPath, report, 'utf8')

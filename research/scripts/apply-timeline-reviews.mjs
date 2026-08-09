@@ -38,7 +38,7 @@ await writeFile(
       schemaVersion: 1,
       generatedAt: new Date().toISOString(),
       source: input.source,
-      completeSixMonthTimeline: false,
+      completeSixMonthTimeline: input.completeSixMonthTimeline,
       testSetHash,
       records,
     },

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "handle": "thsottiaux",
+  "rangeStart": "2026-02-09",
+  "rangeEnd": "2026-07-23",
+  "query": "from:thsottiaux since:2026-02-09 until:2026-07-23 -filter:retweets",
+  "cursor": null,
+  "pagesFetched": 75,
+  "added": 1200,
+  "inRangeUnique": 1436,
+  "outOfRangeResults": 29,
+  "complete": true,
+  "completionReason": "empty_page",
+  "failedReason": null,
+  "updatedAt": "2026-08-09T14:02:04.524Z"
+}

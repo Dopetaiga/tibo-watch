@@ -4,9 +4,11 @@ import path from 'node:path'
 
 const rawPath = path.resolve('research/dataset/timeline-capture.raw.jsonl')
 const outputPath = path.resolve('research/dataset/timeline-sample.provisional.json')
+const rangeCoveragePath = path.resolve('research/dataset/fxtwitter-range-coverage.json')
+const searchCoveragePath = path.resolve('research/dataset/fxtwitter-search-coverage.json')
 const userAgent = 'Tibo-Watch-Research/0.1 (+local-open-source-research)'
 
-async function fetchPost(id, expectedAuthor = null) {
+async function fetchPostUncached(id, expectedAuthor = null) {
   const response = await fetch(`https://api.fxtwitter.com/status/${id}`, {
     headers: { 'user-agent': userAgent },
   })
@@ -17,6 +19,16 @@ async function fetchPost(id, expectedAuthor = null) {
     throw new Error(`帖子 ${id} 作者不匹配`)
   }
   return payload.tweet
+}
+
+const postCache = new Map()
+async function fetchPost(id, expectedAuthor = null) {
+  if (!postCache.has(id)) postCache.set(id, fetchPostUncached(id))
+  const post = await postCache.get(id)
+  if (expectedAuthor && post.author?.screen_name !== expectedAuthor) {
+    throw new Error(`帖子 ${id} 作者不匹配`)
+  }
+  return post
 }
 
 function excerpt(text) {
@@ -38,21 +50,30 @@ try {
   if (error.code !== 'ENOENT') throw error
 }
 
-const records = []
-for (const [index, capturedPost] of [...captured.values()].entries()) {
+async function enrichCapturedPost(capturedPost) {
   const existing = existingById.get(capturedPost.id)
   if (existing) {
-    records.push({
+    return {
       ...existing,
+      parentContext:
+        existing.postKind === 'reply' && !existing.parentContext
+          ? {
+              postId: null,
+              author: existing.excerpt.match(/^@([^\s]+)/)?.[1] ?? null,
+              excerpt: null,
+              url: null,
+              error: 'FxTwitter 未提供父帖 status id',
+            }
+          : existing.parentContext,
       captureEvidence: {
         capturedAt: capturedPost.capturedAt,
-        source: 'authenticated_x_timeline',
+        source: capturedPost.source ?? 'authenticated_x_timeline',
       },
-    })
-    continue
+    }
   }
 
-  const post = await fetchPost(capturedPost.id, 'thsottiaux')
+  const post = await fetchPost(capturedPost.id)
+  if (post.author?.screen_name !== 'thsottiaux') return null
   let parent = null
   if (post.replying_to_status) {
     try {
@@ -74,7 +95,7 @@ for (const [index, capturedPost] of [...captured.values()].entries()) {
     }
   }
 
-  records.push({
+  return {
     schemaVersion: 1,
     postId: post.id,
     postUrl: post.url,
@@ -101,16 +122,67 @@ for (const [index, capturedPost] of [...captured.values()].entries()) {
     rationale: '',
     captureEvidence: {
       capturedAt: capturedPost.capturedAt,
-      source: 'authenticated_x_timeline',
+      source: capturedPost.source ?? 'authenticated_x_timeline',
     },
-  })
-
-  if (index < captured.size - 1) {
-    await new Promise((resolve) => setTimeout(resolve, 750))
   }
 }
 
+const capturedPosts = [...captured.values()]
+const records = []
+let nextIndex = 0
+let processed = 0
+async function worker() {
+  while (true) {
+    const index = nextIndex
+    nextIndex += 1
+    if (index >= capturedPosts.length) return
+    const record = await enrichCapturedPost(capturedPosts[index])
+    if (record) records.push(record)
+    processed += 1
+    if (processed % 100 === 0 || processed === capturedPosts.length) {
+      console.log(`上下文补齐进度 ${processed}/${capturedPosts.length}`)
+    }
+  }
+}
+await Promise.all(Array.from({ length: 6 }, () => worker()))
+
+const validIds = new Set(records.map(({ postId }) => postId))
+const normalizedRaw = capturedPosts.filter(({ id }) => validIds.has(id))
+await writeFile(rawPath, `${normalizedRaw.map((record) => JSON.stringify(record)).join('\n')}\n`, 'utf8')
+
 records.sort((left, right) => left.createdAt.localeCompare(right.createdAt))
+let completeSixMonthTimeline = false
+try {
+  const rangeCoverage = JSON.parse(await readFile(rangeCoveragePath, 'utf8'))
+  const searchCoverage = JSON.parse(await readFile(searchCoveragePath, 'utf8'))
+  const completeDates = new Set(
+    searchCoverage.slices
+      .filter(({ status }) => status === 'complete_api_search_slice')
+      .map(({ date }) => date),
+  )
+  const sortedDates = [...completeDates].sort()
+  const searchStart = sortedDates.at(0)
+  const searchEndDate = new Date(`${sortedDates.at(-1)}T00:00:00.000Z`)
+  searchEndDate.setUTCDate(searchEndDate.getUTCDate() + 1)
+  const searchEnd = searchEndDate.toISOString().slice(0, 10)
+  const expectedDates = []
+  for (
+    let date = new Date(`${searchStart}T00:00:00.000Z`);
+    date < searchEndDate;
+    date.setUTCDate(date.getUTCDate() + 1)
+  ) {
+    expectedDates.push(date.toISOString().slice(0, 10))
+  }
+  completeSixMonthTimeline =
+    rangeCoverage.complete === true &&
+    rangeCoverage.rangeStart === '2026-02-09' &&
+    rangeCoverage.rangeEnd === searchStart &&
+    expectedDates.length === completeDates.size &&
+    expectedDates.every((date) => completeDates.has(date)) &&
+    records.at(-1)?.createdAt.slice(0, 10) === searchEnd
+} catch (error) {
+  if (error.code !== 'ENOENT') throw error
+}
 await writeFile(
   outputPath,
   `${JSON.stringify(
@@ -118,7 +190,7 @@ await writeFile(
       schemaVersion: 1,
       generatedAt: new Date().toISOString(),
       source: 'authenticated_x_timeline',
-      completeSixMonthTimeline: false,
+      completeSixMonthTimeline,
       records,
     },
     null,

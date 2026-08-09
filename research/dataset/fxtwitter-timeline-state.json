@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "handle": "thsottiaux",
+  "cutoff": "2026-02-09T00:00:00.000Z",
+  "cursor": null,
+  "complete": false,
+  "paginationExhausted": true,
+  "completionReason": "pagination_exhausted",
+  "pagesFetched": 23,
+  "uniqueCaptured": 803,
+  "addedThisRun": 718,
+  "oldestSeen": "2026-07-09T23:10:36.000Z",
+  "updatedAt": "2026-08-09T13:41:27.200Z"
+}
