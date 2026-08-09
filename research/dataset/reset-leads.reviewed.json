@@ -1,0 +1,1056 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-09T12:01:50.698Z",
+  "completeSixMonthTimeline": false,
+  "status": "reviewed_positive_samples_incomplete_timeline",
+  "testSetHash": "e6287032ce7afe2c3c895aed5a23f19f7d38a9731f7a7c39ad9f3693484f62a9",
+  "records": [
+    {
+      "schemaVersion": 1,
+      "postId": "2028649088594436225",
+      "postUrl": "https://x.com/thsottiaux/status/2028649088594436225",
+      "author": "thsottiaux",
+      "createdAt": "2026-03-03T01:50:07.000Z",
+      "postKind": "original",
+      "excerpt": "Codex is back up. We introduced an issue that caused requests to be blocked and rejected as high cyber risk. This was fixed in ~8 mins and we are now back online and fully operational. Team will reset rate limits, that’s been a while. Enjoy one on us.",
+      "excerptHash": "efeac9093f4eaf2fad31bcadd24736c8261826174c5d19c56702c3ed5482ae4b",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "will reset; no exact time",
+        "normalizedWindow": null
+      },
+      "scope": "Codex（具体方案未知）",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2029308599835738218",
+      "postUrl": "https://x.com/thsottiaux/status/2029308599835738218",
+      "author": "thsottiaux",
+      "createdAt": "2026-03-04T21:30:47.000Z",
+      "postKind": "original",
+      "excerpt": "We caught an issue that was causing the 2X promotional increase in limits to not be applied to an estimated 9% of plus and pro users for Codex. We have now fixed this issue and are reseting the rate limit for all plus and pro users to compensate. Apologies and thank you for the bug reports over the last couple of days.",
+      "excerptHash": "b0671103a1cfbbf44d0f7e82486eb86b6df9a75011849c42298ded9b5612644a",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "are resetting; no exact time",
+        "normalizedWindow": null
+      },
+      "scope": "Plus、Pro",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2030474136024400173",
+      "postUrl": "https://x.com/thsottiaux/status/2030474136024400173",
+      "author": "thsottiaux",
+      "createdAt": "2026-03-08T02:42:13.000Z",
+      "postKind": "quote",
+      "excerpt": "We don’t have evidence of a widespread issue with codex usage being drained faster than it should but there are enough reports and we have reset rate limits for plus & pro subscriptions while we work towards wrapping up our investigation over the coming 1-3 days.",
+      "excerptHash": "e0de7d254f90d53f34ec329fccd2d7ae456ed4d09ce76e79757b5f15e6c2d8e2",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Plus、Pro",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2030146003249307740",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2031216405266481489",
+      "postUrl": "https://x.com/thsottiaux/status/2031216405266481489",
+      "author": "thsottiaux",
+      "createdAt": "2026-03-10T03:51:43.000Z",
+      "postKind": "quote",
+      "excerpt": "This codex issue is now fully resolved and stable for the last couple of hours. You have come to expect it, but yes, that means we will be reseting rate limits in a bit. Enjoy.",
+      "excerptHash": "971da112efe9d948a462fdf005e3b2a364bc53c9af0f5ca3b6b77fa6a1a72ed4",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "in a bit",
+        "normalizedWindow": {
+          "label": "official hint — timing unspecified",
+          "start_at": "2026-03-10T03:51:43.000Z",
+          "end_at": "2026-03-11T03:51:43.000Z"
+        }
+      },
+      "scope": "Codex（具体方案未知）",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2031032618716959014",
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2031605592352313567",
+      "postUrl": "https://x.com/thsottiaux/status/2031605592352313567",
+      "author": "thsottiaux",
+      "createdAt": "2026-03-11T05:38:13.000Z",
+      "postKind": "quote",
+      "excerpt": "OK, Codex is back and stable and we should be good for a while. Reset button pressed, should see it in a bit",
+      "excerptHash": "bc6b062b32b085307ce98c351f49693feb91a39d68cf2a194f29613f1b5e13d8",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex（具体方案未知）",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2031601392344035592",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2037346989244096581",
+      "postUrl": "https://x.com/thsottiaux/status/2037346989244096581",
+      "author": "thsottiaux",
+      "createdAt": "2026-03-27T01:52:28.000Z",
+      "postKind": "original",
+      "excerpt": "Hello. We have reset Codex usage limits across all plans to let everyone experiment with the magnificent plugins we just launched, and because it had been a while! You can just build unlimited things with Codex. Have fun!",
+      "excerptHash": "9eaf0d11e048c5e0ede86149f055209db022f04d13014f724fcf9118c354ffe8",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex 全部方案",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2039248564967424483",
+      "postUrl": "https://x.com/thsottiaux/status/2039248564967424483",
+      "author": "thsottiaux",
+      "createdAt": "2026-04-01T07:48:39.000Z",
+      "postKind": "original",
+      "excerpt": "Our Codex dashboards are showing increased rate of users hitting rate limits and since we don't fully understand why I have made the cautious decision of resetting the usage limits for all plans. Enjoy. I also wanted to celebrate us finding a pocket of fraudulent accounts that we banned and have helped us regain some compute. The fight against abuse never st",
+      "excerptHash": "1b070476ca289e8df6d915f7e066d473baae58d887f0a3aaa8f54f375eb42b0a",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "decision made; no exact time",
+        "normalizedWindow": null
+      },
+      "scope": "Codex 全部方案",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2041655710346572085",
+      "postUrl": "https://x.com/thsottiaux/status/2041655710346572085",
+      "author": "thsottiaux",
+      "createdAt": "2026-04-07T23:13:48.000Z",
+      "postKind": "original",
+      "excerpt": "Three million people are now using Codex weekly - up from two million a little under a month ago. Incredible to see the growth. Thank you to all of you and to the ecosystem we’re part of. To celebrate, we’re resetting rate limits so you can keep building, and we’ll reset them every additional 1M users until we reach 10M, so we can keep celebrating along the ",
+      "excerptHash": "5e3e25745803bc382d7578ffe309db9382b95ecd61222d6ad30d3ec764acf394",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "current reset plus each additional 1M users",
+        "normalizedWindow": null
+      },
+      "scope": "Codex（具体方案未知）",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "promo",
+        "secondaryLeadGroup": "boost"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2042299371602264319",
+      "postUrl": "https://x.com/thsottiaux/status/2042299371602264319",
+      "author": "thsottiaux",
+      "createdAt": "2026-04-09T17:51:28.000Z",
+      "postKind": "quote",
+      "excerpt": "We did it, say hi to the $100 plan! It should be the sweet spot for a ton of you. It comes with a ton of codex usage. And yes we are resetting the limits again too as I mentioned yesterday. Let’s keep building!",
+      "excerptHash": "a2e4a67f785825e59a529a4528c6e0b9b9da175c8d50583160ce1c7cc8f25714",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "resetting again; no exact time",
+        "normalizedWindow": null
+      },
+      "scope": "Codex（具体方案未知）",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2042295688323875316",
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "promo",
+        "secondaryLeadGroup": "boost"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2044943514832871564",
+      "postUrl": "https://x.com/thsottiaux/status/2044943514832871564",
+      "author": "thsottiaux",
+      "createdAt": "2026-04-17T00:58:21.000Z",
+      "postKind": "original",
+      "excerpt": "Hi! To celebrate its 1-year anniversary, I have allowed Codex to reset its own rate limits across all plans. Enjoy all the new features.",
+      "excerptHash": "96e1ff9fee45d8e4f8033acfda343e00841a0308ab91265373014ade85748d00",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex 全部方案",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "promo",
+        "secondaryLeadGroup": "boost"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2046367145588916687",
+      "postUrl": "https://x.com/thsottiaux/status/2046367145588916687",
+      "author": "thsottiaux",
+      "createdAt": "2026-04-20T23:15:21.000Z",
+      "postKind": "quote",
+      "excerpt": "Codex incident is mitigated, seeing recovery. Lasted about 10 mins, Codex itself helped with the remediation, but ultimately the insight came from a human this time. Apologies for the disruption and rate limit reset incoming.",
+      "excerptHash": "6d29ce39ef0a5353f65953800969336b02b1b59dfacc1e4b12f054fa27855db5",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "incoming; no exact time",
+        "normalizedWindow": null
+      },
+      "scope": "Codex（具体方案未知）",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2046364656789532739",
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2048997818673537399",
+      "postUrl": "https://x.com/thsottiaux/status/2048997818673537399",
+      "author": "thsottiaux",
+      "createdAt": "2026-04-28T05:28:43.000Z",
+      "postKind": "original",
+      "excerpt": "Don't just reset Codex rate limits for fun, it costs money. Don't just reset Codex rate limits for fun, it costs money. ... but the vibes are good ... I have reset Codex rate limits for ALL paid plans to celebrate a good week and allow everyone to build more with GPT-5.5. Enjoy",
+      "excerptHash": "bb4ead38db8e45fc013c6f8a161f60e0f8ae9b479b092f3147ff7466eeea713c",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex 全部付费方案",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": true,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "promo",
+        "secondaryLeadGroup": "boost"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2055707616605835333",
+      "postUrl": "https://x.com/thsottiaux/status/2055707616605835333",
+      "author": "thsottiaux",
+      "createdAt": "2026-05-16T17:51:03.000Z",
+      "postKind": "quote",
+      "excerpt": "Codex usage limits have now been reset across all paid plans. Enjoy the weekend!",
+      "excerptHash": "d67d95d59cc2ceb6f4e730023dc6b851ab397c76e01f0b7c0235effaeb6d1f22",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex 全部付费方案",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2055446089957036402",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2058280452851638313",
+      "postUrl": "https://x.com/thsottiaux/status/2058280452851638313",
+      "author": "thsottiaux",
+      "createdAt": "2026-05-23T20:14:35.000Z",
+      "postKind": "quote",
+      "excerpt": "Some of you noticed limits drained faster in Codex, we root caused it to an optimization that we rolled back that had an impact on cache hit rates when compacting across long running sessions. We fixed this and have now reset usage limits for all accounts. Enjoy the weekend.",
+      "excerptHash": "76ff5570cf8819f67583395f54dd959d7315e06bb119a4e97f2ebbe6778e34cd",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex（具体方案未知）",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2058183334744711364",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2061106703446450392",
+      "postUrl": "https://x.com/thsottiaux/status/2061106703446450392",
+      "author": "thsottiaux",
+      "createdAt": "2026-05-31T15:25:06.000Z",
+      "postKind": "quote",
+      "excerpt": "The Codex usage limits have been reset for all paid ChatGPT subscriptions. You should be back to 100% weekly and 100% hourly limits. Let the tokens do incredible things today and have fun.",
+      "excerptHash": "6f93508b48185a8fcb87e7ec9008a415e2c996fc022e7ffac2886a0fb811d236",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex 全部付费方案",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2060964284117782996",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2062329981548802523",
+      "postUrl": "https://x.com/thsottiaux/status/2062329981548802523",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-04T00:25:58.000Z",
+      "postKind": "original",
+      "excerpt": "Hi. Over the last 24 hours we had three separate small incidents that affected Codex reliability. Those are three too many and we are taking active steps for them to not reproduce. I have reset usage limits for Codex across all paid plans. May the tokens flow again.",
+      "excerptHash": "e7dcca275b8da9138c9f0653433caa36438fb2d95631376addced63c836c59f7",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex 全部付费方案",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2067399435009622521",
+      "postUrl": "https://x.com/thsottiaux/status/2067399435009622521",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-18T00:10:10.000Z",
+      "postKind": "quote",
+      "excerpt": "Dearest gentle codexer. We did a sneaky double reset. Not only do you get a full reset on us. But you are also getting one into the reset bank to use at your own leisure. Enjoy",
+      "excerptHash": "0f8e74eff091fa21f337cf008a4953fff277e38d701313c93cddfb1eb2a58043",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex（具体方案未知）",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2067364445593170007",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2070653282440405046",
+      "postUrl": "https://x.com/thsottiaux/status/2070653282440405046",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-26T23:39:48.000Z",
+      "postKind": "quote",
+      "excerpt": "We are giving all Codex users a usage reset on the house. Should be showing in your accounts in the next few hours. We have applied some mitigations, but our investigation hasn't shown users being impacted at large. We are continuing to monitor the situation.",
+      "excerptHash": "82c52e5ca19285651778ca2c5a5939e5198cf264e61b5c8bcb7083e1d73d1163",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "in the next few hours",
+        "normalizedWindow": {
+          "label": "within a few hours",
+          "start_at": "2026-06-26T23:39:48.000Z",
+          "end_at": "2026-06-27T02:39:48.000Z"
+        }
+      },
+      "scope": "Codex 全部用户",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2070553131503776175",
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071381664853319742",
+      "postUrl": "https://x.com/thsottiaux/status/2071381664853319742",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-28T23:54:07.000Z",
+      "postKind": "quote",
+      "excerpt": "As we are still investigating, I have reset everyone's Codex usage limits. This is a hard reset given some users had stacked up to three banked resets already that they can apply on their own schedule. Funnily enough, this week at OpenAI is called the RESET week, which is meant for folks to relax a bit. However it will be a different kind of RESET week. Enjo",
+      "excerptHash": "5a6e2ad9f07053b281d4bf4d57ba3d81a42796e2c3e0331fc16814a7e6bbd83f",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex 全部用户",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2071357473659707441",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2071740419030053227",
+      "postUrl": "https://x.com/thsottiaux/status/2071740419030053227",
+      "author": "thsottiaux",
+      "createdAt": "2026-06-29T23:39:41.000Z",
+      "postKind": "quote",
+      "excerpt": "Codex usage limits will be fully reset again in the next hour and we will credit one additional reset into your bank for your own usage over the next 24 hours. We investigated reports that Codex usage was being consumed faster than expected. There wasn't one central issue, but a few smaller problems compounded for some users. Here's what we found and changed",
+      "excerptHash": "43371603548abaaf54bac5061f38f6adab1ec4dddf956872732f07df0a3b2fcf",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "in the next hour",
+        "normalizedWindow": {
+          "label": "within an hour",
+          "start_at": "2026-06-29T23:39:41.000Z",
+          "end_at": "2026-06-30T00:39:41.000Z"
+        }
+      },
+      "scope": "Codex（具体方案未知）",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2071357473659707441",
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2075330198887940337",
+      "postUrl": "https://x.com/thsottiaux/status/2075330198887940337",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-09T21:24:11.000Z",
+      "postKind": "original",
+      "excerpt": "Enjoy a full reset of your usage limits for ChatGPT Work and Codex. Propagating in the next hour. @_rajanagarwal just joined to work on model research and push on coding capabilities. You can thank him for pressing the button today.",
+      "excerptHash": "81a9d3e5deafae31de98ff0938a891af03a83b9f21f28b9d84e677b007b344f4",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "propagating in the next hour",
+        "normalizedWindow": {
+          "label": "within an hour",
+          "start_at": "2026-07-09T21:24:11.000Z",
+          "end_at": "2026-07-09T22:24:11.000Z"
+        }
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2075641131002700120",
+      "postUrl": "https://x.com/thsottiaux/status/2075641131002700120",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-10T17:59:43.000Z",
+      "postKind": "original",
+      "excerpt": "Hello beautiful people! We have reset usage limits across Codex and ChatGPT Work. And another one will come later in the day. Rejoice. Now that I have your attention, a quick update on ChatGPT Work, Codex and all the updates we shared yesterday. We’ve spent the last 24 hours reading feedback, looking at usage patterns, and talking with many of you. The short",
+      "excerptHash": "b045380177626bfc7cfe947e21700003421aa37ee731afb575d83407112c2249",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "another one later in the day",
+        "normalizedWindow": {
+          "label": "later today",
+          "start_at": "2026-07-10T17:59:43.000Z",
+          "end_at": "2026-07-10T23:59:59.999Z"
+        }
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2075820987833274448",
+      "postUrl": "https://x.com/thsottiaux/status/2075820987833274448",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-11T05:54:25.000Z",
+      "postKind": "quote",
+      "excerpt": "Introducing... another usage limit reset for all our ChatGPT Work and Codex users. Should land over next 30 minutes. Hope you have an awesome weekend. Thank you for pushing our systems to the absolute limit, we have never seen traffic increase so quickly. Keep the feedback coming and we'll keep shipping.",
+      "excerptHash": "c90822d991e96981c4b29e222a3cdbfdf81f35c148378cb8240abcafa111468f",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "over the next 30 minutes",
+        "normalizedWindow": {
+          "label": "within 30 minutes",
+          "start_at": "2026-07-11T05:54:25.000Z",
+          "end_at": "2026-07-11T06:24:25.000Z"
+        }
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2075641131002700120",
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2076418567143408112",
+      "postUrl": "https://x.com/thsottiaux/status/2076418567143408112",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-12T21:28:59.000Z",
+      "postKind": "original",
+      "excerpt": "Added a banked reset to 500k users of ChatGPT Work and Codex. What’s been happening: - Just released the ability to use a banked reset from web and mobile. Before today you could only do it in the desktop app - Had an issue where less than 10% of users who used a banked reset and it didn’t actually reset. This was during a 2 hour window. - It was hard to fin",
+      "excerptHash": "dd36e2c8318f5ac829ef7662812e7a4f7ba98e045ea9cc00415725e58e078e70",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "credits",
+        "secondaryLeadGroup": "credits"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2076735790567338203",
+      "postUrl": "https://x.com/thsottiaux/status/2076735790567338203",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-13T18:29:31.000Z",
+      "postKind": "original",
+      "excerpt": "Thank you to the 7M active users who are now using Codex and ChatGPT Work. We have added a banked reset to everyone's account to celebrate the milestone. You can apply the reset in the desktop app or on web and it will replenish the weekly usage for you. Have fun out there.",
+      "excerptHash": "f638ffa6e99f648e95a6b2cc1e3f345a846aa19f7eba1738f175625a8c83ed9c",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "credits",
+        "secondaryLeadGroup": "credits"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2077114635308986427",
+      "postUrl": "https://x.com/thsottiaux/status/2077114635308986427",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-14T19:34:54.000Z",
+      "postKind": "quote",
+      "excerpt": "Hello. We have reached 8M active users across Codex and ChatGPT Work. We are once again resetting the usage limits for all. And we continue to not have the 5h rate limit as well, allowing everyone to explore the boundaries of GPT-5.6 Sol and discover how ambitious you can be. See you tomorrow for more updates on our growth!",
+      "excerptHash": "68938093b0d123d2cbe03da5ef131d74540fabbae336c9ddf2f1737b55cc35d1",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2077106587307798989",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2077607697487188198",
+      "postUrl": "https://x.com/thsottiaux/status/2077607697487188198",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-16T04:14:09.000Z",
+      "postKind": "original",
+      "excerpt": "Another reset for our Codex and ChatGPT Work users. Actually hit 9M active users way earlier today, but then got distracted by the approximately millions of things the team is doing to keep the systems up and reliable. Should have that sweet 100% weekly usage limit back in a few minutes. Go be your productive self and close twitter. Shoo!",
+      "excerptHash": "6061ae72fd3434bdab7fd65befd9f41bc66559ead31a76eeb013ec2226782d78",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "in a few minutes",
+        "normalizedWindow": null
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2078320950488297917",
+      "postUrl": "https://x.com/thsottiaux/status/2078320950488297917",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-18T03:28:22.000Z",
+      "postKind": "quote",
+      "excerpt": "Oops... I did it again. Enjoy reset usage limits for all paid users for Codex and ChatGPT Work. Super grateful for an incredible team who is iterating at lightspeed and keeping the infra up as we scale faster than ever. Enjoy the weekend!",
+      "excerptHash": "6b1d49ce2649a6a7a64e886c3cbf7290d641d69de991c2842e5bb577cd70f6e0",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2078310751878647932",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2079609157934886975",
+      "postUrl": "https://x.com/thsottiaux/status/2079609157934886975",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-21T16:47:15.000Z",
+      "postKind": "original",
+      "excerpt": "10M! New day, new usage reset for paid users of Codex and ChatGPT Work. Lands in the next hour. Enjoy.",
+      "excerptHash": "993b9ad22af15f470528f15beb1ceb5d4812a8e4e3479e81e46ad1a40e9b07ec",
+      "label": "明确未来",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "in the next hour",
+        "normalizedWindow": {
+          "label": "within an hour",
+          "start_at": "2026-07-21T16:47:15.000Z",
+          "end_at": "2026-07-21T17:47:15.000Z"
+        }
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖明确承诺或宣告正在传播的重置，并使用 will、incoming、lands、should land 等未来表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081096447718723984",
+      "postUrl": "https://x.com/thsottiaux/status/2081096447718723984",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-25T19:17:12.000Z",
+      "postKind": "quote",
+      "excerpt": "We have reset usage limits for all Codex and ChatGPT Work users. Last night around 2am to 4am we suffered an almost global outage. All well and recovered, but you know what comes next. We learn. We reset. Enjoy.",
+      "excerptHash": "269fafa34d141af75aa19595bf2ff82f34e32bc000aa0392a73a86463f7387a8",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2080956723297198218",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081899343091843463",
+      "postUrl": "https://x.com/thsottiaux/status/2081899343091843463",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-28T00:27:37.000Z",
+      "postKind": "original",
+      "excerpt": "We’re celebrating the fast adoption of chatGPT Work and all the incredible effort that went into it today. I’m feeling like a limit reset. Hold on tight to your ultra and /fast and see you in a few hours when I’m back at the laptop!",
+      "excerptHash": "b1c6024dbdbf017c7ba574181987ff3d3d41a6daa8143c556726d972164fafb9",
+      "label": "模糊意向",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": "in a few hours when back at the laptop",
+        "normalizedWindow": {
+          "label": "within a few hours",
+          "start_at": "2026-07-28T00:27:37.000Z",
+          "end_at": "2026-07-28T03:27:37.000Z"
+        }
+      },
+      "scope": "Codex（具体方案未知）",
+      "certainty": "中",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": true,
+      "rationale": "原帖表达想重置并给出回到电脑后的模糊时间，但尚未明确承诺执行。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2081940052154933696",
+      "postUrl": "https://x.com/thsottiaux/status/2081940052154933696",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-28T03:09:23.000Z",
+      "postKind": "quote",
+      "excerpt": "Back at the laptop. The usage limits have been reset for all paid users of Codex and ChatGPT Work. Weeeeeeeee. It's a good day!",
+      "excerptHash": "f15b297661247b9cbaec26a0555df807fe12770bb67b9eb1bbcf1efb619c94d6",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2081899343091843463",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2082317452755751098",
+      "postUrl": "https://x.com/thsottiaux/status/2082317452755751098",
+      "author": "thsottiaux",
+      "createdAt": "2026-07-29T04:09:02.000Z",
+      "postKind": "original",
+      "excerpt": "Hello people of Sol! I've reset usage limits for all ChatGPT Work and Codex users. Together with that, a quick update on GPT-5.6 Sol usage limits. Over the past few weeks, many of you have told us that Sol was using your Codex limits faster than expected. To be clear, we have not reduced usage on any subscription plans. We’ve been digging into what was happe",
+      "excerptHash": "53e594f5c781e0bbd834e6d3e0560d9fa84d4d2c2346a195c2eafec0a89ad1ae",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2083395449814229287",
+      "postUrl": "https://x.com/thsottiaux/status/2083395449814229287",
+      "author": "thsottiaux",
+      "createdAt": "2026-08-01T03:32:37.000Z",
+      "postKind": "original",
+      "excerpt": "To celebrate a week of efficiency and let you run 100'000 Luna threads this weekend... that's right... wait for it... I have reset usage limits for Codex and ChatGPT Work. Enjoy.",
+      "excerptHash": "9c3a36b44acd0b5133c732aa6ff7272b1ed1d97d2d8b5604e3049ed3a7c8d655",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": null,
+      "ironyOrJoke": true,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "postId": "2086188036493344823",
+      "postUrl": "https://x.com/thsottiaux/status/2086188036493344823",
+      "author": "thsottiaux",
+      "createdAt": "2026-08-08T20:29:22.000Z",
+      "postKind": "quote",
+      "excerpt": "That's right, GPT-5.6 Sol is awesome and can be used pretty much anywhere, including in the CC harness. To celebrate this, together with the fact that I'm not going anywhere... I have reset usage limits for all paid users of ChatGPT Work and Codex. Have fun out there!",
+      "excerptHash": "d33d607bb1e2738d1935bceda6add9c3990a272a5a6c4937b275ffa98a086def",
+      "label": "已完成",
+      "labelStatus": "reviewed_primary",
+      "expectedTime": {
+        "originalExpression": null,
+        "normalizedWindow": null
+      },
+      "scope": "Codex、ChatGPT Work",
+      "certainty": "高",
+      "parentContext": null,
+      "quotedPostId": "2086173812253729118",
+      "ironyOrJoke": false,
+      "rationale": "原帖使用 have reset、reset button pressed、added 等完成性表达。",
+      "verification": {
+        "primaryLinkChecked": true,
+        "primaryAdapter": "fxtwitter-status-v2",
+        "secondaryLeadUrl": "https://codex-reset.com/api/timeline",
+        "secondaryLeadType": "reset",
+        "secondaryLeadGroup": "reset"
+      }
+    }
+  ]
+}
