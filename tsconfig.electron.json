@@ -9,5 +9,11 @@
     "rootDir": "app",
     "types": ["node"]
   },
-  "include": ["app/main/**/*.ts", "app/preload/**/*.ts"]
+  "include": [
+    "app/main/**/*.ts",
+    "app/preload/**/*.ts",
+    "app/domain/**/*.ts",
+    "app/adapters/**/*.ts",
+    "app/rules/**/*.ts"
+  ]
 }
