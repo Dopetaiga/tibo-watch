@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-electron/
 release/
+.pack-staging/
 playwright-report/
 test-results/
 *.log
