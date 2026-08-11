@@ -313,6 +313,7 @@ export function App({
           />
           <div className="credential-control">
             <label htmlFor="deepseek-key">DeepSeek API Key</label>
+            <small>无需密钥文件；安全保存后写入 Windows 凭据管理器。</small>
             <input
               id="deepseek-key"
               type="password"
@@ -364,6 +365,7 @@ export function App({
           </div>
           <div className="credential-control">
             <label htmlFor="webhook-url">通知 Webhook</label>
+            <small>飞书建议使用只有自己的私密群和自定义机器人。</small>
             <select
               value={webhookChannel}
               onChange={(event) =>

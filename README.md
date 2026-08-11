@@ -25,6 +25,8 @@ npm run dist:win
 
 首次启动后，在大屏“设置与请求日志”中启用数据源。DeepSeek Key 通过“安全保存”写入 Windows 凭据管理器；只有规则命中的候选帖才会触发分析。安装版数据默认保存在 `%APPDATA%\Tibo Watch\data`，便携版数据保存在程序同目录的 `Tibo Watch Data\data`。
 
+飞书通知推荐使用只有自己的私密群和自定义机器人 webhook；配置步骤与密钥保存位置见 [飞书通知配置](docs/FEISHU-NOTIFICATIONS.md)。
+
 未签名的 Windows 构建可能触发 SmartScreen；发布版会同时提供 SHA-256 校验文件。
 
 ## 更新与发布安全
