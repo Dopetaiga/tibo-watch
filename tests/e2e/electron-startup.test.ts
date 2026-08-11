@@ -18,16 +18,13 @@ test('packaged Windows dashboard starts and renders its safe empty state', async
     await window.waitForLoadState('domcontentloaded')
     expect(await window.title()).toBe('Tibo Watch')
     expect(new URL(window.url()).protocol).toBe('file:')
-    await expect(
-      window.getByRole('heading', { name: 'Tibo Watch' }),
-    ).toBeVisible()
+    await expect(window.getByText('Tibo Watch', { exact: true })).toBeVisible()
     await expect(window.locator('.health-pill')).toContainText('尚未启用')
-    await expect(window.getByText('暂无可靠预测')).toHaveCount(2)
     await expect(
-      window.getByRole('heading', { name: '最近帖子' }),
+      window.getByRole('heading', { name: '最新消息' }),
     ).toBeVisible()
     await expect(
-      window.getByRole('heading', { name: '事件热力图' }),
+      window.getByRole('heading', { name: '活动热力图' }),
     ).toBeVisible()
     const bridge = await window.evaluate(async () => {
       const api = (
@@ -43,18 +40,36 @@ test('packaged Windows dashboard starts and renders its safe empty state', async
     expect(bridge.keys).toEqual(
       [
         'deepSeekHint',
+        'aiProviderSummary',
+        'codexProbe',
+        'codexResumeSettings',
+        'codexThreads',
         'getDashboard',
+        'notificationPolicy',
         'platform',
         'refresh',
+        'runBasicSelfTest',
         'setDeepSeekKey',
+        'setAiProvider',
+        'setCodexResumeSettings',
         'setSourceEnabled',
+        'setNotificationPolicy',
         'setWebhook',
         'testDeepSeek',
+        'testAiProvider',
         'testWebhook',
+        'resumeCodexThread',
         'webhookHint',
       ].sort(),
     )
     expect(bridge.model).toMatchObject({ health: 'disabled', events: [] })
+    await window.getByRole('button', { name: '设置', exact: true }).click()
+    await window.getByRole('button', { name: '运行基础自检' }).click()
+    await expect(
+      window.getByRole('status').filter({ hasText: '自检通过' }),
+    ).toContainText('5/5')
+    await expect(window.getByText('明确的未来重置承诺')).toBeVisible()
+    await expect(window.getByText('完全无关的简短回复不应入选')).toBeVisible()
   } finally {
     await application.evaluate(({ app }) => app.quit())
   }

@@ -30,7 +30,8 @@ export class WebhookNotificationChannel implements NotificationChannel {
   ): Promise<NotificationDelivery> {
     const attemptedAt = new Date().toISOString()
     try {
-      const body = this.id === 'feishu' ? feishuBody(message) : message
+      const body =
+        this.id === 'feishu' ? feishuBody(message) : httpBody(message)
       const response = await this.#fetch(await this.#url(), {
         method: 'POST',
         signal,
@@ -63,7 +64,30 @@ function feishuBody(message: NotificationMessage) {
   return {
     msg_type: 'text',
     content: {
-      text: `${message.isTest ? '[测试] ' : ''}${message.title}\n${message.summaryZh}\n预计：${message.expectedWindow}\n不确定性：${message.uncertainties.join('；') || '无'}\n${message.sourceUrl}`,
+      text: `${message.isTest ? '[测试] ' : ''}[${eventTypeLabel(message.eventType)}] ${message.title}\n${message.summaryZh}\n预计：${message.expectedWindow}\n不确定性：${message.uncertainties.join('；') || '无'}\n${message.sourceUrl}`,
     },
   }
+}
+
+function httpBody(message: NotificationMessage) {
+  return {
+    schema: 'dev.tibowatch.event',
+    schemaVersion: message.schemaVersion,
+    eventType: message.eventType,
+    idempotencyKey: `${message.eventId}:${message.semanticVersion}:${message.isTest ? 'test' : 'real'}`,
+    occurredAt: new Date().toISOString(),
+    event: { ...message },
+  }
+}
+
+function eventTypeLabel(value: NotificationMessage['eventType']): string {
+  return {
+    rule_candidate: '规则候选',
+    ai_confirmed: 'AI 已确认',
+    reset_observed: '已观测重置',
+    codex_resume_started: 'Codex 恢复已开始',
+    codex_resume_waiting_approval: 'Codex 等待批准',
+    codex_resume_completed: 'Codex 恢复已完成',
+    codex_resume_failed: 'Codex 恢复失败',
+  }[value]
 }

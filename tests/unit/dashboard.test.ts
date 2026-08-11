@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { resetOverview } from '../../app/domain/dashboard'
 import {
   calendarDays,
   eventStatistics,
@@ -46,9 +47,16 @@ describe('dashboard statistics', () => {
     expect(Math.max(...calendar.map(({ count }) => count))).toBe(2)
   })
 
+  it('anchors the baseline to the latest observed reset plus seven days', () => {
+    expect(resetOverview(events)).toEqual({
+      lastObservedResetAt: '2026-08-09T00:30:00.000Z',
+      baselineNextResetAt: '2026-08-16T00:30:00.000Z',
+    })
+  })
+
   it('renders untrusted detail payloads through React text nodes only', () => {
     const source = readFileSync('app/renderer/src/App.tsx', 'utf8')
     expect(source).not.toContain('dangerouslySetInnerHTML')
-    expect(source).toContain('JSON.stringify(selectedDetail.payload')
+    expect(source).toContain('JSON.stringify(selected.payload')
   })
 })

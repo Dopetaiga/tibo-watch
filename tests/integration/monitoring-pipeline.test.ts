@@ -166,4 +166,53 @@ describe('complete monitoring pipeline', () => {
     expect(result.event).toBeNull()
     expect(notifications.dispatch).not.toHaveBeenCalled()
   })
+
+  it('persists and notifies a rule candidate when AI is unavailable', async () => {
+    const notifications = { dispatch: vi.fn(async () => []) }
+    const events =
+      sink<Parameters<MonitoringPipeline['options']['events']['put']>[0]>()
+    const pipeline = new MonitoringPipeline({
+      analyze: {
+        run: vi.fn(async () => ({
+          status: 'failed' as const,
+          analysis: null,
+          errors: ['offline'],
+        })),
+      },
+      notifications,
+      evaluate: (post) =>
+        evaluateRulesV1({
+          postId: post.postId,
+          excerpt: post.text,
+          contentHash: post.contentHash,
+        }),
+      posts: sink<Post>(),
+      analyses: sink<Analysis>(),
+      events,
+      notificationRecords: sink(),
+    })
+    const post: Post = {
+      schemaVersion: 1,
+      createdAt: '2026-08-11T00:00:00.000Z',
+      source: 'fixture',
+      contentHash: 'b'.repeat(64),
+      postId: 'rule-only',
+      url: 'https://x.com/thsottiaux/status/rule-only',
+      author: 'thsottiaux',
+      text: 'We will reset Codex usage limits tomorrow.',
+      postedAt: '2026-08-11T00:00:00.000Z',
+      kind: 'original',
+      parentPostId: null,
+      quotedPostId: null,
+    }
+    const result = await pipeline.process(post, new AbortController().signal)
+    expect(result.event).toMatchObject({
+      status: 'candidate',
+      source: 'rules-baseline',
+    })
+    expect(events.records).toHaveLength(1)
+    expect(notifications.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: 'rule_candidate' }),
+    )
+  })
 })

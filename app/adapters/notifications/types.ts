@@ -1,4 +1,15 @@
+export type AutomationEventType =
+  | 'rule_candidate'
+  | 'ai_confirmed'
+  | 'reset_observed'
+  | 'codex_resume_started'
+  | 'codex_resume_waiting_approval'
+  | 'codex_resume_completed'
+  | 'codex_resume_failed'
+
 export interface NotificationMessage {
+  schemaVersion: 1
+  eventType: AutomationEventType
   eventId: string
   semanticVersion: string
   title: string

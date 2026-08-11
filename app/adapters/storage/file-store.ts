@@ -1,5 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { mkdir, open, readFile, readdir, rename, stat } from 'node:fs/promises'
+import {
+  mkdir,
+  open,
+  readFile,
+  readdir,
+  rename,
+  stat,
+  unlink,
+} from 'node:fs/promises'
 import path from 'node:path'
 import type { FactRecord } from '../../domain/models.js'
 
@@ -154,6 +162,24 @@ export class JsonRecordStore<T extends FactRecord> {
     }
     for (const value of values) await this.put(value)
     return values.length
+  }
+
+  async deleteWhere(predicate: (record: T) => boolean): Promise<number> {
+    return this.#queue.run(async () => {
+      const records = await this.list()
+      let deleted = 0
+      for (const record of records) {
+        if (!predicate(record)) continue
+        try {
+          await unlink(this.recordPath(this.options.idOf(record)))
+          deleted += 1
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+        }
+      }
+      if (deleted > 0) await this.rebuildIndex()
+      return deleted
+    })
   }
 
   recordPath(id: string): string {

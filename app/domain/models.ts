@@ -77,8 +77,21 @@ export interface RuntimeState extends FactRecord {
   lastPostId: string | null
 }
 
+export interface CodexResumeAudit extends FactRecord {
+  resumeId: string
+  eventId: string
+  threadId: string
+  triggerMode: 'rule-only' | 'rule+ai'
+  status: 'started' | 'completed' | 'failed' | 'blocked'
+  startedAt: string
+  finishedAt: string | null
+  turnId: string | null
+  usedPercent: number | null
+  errorCode: string | null
+}
+
 export type StoredRecord =
-  Post | Analysis | ResetEvent | Notification | RuntimeState
+  Post | Analysis | ResetEvent | Notification | RuntimeState | CodexResumeAudit
 
 export function isFactRecord(value: unknown): value is FactRecord {
   if (!value || typeof value !== 'object') return false

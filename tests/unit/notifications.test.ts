@@ -8,6 +8,8 @@ import { WebhookNotificationChannel } from '../../app/adapters/notifications/web
 import { WindowsNotificationChannel } from '../../app/adapters/notifications/windows'
 
 const message: NotificationMessage = {
+  schemaVersion: 1,
+  eventType: 'ai_confirmed',
   eventId: 'event-1',
   semanticVersion: 'v1',
   title: 'Codex 额度重置',
@@ -106,5 +108,27 @@ describe('notification channels', () => {
     const body = String(fetchMock.mock.calls[0][1]?.body)
     expect(body).toContain('msg_type')
     expect(body).not.toContain('secret-token')
+  })
+
+  it('wraps generic HTTP payloads in a versioned event envelope', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('{}', { status: 200 }))
+    const http = new WebhookNotificationChannel({
+      id: 'http',
+      url: async () => 'https://example.test/hook',
+      fetch: fetchMock,
+    })
+    await http.send(message, new AbortController().signal)
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body)) as Record<
+      string,
+      unknown
+    >
+    expect(body).toMatchObject({
+      schema: 'dev.tibowatch.event',
+      schemaVersion: 1,
+      eventType: 'ai_confirmed',
+    })
+    expect(body.idempotencyKey).toContain('event-1')
   })
 })

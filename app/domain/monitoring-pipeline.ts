@@ -20,6 +20,12 @@ export interface MonitoringPipelineOptions {
   analyses: FactSink<Analysis>
   events: FactSink<ResetEvent>
   notificationRecords: FactSink<Notification>
+  eventAutomation?: {
+    onEvent(
+      event: ResetEvent,
+      triggerMode: 'rule-only' | 'rule+ai',
+    ): Promise<void>
+  }
 }
 
 export interface MonitoringResult {
@@ -52,6 +58,36 @@ export class MonitoringPipeline {
       signal,
     )
     if (!analysisResult.analysis) {
+      if (ruleResult.candidate) {
+        const event = candidateEvent(post, ruleResult)
+        const persisted = await this.options.events.put(event)
+        const duplicate =
+          persisted &&
+          typeof persisted === 'object' &&
+          'created' in persisted &&
+          persisted.created === false
+        const notifications = duplicate
+          ? []
+          : await this.options.notifications.dispatch({
+              schemaVersion: 1,
+              eventType: 'rule_candidate',
+              eventId: event.eventId,
+              semanticVersion: ruleResult.ruleVersion,
+              title: event.titleZh,
+              summaryZh: `规则命中：${ruleResult.reasons.join('；')}`,
+              expectedWindow: '规则未能确定',
+              uncertainties: ['AI 未配置、不可用或未完成确认'],
+              sourceUrl: post.url,
+              isTest: false,
+            })
+        await Promise.all(
+          notifications.map((record) =>
+            this.options.notificationRecords.put(record),
+          ),
+        )
+        await this.options.eventAutomation?.onEvent(event, 'rule-only')
+        return { post, ruleResult, analysisResult, event, notifications }
+      }
       return {
         post,
         ruleResult,
@@ -82,6 +118,9 @@ export class MonitoringPipeline {
       return { post, ruleResult, analysisResult, event, notifications: [] }
     }
     const notificationMessage: NotificationMessage = {
+      schemaVersion: 1,
+      eventType:
+        analysis.eventType === 'completed' ? 'reset_observed' : 'ai_confirmed',
       eventId: event.eventId,
       semanticVersion: analysis.analysisVersion,
       title: event.titleZh,
@@ -98,7 +137,32 @@ export class MonitoringPipeline {
         this.options.notificationRecords.put(record),
       ),
     )
+    await this.options.eventAutomation?.onEvent(event, 'rule+ai')
     return { post, ruleResult, analysisResult, event, notifications }
+  }
+}
+
+function candidateEvent(post: Post, ruleResult: RuleResult): ResetEvent {
+  const eventId = `${post.postId}--${ruleResult.ruleVersion}--rule-candidate`
+  const createdAt = new Date().toISOString()
+  return {
+    schemaVersion: 1,
+    createdAt,
+    source: 'rules-baseline',
+    contentHash: createHash('sha256')
+      .update(`${eventId}:${ruleResult.inputHash}`, 'utf8')
+      .digest('hex'),
+    eventId,
+    postId: post.postId,
+    analysisVersion: ruleResult.ruleVersion,
+    status: 'candidate',
+    eventType: 'vague_intent',
+    resetKind: classifyResetKind(post.text),
+    scope: '规则候选，范围待确认',
+    expectedStart: null,
+    expectedEnd: null,
+    confirmedAt: null,
+    titleZh: '发现可能的重置信号',
   }
 }
 

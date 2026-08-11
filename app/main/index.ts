@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, Notification, shell } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { RuntimeController } from './runtime-controller.js'
+import type { AiProviderConfig } from '../adapters/ai/multi-protocol.js'
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url))
 let runtime: RuntimeController | null = null
@@ -62,6 +63,7 @@ app.on('window-all-closed', () => {
 
 function registerIpc(controller: RuntimeController): void {
   ipcMain.handle('dashboard:get', () => controller.snapshot())
+  ipcMain.handle('self-test:run-basic', () => controller.runBasicSelfTest())
   ipcMain.handle('source:set-enabled', (_event, enabled: unknown) => {
     if (typeof enabled !== 'boolean') throw new Error('enabled 必须是布尔值')
     return controller.setSourceEnabled(enabled)
@@ -73,6 +75,29 @@ function registerIpc(controller: RuntimeController): void {
   })
   ipcMain.handle('deepseek:hint', () => controller.deepSeekHint())
   ipcMain.handle('deepseek:test', () => controller.testDeepSeek())
+  ipcMain.handle('ai-provider:summary', () => controller.aiProviderSummary())
+  ipcMain.handle('ai-provider:test', () => controller.testAiProvider())
+  ipcMain.handle('ai-provider:set', (_event, value: unknown) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value))
+      throw new Error('AI Provider 配置无效')
+    return controller.setAiProviderConfig(value as AiProviderConfig)
+  })
+  ipcMain.handle('codex:probe', () => controller.codexProbe())
+  ipcMain.handle('codex:threads', () => controller.codexThreads())
+  ipcMain.handle('codex:resume-settings:get', () =>
+    controller.codexResumeSettings(),
+  )
+  ipcMain.handle('codex:resume-settings:set', (_event, value: unknown) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value))
+      throw new Error('Codex 恢复设置无效')
+    return controller.setCodexResumeSettings(
+      value as Parameters<RuntimeController['setCodexResumeSettings']>[0],
+    )
+  })
+  ipcMain.handle('codex:resume', (_event, threadId: unknown) => {
+    if (typeof threadId !== 'string') throw new Error('Codex 线程 ID 无效')
+    return controller.resumeCodexThread(threadId)
+  })
   ipcMain.handle(
     'webhook:set',
     (_event, channel: unknown, url: unknown, headers: unknown) => {
@@ -103,4 +128,10 @@ function registerIpc(controller: RuntimeController): void {
       throw new Error('Webhook 渠道无效')
     return controller.testWebhook(channel)
   })
+  ipcMain.handle('notification-policy:get', () =>
+    controller.notificationPolicy(),
+  )
+  ipcMain.handle('notification-policy:set', (_event, value: unknown) =>
+    controller.setNotificationPolicy(value),
+  )
 }

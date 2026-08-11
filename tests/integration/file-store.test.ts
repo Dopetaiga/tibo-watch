@@ -103,4 +103,14 @@ describe('JSON record store', () => {
       'two',
     ])
   })
+
+  it('deletes only matching records and rebuilds the index', async () => {
+    const { store } = await createStore()
+    await store.put(post('keep'))
+    await store.put(post('remove', 'b'))
+    expect(await store.deleteWhere((value) => value.postId === 'remove')).toBe(
+      1,
+    )
+    expect((await store.list()).map(({ postId }) => postId)).toEqual(['keep'])
+  })
 })

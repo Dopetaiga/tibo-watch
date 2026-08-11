@@ -6,9 +6,12 @@ import { listPackage, extractFile, statFile } from '@electron/asar'
 
 const releaseRoot = path.resolve('release')
 const asarPath = path.join(releaseRoot, 'win-unpacked', 'resources', 'app.asar')
+const { version } = JSON.parse(await readFile('package.json', 'utf8'))
+if (!/^\d+\.\d+\.\d+$/.test(version))
+  throw new Error(`package.json 版本无效：${version}`)
 const artifacts = [
-  path.join(releaseRoot, 'Tibo Watch Setup 0.1.0.exe'),
-  path.join(releaseRoot, 'Tibo Watch-0.1.0-portable.exe'),
+  path.join(releaseRoot, `Tibo Watch Setup ${version}.exe`),
+  path.join(releaseRoot, `Tibo Watch-${version}-portable.exe`),
 ]
 const forbiddenPaths = [/(^|\/)research(\/|$)/i]
 const forbiddenText = ['codexreset.org']

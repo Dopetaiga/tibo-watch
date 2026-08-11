@@ -5,6 +5,7 @@ import {
   type Post,
   type ResetEvent,
   type RuntimeState,
+  type CodexResumeAudit,
 } from './models.js'
 
 function object(value: unknown): Record<string, unknown> | null {
@@ -90,6 +91,22 @@ export function isRuntimeState(value: unknown): value is RuntimeState {
   )
 }
 
+export function isCodexResumeAudit(value: unknown): value is CodexResumeAudit {
+  const record = object(value)
+  return Boolean(
+    isFactRecord(value) &&
+    record &&
+    string(record.resumeId) &&
+    string(record.eventId) &&
+    string(record.threadId) &&
+    ['rule-only', 'rule+ai'].includes(String(record.triggerMode)) &&
+    ['started', 'completed', 'failed', 'blocked'].includes(
+      String(record.status),
+    ) &&
+    string(record.startedAt),
+  )
+}
+
 export const recordKeys = {
   post: (post: Pick<Post, 'postId'>) => post.postId,
   analysis: (analysis: Pick<Analysis, 'postId' | 'analysisVersion'>) =>
@@ -98,4 +115,5 @@ export const recordKeys = {
   notification: (notification: Pick<Notification, 'notificationId'>) =>
     notification.notificationId,
   runtime: () => 'runtime',
+  codexResume: (audit: Pick<CodexResumeAudit, 'resumeId'>) => audit.resumeId,
 } as const
