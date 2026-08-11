@@ -20,6 +20,8 @@
 
 先停止重复启动。若 Windows 事件查看器的 `Microsoft-Windows-CodeIntegrity/Operational` 日志出现事件 3033 或 3077，并说明 `Tibo Watch.exe` 不满足 Enterprise signing level，则是组织的应用控制策略拒绝未签名程序，不是应用数据损坏。不要关闭或绕过企业策略；应使用组织信任的代码签名证书签署构建，或请管理员审核并允许该发布者/文件。当前验证脚本要求看到真实主窗口并通过窗口关闭请求优雅退出，不再把后台进程存在当作启动成功。
 
+发布者可在构建后执行 `npm run verify:signing`；安装器、便携封装和内层 `Tibo Watch.exe` 必须全部返回 `Valid`。Authenticode 有效仅证明文件签名链有效，目标组织是否允许该发布者仍由其策略决定。
+
 ## 数据损坏或重复通知
 
 先退出应用并备份 `data`。索引可从 JSON 事实重建，损坏文件会隔离到 `quarantine`。通知按事件、渠道、语义版本和测试标志幂等；若仍重复，请保留 `notifications` 记录与脱敏请求日志用于诊断，切勿提交凭据。

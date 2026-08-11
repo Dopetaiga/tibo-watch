@@ -448,7 +448,7 @@ Goal 模式应遵守以下工作协议：
 - 没有高优先级已知缺陷、密钥泄露、重复通知或运行时研究站点依赖。
 - MVP Definition of Done 全部满足。
 
-阶段证据（2026-08-11，待外部授权项）：20 个测试文件、54 项测试通过；完整模拟链证明候选帖经规则、模拟 AI、confirmed 事件、幂等通知进入大屏统计，普通帖保持零 AI/事件/通知。24 小时加速测试覆盖 429、503、断网、退避上限、重复帖与 10,000 条默认内存窗口。`research:verify` 回放 1,684 条历史记录，TP=58、FP=0、FN=0、TN=1,626；真实 FxTwitter 只读连接测试沿用 2026-08-09 已完成结果，不重复抓取。当前源码的 NSIS 与便携版可构建，但 Windows Code Integrity 事件 3033/3077 已确认本机 Enterprise signing level 策略拒绝新生成的未签名 EXE；先前仅检查进程存在的便携版验证可能假通过，现已改为必须出现真实主窗口并优雅退出。因此 Windows 成品启动、升级、卸载与数据保留需在受信签名或管理员放行后重新验收。另待用户提供并授权 DeepSeek Key、webhook 目标，以及指定 GitHub 仓库后创建线上草稿 Release。
+阶段证据（2026-08-11，待外部授权项）：20 个测试文件、54 项测试通过；完整模拟链证明候选帖经规则、模拟 AI、confirmed 事件、幂等通知进入大屏统计，普通帖保持零 AI/事件/通知。24 小时加速测试覆盖 429、503、断网、退避上限、重复帖与 10,000 条默认内存窗口。`research:verify` 回放 1,684 条历史记录，TP=58、FP=0、FN=0、TN=1,626；真实 FxTwitter 只读连接测试沿用 2026-08-09 已完成结果，不重复抓取。当前源码的 NSIS 与便携版可构建，但 Windows Code Integrity 事件 3033/3077 已确认本机 Enterprise signing level 策略拒绝新生成的未签名 EXE；`npm run verify:signing` 也已对安装器、便携封装和内层应用逐一确认 `NotSigned`。发布流程现要求三者 Authenticode 状态均为 `Valid`，且先前仅检查进程存在的便携版验证已改为必须出现真实主窗口并优雅退出。因此 Windows 成品启动、升级、卸载与数据保留需在受信签名或管理员放行后重新验收。另待用户提供并授权 DeepSeek Key、webhook 目标，以及指定 GitHub 仓库后创建线上草稿 Release。
 
 ## 8. MVP Definition of Done
 

@@ -16,6 +16,7 @@
     "test:portable": "node scripts/verify-portable-startup.mjs",
     "test:installer": "node scripts/verify-installer-startup.mjs",
     "verify:release": "node scripts/verify-release.mjs",
+    "verify:signing": "node scripts/verify-windows-signing.mjs",
     "research:collect-leads": "node research/scripts/collect-reset-leads.mjs",
     "research:validate": "node research/scripts/validate-provisional-dataset.mjs",
     "research:collect-search": "node research/scripts/collect-fxtwitter-range.mjs",
