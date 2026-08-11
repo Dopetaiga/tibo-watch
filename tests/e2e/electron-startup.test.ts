@@ -5,9 +5,8 @@ test('packaged Windows dashboard starts and renders its safe empty state', async
   const executablePath = path.resolve('release/win-unpacked/Tibo Watch.exe')
   const application = await electron.launch({
     executablePath,
-    // The managed Windows test host cannot launch Chromium's sandboxed child
-    // processes. Production keeps `sandbox: true`; this flag is test-only.
-    args: ['--no-sandbox', '--disable-gpu'],
+    // Match the user's normal launch path without weakening the app sandbox.
+    args: ['--disable-gpu'],
     env: {
       ...process.env,
       PORTABLE_EXECUTABLE_DIR: path.resolve('test-results/portable-root'),
@@ -49,7 +48,10 @@ test('packaged Windows dashboard starts and renders its safe empty state', async
         'refresh',
         'setDeepSeekKey',
         'setSourceEnabled',
+        'setWebhook',
         'testDeepSeek',
+        'testWebhook',
+        'webhookHint',
       ].sort(),
     )
     expect(bridge.model).toMatchObject({ health: 'disabled', events: [] })

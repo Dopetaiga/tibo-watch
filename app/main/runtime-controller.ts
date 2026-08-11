@@ -24,6 +24,11 @@ import { DeepSeekProvider } from '../adapters/ai/deepseek.js'
 import { WindowsCredentialManager } from '../adapters/credentials/windows-credential-manager.js'
 import { NotificationDispatcher } from '../adapters/notifications/dispatcher.js'
 import { WindowsNotificationChannel } from '../adapters/notifications/windows.js'
+import { WebhookNotificationChannel } from '../adapters/notifications/webhook.js'
+import type {
+  NotificationChannel,
+  NotificationMessage,
+} from '../adapters/notifications/types.js'
 import { FxTwitterAdapter } from '../adapters/sources/fx-twitter.js'
 import type { RequestLogEntry } from '../adapters/sources/request-log.js'
 import { PollScheduler } from '../adapters/sources/scheduler.js'
@@ -45,12 +50,14 @@ export class RuntimeController {
   readonly #pipeline: MonitoringPipeline
   readonly #scheduler: PollScheduler
   readonly #requestLogs: RequestLogEntry[] = []
+  readonly #showNotification: (title: string, body: string) => Promise<void>
   #enabled = false
 
   constructor(
     dataRoot: string,
     showNotification: (title: string, body: string) => Promise<void>,
   ) {
+    this.#showNotification = showNotification
     this.#posts = store(dataRoot, 'posts', recordKeys.post, isPost)
     this.#analyses = store(
       dataRoot,
@@ -94,13 +101,7 @@ export class RuntimeController {
     }
     this.#pipeline = new MonitoringPipeline({
       analyze: new AnalysisPipeline(this.#provider, cache),
-      notifications: new NotificationDispatcher({
-        channels: [
-          new WindowsNotificationChannel(async ({ title, body }) =>
-            showNotification(title, body),
-          ),
-        ],
-      }),
+      notifications: { dispatch: (message) => this.#dispatch(message) },
       evaluate: (post) =>
         evaluateRulesV1({
           postId: post.postId,
@@ -165,6 +166,44 @@ export class RuntimeController {
     } finally {
       clearTimeout(timeout)
     }
+  }
+
+  async setWebhook(
+    channel: 'feishu' | 'http',
+    url: string,
+    headers: Record<string, string> = {},
+  ): Promise<void> {
+    validateWebhook(channel, url, headers)
+    await this.#credentials.set(`webhook-${channel}`, 'url', url.trim())
+    await this.#credentials.set(
+      `webhook-${channel}`,
+      'headers',
+      JSON.stringify(headers),
+    )
+  }
+
+  async webhookHint(channel: 'feishu' | 'http'): Promise<string | null> {
+    return this.#credentials.hint(`webhook-${channel}`, 'url')
+  }
+
+  async testWebhook(channel: 'feishu' | 'http'): Promise<Notification> {
+    const configured = await this.#webhookChannel(channel)
+    if (!configured) throw new Error(`${channel} webhook 未配置`)
+    const [result] = await new NotificationDispatcher({
+      channels: [configured],
+      maximumAttempts: 1,
+    }).dispatch({
+      eventId: `configuration-test-${Date.now()}`,
+      semanticVersion: 'configuration-test-v1',
+      title: 'Tibo Watch 通知测试',
+      summaryZh: '这是一条由用户主动发起的测试通知。',
+      expectedWindow: '不适用',
+      uncertainties: [],
+      sourceUrl: 'https://x.com/thsottiaux',
+      isTest: true,
+    })
+    await this.#notifications.put(result)
+    return result
   }
 
   async snapshot(): Promise<DashboardModel> {
@@ -297,6 +336,37 @@ export class RuntimeController {
       ...facts,
     })
   }
+
+  async #dispatch(message: NotificationMessage): Promise<Notification[]> {
+    const channels: NotificationChannel[] = [
+      new WindowsNotificationChannel(async ({ title, body }) =>
+        this.#showNotification(title, body),
+      ),
+    ]
+    for (const kind of ['feishu', 'http'] as const) {
+      const configured = await this.#webhookChannel(kind)
+      if (configured) channels.push(configured)
+    }
+    return new NotificationDispatcher({ channels }).dispatch(message)
+  }
+
+  async #webhookChannel(
+    channel: 'feishu' | 'http',
+  ): Promise<WebhookNotificationChannel | null> {
+    const service = `webhook-${channel}`
+    const url = await this.#credentials.get(service, 'url')
+    if (!url) return null
+    const serializedHeaders = await this.#credentials.get(service, 'headers')
+    const headers = serializedHeaders
+      ? (JSON.parse(serializedHeaders) as Record<string, string>)
+      : {}
+    validateWebhook(channel, url, headers)
+    return new WebhookNotificationChannel({
+      id: channel,
+      url: async () => url,
+      headers: async () => ({ ...headers }),
+    })
+  }
 }
 
 function store<
@@ -343,5 +413,28 @@ function detail(
     version,
     sourceUrl,
     payload: { ...payload },
+  }
+}
+
+export function validateWebhook(
+  channel: 'feishu' | 'http',
+  value: string,
+  headers: Record<string, string>,
+): void {
+  const url = new URL(value.trim())
+  if (url.protocol !== 'https:') throw new Error('Webhook 必须使用 HTTPS')
+  if (
+    channel === 'feishu' &&
+    !['open.feishu.cn', 'open.larksuite.com'].includes(url.hostname)
+  )
+    throw new Error('飞书 webhook 主机无效')
+  for (const [name, headerValue] of Object.entries(headers)) {
+    if (
+      !/^[A-Za-z0-9-]{1,64}$/.test(name) ||
+      /^(host|content-length)$/i.test(name)
+    )
+      throw new Error(`不允许的 webhook 请求头：${name}`)
+    if (typeof headerValue !== 'string' || headerValue.length > 4096)
+      throw new Error(`Webhook 请求头值无效：${name}`)
   }
 }

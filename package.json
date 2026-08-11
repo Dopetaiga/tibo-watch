@@ -30,7 +30,6 @@
     "build:electron": "node scripts/clean-electron-output.mjs && tsc -p tsconfig.electron.json",
     "build": "npm run build:renderer && npm run build:electron && node scripts/verify-runtime-boundary.mjs",
     "pack:dir": "npm run build && electron-builder --dir",
-    "pack:asar": "npm run build && node scripts/pack-local-asar.mjs",
     "dist:win": "npm run build && electron-builder --win nsis portable",
     "verify": "npm run typecheck && npm run lint && npm test && npm run build"
   },

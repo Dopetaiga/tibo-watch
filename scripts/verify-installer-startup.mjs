@@ -63,7 +63,7 @@ function install() {
 async function launch() {
   return electron.launch({
     executablePath: applicationPath,
-    args: ['--no-sandbox', '--disable-gpu'],
+    args: ['--disable-gpu'],
     env: { ...process.env, PORTABLE_EXECUTABLE_DIR: userDataRoot },
   })
 }

@@ -29,6 +29,15 @@ export interface DashboardControls {
   setDeepSeekKey(secret: string): Promise<void>
   deepSeekHint(): Promise<string | null>
   testDeepSeek(): Promise<{ ok: boolean; message: string }>
+  setWebhook(
+    channel: 'feishu' | 'http',
+    url: string,
+    headers: Record<string, string>,
+  ): Promise<void>
+  testWebhook(channel: 'feishu' | 'http'): Promise<{
+    status: string
+    errorCode: string | null
+  }>
 }
 
 export function App({
@@ -43,6 +52,11 @@ export function App({
   const [connectionMessage, setConnectionMessage] = useState<string | null>(
     null,
   )
+  const [webhookChannel, setWebhookChannel] = useState<'feishu' | 'http'>(
+    'feishu',
+  )
+  const [webhookUrl, setWebhookUrl] = useState('')
+  const [webhookHeaders, setWebhookHeaders] = useState('')
   const [detailTab, setDetailTab] = useState<DashboardDetailKind>('post')
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null)
   const statistics = useMemo(
@@ -347,6 +361,76 @@ export function App({
             {connectionMessage && (
               <small role="status">{connectionMessage}</small>
             )}
+          </div>
+          <div className="credential-control">
+            <label htmlFor="webhook-url">通知 Webhook</label>
+            <select
+              value={webhookChannel}
+              onChange={(event) =>
+                setWebhookChannel(event.target.value as 'feishu' | 'http')
+              }
+            >
+              <option value="feishu">飞书</option>
+              <option value="http">通用 HTTP</option>
+            </select>
+            <input
+              id="webhook-url"
+              type="password"
+              autoComplete="off"
+              value={webhookUrl}
+              placeholder="HTTPS webhook；仅保存到 Windows 凭据管理器"
+              onChange={(event) => setWebhookUrl(event.target.value)}
+            />
+            {webhookChannel === 'http' && (
+              <textarea
+                value={webhookHeaders}
+                placeholder={
+                  '可选请求头 JSON，例如 {"Authorization":"Bearer …"}'
+                }
+                onChange={(event) => setWebhookHeaders(event.target.value)}
+              />
+            )}
+            <div>
+              <button
+                disabled={!controls || !webhookUrl.trim()}
+                onClick={() => {
+                  try {
+                    const headers = webhookHeaders.trim()
+                      ? (JSON.parse(webhookHeaders) as Record<string, string>)
+                      : {}
+                    void controls
+                      ?.setWebhook(webhookChannel, webhookUrl, headers)
+                      .then(() => {
+                        setWebhookUrl('')
+                        setWebhookHeaders('')
+                        setConnectionMessage(
+                          `${webhookChannel} webhook 已安全保存`,
+                        )
+                      })
+                      .catch((error) => setConnectionMessage(String(error)))
+                  } catch {
+                    setConnectionMessage('请求头必须是有效 JSON 对象')
+                  }
+                }}
+              >
+                安全保存
+              </button>
+              <button
+                disabled={!controls}
+                onClick={() =>
+                  void controls
+                    ?.testWebhook(webhookChannel)
+                    .then(({ status, errorCode }) =>
+                      setConnectionMessage(
+                        `测试结果：${status}${errorCode ? ` · ${errorCode}` : ''}`,
+                      ),
+                    )
+                    .catch((error) => setConnectionMessage(String(error)))
+                }
+              >
+                发送测试
+              </button>
+            </div>
           </div>
           <div className="request-log">
             <strong>最近请求</strong>

@@ -73,4 +73,34 @@ function registerIpc(controller: RuntimeController): void {
   })
   ipcMain.handle('deepseek:hint', () => controller.deepSeekHint())
   ipcMain.handle('deepseek:test', () => controller.testDeepSeek())
+  ipcMain.handle(
+    'webhook:set',
+    (_event, channel: unknown, url: unknown, headers: unknown) => {
+      if (channel !== 'feishu' && channel !== 'http')
+        throw new Error('Webhook 渠道无效')
+      if (typeof url !== 'string') throw new Error('Webhook URL 必须是字符串')
+      if (
+        !headers ||
+        typeof headers !== 'object' ||
+        Array.isArray(headers) ||
+        !Object.values(headers).every((value) => typeof value === 'string')
+      )
+        throw new Error('Webhook 请求头必须是字符串对象')
+      return controller.setWebhook(
+        channel,
+        url,
+        headers as Record<string, string>,
+      )
+    },
+  )
+  ipcMain.handle('webhook:hint', (_event, channel: unknown) => {
+    if (channel !== 'feishu' && channel !== 'http')
+      throw new Error('Webhook 渠道无效')
+    return controller.webhookHint(channel)
+  })
+  ipcMain.handle('webhook:test', (_event, channel: unknown) => {
+    if (channel !== 'feishu' && channel !== 'http')
+      throw new Error('Webhook 渠道无效')
+    return controller.testWebhook(channel)
+  })
 }

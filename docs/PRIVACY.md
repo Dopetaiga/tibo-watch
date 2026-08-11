@@ -6,4 +6,8 @@ Tibo Watch 是本地优先的 Windows 应用，没有中心服务器、账号系
 
 DeepSeek Key 和 webhook 密钥保存于 Windows 凭据管理器，事实记录、日志与导出中不包含密钥。渲染进程只能提交新密钥，不能读取明文。
 
+兼容性说明：当前支持的 Windows 主机上，Chromium 沙箱子进程会触发原生 `0x80000003` 崩溃，因此 Windows 构建暂时关闭 Chromium sandbox。应用仍启用 context isolation、禁用 renderer Node、严格 CSP、权限拒绝和白名单 IPC；在 Electron/Windows 兼容性问题解决前，这是明确记录的安全折中。
+
+兼容性说明：当前支持的 Windows 主机上，Chromium 沙箱子进程会触发原生 `0x80000003` 崩溃，因此 Windows 构建暂时关闭 Chromium sandbox。应用仍启用 context isolation、禁用 renderer Node、严格 CSP、权限拒绝和白名单 IPC；在 Electron/Windows 兼容性问题解决前，这是明确记录的安全折中。
+
 安装版数据位于 `%APPDATA%\Tibo Watch\data`。便携版数据位于便携程序同目录的 `Tibo Watch Data\data`。卸载程序默认保留用户数据，便于重装恢复；如需彻底删除，请退出应用后手动删除相应数据目录和 Windows 凭据管理器中以 `TiboWatch/` 开头的条目。

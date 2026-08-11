@@ -10,4 +10,13 @@ contextBridge.exposeInMainWorld('tiboWatch', {
     ipcRenderer.invoke('deepseek:set-key', secret),
   deepSeekHint: () => ipcRenderer.invoke('deepseek:hint'),
   testDeepSeek: () => ipcRenderer.invoke('deepseek:test'),
+  setWebhook: (
+    channel: 'feishu' | 'http',
+    url: string,
+    headers: Record<string, string>,
+  ) => ipcRenderer.invoke('webhook:set', channel, url, headers),
+  webhookHint: (channel: 'feishu' | 'http') =>
+    ipcRenderer.invoke('webhook:hint', channel),
+  testWebhook: (channel: 'feishu' | 'http') =>
+    ipcRenderer.invoke('webhook:test', channel),
 })

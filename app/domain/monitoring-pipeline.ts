@@ -72,7 +72,15 @@ export class MonitoringPipeline {
         notifications: [],
       }
     }
-    await this.options.events.put(event)
+    const persistedEvent = await this.options.events.put(event)
+    if (
+      persistedEvent &&
+      typeof persistedEvent === 'object' &&
+      'created' in persistedEvent &&
+      persistedEvent.created === false
+    ) {
+      return { post, ruleResult, analysisResult, event, notifications: [] }
+    }
     const notificationMessage: NotificationMessage = {
       eventId: event.eventId,
       semanticVersion: analysis.analysisVersion,

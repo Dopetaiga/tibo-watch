@@ -414,13 +414,19 @@ td small {
   font-size: 0.82rem;
   font-weight: 700;
 }
-.credential-control input {
+.credential-control input,
+.credential-control select,
+.credential-control textarea {
   min-width: 0;
   padding: 9px 10px;
   border: 1px solid #304158;
   border-radius: 7px;
   background: #080f18;
   color: #e7f0fb;
+}
+.credential-control textarea {
+  min-height: 64px;
+  resize: vertical;
 }
 .credential-control > div {
   display: flex;

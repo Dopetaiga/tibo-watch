@@ -10,6 +10,16 @@ declare global {
       setDeepSeekKey(secret: string): Promise<void>
       deepSeekHint(): Promise<string | null>
       testDeepSeek(): Promise<{ ok: boolean; message: string }>
+      setWebhook(
+        channel: 'feishu' | 'http',
+        url: string,
+        headers: Record<string, string>,
+      ): Promise<void>
+      webhookHint(channel: 'feishu' | 'http'): Promise<string | null>
+      testWebhook(channel: 'feishu' | 'http'): Promise<{
+        status: 'pending' | 'sent' | 'failed' | 'suppressed'
+        errorCode: string | null
+      }>
     }
   }
 }

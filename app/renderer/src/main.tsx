@@ -34,6 +34,9 @@ export function RuntimeApp() {
         setDeepSeekKey: (secret) => window.tiboWatch!.setDeepSeekKey(secret),
         deepSeekHint: () => window.tiboWatch!.deepSeekHint(),
         testDeepSeek: () => window.tiboWatch!.testDeepSeek(),
+        setWebhook: (channel, url, headers) =>
+          window.tiboWatch!.setWebhook(channel, url, headers),
+        testWebhook: (channel) => window.tiboWatch!.testWebhook(channel),
       }
     : undefined
   return <App model={model} controls={controls} />
