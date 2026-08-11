@@ -1,11 +1,6 @@
-export interface DashboardEvent {
-  id: string
-  title: string
-  type: 'forced' | 'compensation' | 'banked'
-  status: 'confirmed' | 'expected' | 'candidate'
-  occurredAt: string
-  sourceUrl: string
-}
+import type { DashboardEvent } from '../../domain/dashboard'
+
+export type { DashboardEvent } from '../../domain/dashboard'
 
 export function eventStatistics(events: DashboardEvent[], now = new Date()) {
   const confirmed = events.filter(({ status }) => status === 'confirmed')

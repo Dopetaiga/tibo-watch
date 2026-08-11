@@ -27,9 +27,10 @@
     "research:validate-timeline": "node research/scripts/validate-timeline-research.mjs",
     "research:verify": "npm run research:validate && npm run research:validate-timeline && npm run research:evaluate-candidate",
     "build:renderer": "vite build",
-    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:electron": "node scripts/clean-electron-output.mjs && tsc -p tsconfig.electron.json",
     "build": "npm run build:renderer && npm run build:electron && node scripts/verify-runtime-boundary.mjs",
     "pack:dir": "npm run build && electron-builder --dir",
+    "pack:asar": "npm run build && node scripts/pack-local-asar.mjs",
     "dist:win": "npm run build && electron-builder --win nsis portable",
     "verify": "npm run typecheck && npm run lint && npm test && npm run build"
   },
@@ -58,6 +59,7 @@
   "build": {
     "appId": "dev.tibowatch.app",
     "productName": "Tibo Watch",
+    "electronDist": "node_modules/electron/dist",
     "asar": true,
     "files": [
       "dist/**/*",

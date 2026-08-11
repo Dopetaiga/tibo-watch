@@ -1,4 +1,4 @@
-import type { PostSourceAdapter, SourceCursor } from './types.js'
+import type { PostSourceAdapter, SourceCursor, SourcePost } from './types.js'
 import { SourceHttpError } from './types.js'
 
 export interface SchedulerState {
@@ -19,7 +19,8 @@ export interface SchedulerOptions {
   maximumBackoffMs?: number
   jitter?: () => number
   now?: () => number
-  onPosts?: (ids: string[]) => Promise<void>
+  onPosts?: (posts: SourcePost[]) => Promise<void>
+  maximumSeenPostIds?: number
 }
 
 export class PollScheduler {
@@ -29,6 +30,7 @@ export class PollScheduler {
   #inFlight: Promise<SchedulerState> | null = null
   #activeUntil = 0
   #seenPostIds = new Set<string>()
+  #seenPostOrder: string[] = []
   #state: SchedulerState
   #timer: ReturnType<typeof setTimeout> | null = null
   #running = false
@@ -44,6 +46,7 @@ export class PollScheduler {
       maximumBackoffMs: options.maximumBackoffMs ?? 30 * 60_000,
       jitter: options.jitter ?? Math.random,
       now: options.now ?? Date.now,
+      maximumSeenPostIds: options.maximumSeenPostIds ?? 10_000,
     }
     this.#state = {
       sourceStatus: 'degraded',
@@ -83,6 +86,14 @@ export class PollScheduler {
     return { ...this.#state }
   }
 
+  diagnostics(): { seenPostIds: number; inFlight: boolean; running: boolean } {
+    return {
+      seenPostIds: this.#seenPostIds.size,
+      inFlight: this.#inFlight !== null,
+      running: this.#running,
+    }
+  }
+
   async #poll(): Promise<SchedulerState> {
     const checkedAt = new Date(this.#options.now()).toISOString()
     const controller = new AbortController()
@@ -96,11 +107,19 @@ export class PollScheduler {
         controller.signal,
       )
       this.#cursor = result.cursor
-      const newIds = result.posts
-        .map(({ id }) => id)
-        .filter((id) => !this.#seenPostIds.has(id))
-      newIds.forEach((id) => this.#seenPostIds.add(id))
-      if (newIds.length) await this.#options.onPosts?.(newIds)
+      const newPosts = result.posts.filter(
+        ({ id }) => !this.#seenPostIds.has(id),
+      )
+      const newIds = newPosts.map(({ id }) => id)
+      newIds.forEach((id) => {
+        this.#seenPostIds.add(id)
+        this.#seenPostOrder.push(id)
+      })
+      while (this.#seenPostOrder.length > this.#options.maximumSeenPostIds) {
+        const oldest = this.#seenPostOrder.shift()
+        if (oldest) this.#seenPostIds.delete(oldest)
+      }
+      if (newPosts.length) await this.#options.onPosts?.(newPosts)
       const baseDelay =
         this.#options.now() < this.#activeUntil
           ? this.#options.activeIntervalMs

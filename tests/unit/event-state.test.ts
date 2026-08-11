@@ -15,6 +15,7 @@ const event: ResetEvent = {
   analysisVersion: 'analysis-v1',
   status: 'candidate',
   eventType: 'explicit_future',
+  resetKind: 'forced',
   scope: 'Codex',
   expectedStart: null,
   expectedEnd: null,

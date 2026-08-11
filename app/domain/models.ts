@@ -48,6 +48,7 @@ export interface ResetEvent extends FactRecord {
   analysisVersion: string
   status: ResetEventStatus
   eventType: 'completed' | 'explicit_future' | 'vague_intent'
+  resetKind: 'forced' | 'compensation' | 'banked'
   scope: string
   expectedStart: string | null
   expectedEnd: string | null

@@ -1,53 +1,11 @@
 import { useMemo, useState } from 'react'
-import {
-  calendarDays,
-  eventStatistics,
-  type DashboardEvent,
-} from './dashboard-model'
+import { calendarDays, eventStatistics } from './dashboard-model'
+import type {
+  DashboardDetailKind,
+  DashboardModel,
+} from '../../domain/dashboard'
 
-type Health = 'healthy' | 'degraded' | 'offline' | 'disabled'
-
-interface DashboardPost {
-  id: string
-  excerpt: string
-  capturedAt: string
-  ruleMatched: boolean
-  aiCalled: boolean
-  formedEvent: boolean
-}
-
-type DetailKind = 'post' | 'analysis' | 'event' | 'notification'
-
-export interface DashboardDetail {
-  id: string
-  title: string
-  timestamp: string
-  version: string
-  sourceUrl?: string
-  payload: Record<string, unknown>
-}
-
-export interface DashboardModel {
-  health: Health
-  lastCheckedAt: string | null
-  consecutiveFailures: number
-  pollingIntervalMinutes: number
-  stale: boolean
-  prediction24h: string | null
-  prediction48h: string | null
-  latestSummary: string | null
-  latestSourceUrl: string | null
-  latestEvidence: string[]
-  posts: DashboardPost[]
-  events: DashboardEvent[]
-  requestLogs: Array<{
-    timestamp: string
-    target: string
-    status: string
-    durationMs: number
-  }>
-  details?: Partial<Record<DetailKind, DashboardDetail[]>>
-}
+export type { DashboardDetail, DashboardModel } from '../../domain/dashboard'
 
 const emptyModel: DashboardModel = {
   health: 'disabled',
@@ -65,13 +23,27 @@ const emptyModel: DashboardModel = {
   requestLogs: [],
 }
 
-export function App({ model = emptyModel }: { model?: DashboardModel }) {
-  const [sourceEnabled, setSourceEnabled] = useState(
-    model.health !== 'disabled',
+export interface DashboardControls {
+  setSourceEnabled(enabled: boolean): Promise<void>
+  refresh(): Promise<void>
+  setDeepSeekKey(secret: string): Promise<void>
+  deepSeekHint(): Promise<string | null>
+  testDeepSeek(): Promise<{ ok: boolean; message: string }>
+}
+
+export function App({
+  model = emptyModel,
+  controls,
+}: {
+  model?: DashboardModel
+  controls?: DashboardControls
+}) {
+  const sourceEnabled = model.health !== 'disabled'
+  const [deepSeekKey, setDeepSeekKey] = useState('')
+  const [connectionMessage, setConnectionMessage] = useState<string | null>(
+    null,
   )
-  const [aiEnabled, setAiEnabled] = useState(false)
-  const [webhooksEnabled, setWebhooksEnabled] = useState(false)
-  const [detailTab, setDetailTab] = useState<DetailKind>('post')
+  const [detailTab, setDetailTab] = useState<DashboardDetailKind>('post')
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null)
   const statistics = useMemo(
     () => eventStatistics(model.events),
@@ -319,18 +291,63 @@ export function App({ model = emptyModel }: { model?: DashboardModel }) {
           <Toggle
             label="数据源请求"
             checked={sourceEnabled}
-            onChange={setSourceEnabled}
+            onChange={(enabled) => {
+              void controls
+                ?.setSourceEnabled(enabled)
+                .catch((error) => setConnectionMessage(String(error)))
+            }}
           />
-          <Toggle
-            label="DeepSeek 分析"
-            checked={aiEnabled}
-            onChange={setAiEnabled}
-          />
-          <Toggle
-            label="Webhook 通知"
-            checked={webhooksEnabled}
-            onChange={setWebhooksEnabled}
-          />
+          <div className="credential-control">
+            <label htmlFor="deepseek-key">DeepSeek API Key</label>
+            <input
+              id="deepseek-key"
+              type="password"
+              autoComplete="off"
+              value={deepSeekKey}
+              placeholder="仅保存到 Windows 凭据管理器"
+              onChange={(event) => setDeepSeekKey(event.target.value)}
+            />
+            <div>
+              <button
+                disabled={!controls || deepSeekKey.trim().length < 16}
+                onClick={() => {
+                  void controls
+                    ?.setDeepSeekKey(deepSeekKey)
+                    .then(() => {
+                      setDeepSeekKey('')
+                      setConnectionMessage('DeepSeek Key 已安全保存')
+                    })
+                    .catch((error) => setConnectionMessage(String(error)))
+                }}
+              >
+                安全保存
+              </button>
+              <button
+                disabled={!controls}
+                onClick={() => {
+                  void controls
+                    ?.testDeepSeek()
+                    .then(({ message }) => setConnectionMessage(message))
+                    .catch((error) => setConnectionMessage(String(error)))
+                }}
+              >
+                连接测试
+              </button>
+              <button
+                disabled={!controls || !sourceEnabled}
+                onClick={() =>
+                  void controls
+                    ?.refresh()
+                    .catch((error) => setConnectionMessage(String(error)))
+                }
+              >
+                立即检查
+              </button>
+            </div>
+            {connectionMessage && (
+              <small role="status">{connectionMessage}</small>
+            )}
+          </div>
           <div className="request-log">
             <strong>最近请求</strong>
             {model.requestLogs.length ? (
@@ -437,7 +454,7 @@ function formatUtc(value: string) {
   return new Date(value).toISOString().replace('.000Z', ' UTC')
 }
 
-function detailLabel(kind: DetailKind) {
+function detailLabel(kind: DashboardDetailKind) {
   return {
     post: '帖子',
     analysis: '分析',

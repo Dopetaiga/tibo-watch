@@ -17,6 +17,7 @@ describe('event report', () => {
       analysisVersion: 'a1',
       status: 'confirmed' as const,
       eventType: 'completed' as const,
+      resetKind: 'forced' as const,
       scope: 'Codex',
       expectedStart: null,
       expectedEnd: null,

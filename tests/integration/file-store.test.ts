@@ -82,7 +82,11 @@ describe('JSON record store', () => {
   it('ignores an interrupted temporary write', async () => {
     const { rootDirectory, store } = await createStore()
     await store.put(post('stable'))
-    await writeFile(path.join(rootDirectory, 'posts', '.stable.interrupted.tmp'), '{"partial":', 'utf8')
+    await writeFile(
+      path.join(rootDirectory, 'posts', '.stable.interrupted.tmp'),
+      '{"partial":',
+      'utf8',
+    )
     expect((await store.list()).map(({ postId }) => postId)).toEqual(['stable'])
     expect((await store.get('stable')).contentHash).toBe('a'.repeat(64))
   })

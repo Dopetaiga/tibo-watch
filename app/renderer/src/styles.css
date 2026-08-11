@@ -401,6 +401,47 @@ td small {
   display: grid;
   gap: 7px;
 }
+.credential-control {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #26364b;
+  border-radius: 9px;
+  background: #0b1420;
+}
+.credential-control label {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.credential-control input {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #304158;
+  border-radius: 7px;
+  background: #080f18;
+  color: #e7f0fb;
+}
+.credential-control > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.credential-control button {
+  padding: 7px 10px;
+  border: 1px solid #32506a;
+  border-radius: 7px;
+  background: #122234;
+  color: #cce0f5;
+  cursor: pointer;
+}
+.credential-control button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.credential-control small {
+  color: #8fa5bd;
+}
 .request-log strong {
   font-size: 0.84rem;
 }

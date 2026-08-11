@@ -8,6 +8,10 @@ test('packaged Windows dashboard starts and renders its safe empty state', async
     // The managed Windows test host cannot launch Chromium's sandboxed child
     // processes. Production keeps `sandbox: true`; this flag is test-only.
     args: ['--no-sandbox', '--disable-gpu'],
+    env: {
+      ...process.env,
+      PORTABLE_EXECUTABLE_DIR: path.resolve('test-results/portable-root'),
+    },
   })
 
   try {
@@ -26,6 +30,29 @@ test('packaged Windows dashboard starts and renders its safe empty state', async
     await expect(
       window.getByRole('heading', { name: '事件热力图' }),
     ).toBeVisible()
+    const bridge = await window.evaluate(async () => {
+      const api = (
+        globalThis as unknown as {
+          tiboWatch?: { getDashboard(): Promise<unknown> }
+        }
+      ).tiboWatch
+      return {
+        keys: Object.keys(api ?? {}).sort(),
+        model: await api?.getDashboard(),
+      }
+    })
+    expect(bridge.keys).toEqual(
+      [
+        'deepSeekHint',
+        'getDashboard',
+        'platform',
+        'refresh',
+        'setDeepSeekKey',
+        'setSourceEnabled',
+        'testDeepSeek',
+      ].sort(),
+    )
+    expect(bridge.model).toMatchObject({ health: 'disabled', events: [] })
   } finally {
     await application.evaluate(({ app }) => app.quit())
   }

@@ -12,6 +12,7 @@
   "include": [
     "app/main/**/*.ts",
     "app/preload/**/*.ts",
+    "app/preload/**/*.cts",
     "app/domain/**/*.ts",
     "app/adapters/**/*.ts",
     "app/rules/**/*.ts"

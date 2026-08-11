@@ -59,7 +59,9 @@ if (!launcher.killed && launcher.exitCode === null) launcher.kill()
 
 const runningApplication = started[0]
 if (!runningApplication) {
-  throw new Error(`便携版未在 45 秒内显示主窗口；新进程：${JSON.stringify(started)}`)
+  throw new Error(
+    `便携版未在 45 秒内显示主窗口；新进程：${JSON.stringify(started)}`,
+  )
 }
 
 console.log(`便携版启动验证通过：pid=${runningApplication.Id}`)

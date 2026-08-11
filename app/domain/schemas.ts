@@ -60,7 +60,8 @@ export function isResetEvent(value: unknown): value is ResetEvent {
     string(record.postId) &&
     ['candidate', 'expected', 'confirmed', 'denied', 'expired'].includes(
       String(record.status),
-    ),
+    ) &&
+    ['forced', 'compensation', 'banked'].includes(String(record.resetKind)),
   )
 }
 

@@ -23,7 +23,11 @@ describe('Electron security baseline', () => {
 
   it('exposes no credential or filesystem capability through preload', () => {
     const preload = readFileSync('app/preload/index.cts', 'utf8')
-    expect(preload).not.toMatch(/credential|secret|token|readFile|writeFile/i)
+    expect(preload).not.toMatch(
+      /readFile|writeFile|getDeepSeekKey|getCredential/i,
+    )
+    expect(preload).toContain("ipcRenderer.invoke('deepseek:set-key', secret)")
+    expect(preload).toContain("ipcRenderer.invoke('deepseek:hint')")
     expect(preload).toContain('platform: process.platform')
   })
 })

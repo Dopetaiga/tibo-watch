@@ -4,6 +4,8 @@ Tibo Watch 是一个 Windows 优先、本地优先的开源桌面助手，仅监
 
 当前处于 MVP 开发阶段。完整范围、产品边界和验收条件见 [ROADMAP.md](ROADMAP.md)。
 
+用户文档：[隐私说明](docs/PRIVACY.md) · [数据与导出](docs/DATA-EXPORT.md) · [故障排查](docs/TROUBLESHOOTING.md) · [发布检查清单](docs/RELEASE-CHECKLIST.md)
+
 ## 隐私与边界
 
 - 默认数据只保存在本机。
@@ -20,6 +22,8 @@ npm ci
 npm run verify
 npm run dist:win
 ```
+
+首次启动后，在大屏“设置与请求日志”中启用数据源。DeepSeek Key 通过“安全保存”写入 Windows 凭据管理器；只有规则命中的候选帖才会触发分析。安装版数据默认保存在 `%APPDATA%\Tibo Watch\data`，便携版数据保存在程序同目录的 `Tibo Watch Data\data`。
 
 未签名的 Windows 构建可能触发 SmartScreen；发布版会同时提供 SHA-256 校验文件。
 
