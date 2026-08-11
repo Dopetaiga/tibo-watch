@@ -409,15 +409,15 @@ Goal 模式应遵守以下工作协议：
 
 目标：实现可控的软件升级，并证明研究内容不会进入运行时。
 
-- [ ] 通过 GitHub Releases 自动检查新版本，由用户确认后下载和安装。
-- [ ] 更新不得静默安装。
-- [ ] 发布安装版、便携版和 SHA-256 校验文件。
-- [ ] 未获得代码签名证书前，在 README 和发布说明解释 SmartScreen 提示。
-- [ ] 规则升级默认只影响新帖子；历史重放必须由用户手动触发。
-- [ ] 新旧规则重放结果并列展示，不覆盖旧分析。
-- [ ] 新规则校验或运行失败时回退到内置上一版。
-- [ ] 扫描最终 ASAR、resources 和安装包内容，禁止包含 `research/` 及研究站点域名。
-- [ ] 完成 Electron 安全基线：sandbox、contextIsolation、禁用 renderer Node、最小 IPC、严格 CSP。
+- [x] 通过 GitHub Releases 自动检查新版本，由用户确认后下载和安装。
+- [x] 更新不得静默安装。
+- [x] 发布安装版、便携版和 SHA-256 校验文件。
+- [x] 未获得代码签名证书前，在 README 和发布说明解释 SmartScreen 提示。
+- [x] 规则升级默认只影响新帖子；历史重放必须由用户手动触发。
+- [x] 新旧规则重放结果并列展示，不覆盖旧分析。
+- [x] 新规则校验或运行失败时回退到内置上一版。
+- [x] 扫描最终 ASAR、resources 和安装包内容，禁止包含 `research/` 及研究站点域名。
+- [x] 完成 Electron 安全基线：sandbox、contextIsolation、禁用 renderer Node、最小 IPC、严格 CSP。
 
 验收：
 
@@ -425,6 +425,8 @@ Goal 模式应遵守以下工作协议：
 - 被篡改的规则或更新元数据不会被加载。
 - 最终运行包中不存在 codexreset.org 或同类研究站点字符串及抓取代码。
 - 渲染进程无法直接读取凭据或任意文件。
+
+证据（2026-08-11）：GitHub Release 检查器仅接受与 Release 资源完全一致的 Ed25519 签名清单，安装前再次验证 SHA-256，并在未明确确认时保证零下载、零启动；周期检查会隔离离线错误。Windows 安装适配器只在受控临时目录暂存 `.exe`。规则注册表强制安装校验，校验失败保持内置当前版；手动重放函数只返回新旧版本并列结果，不改写输入或历史记录。`npm run verify` 的 49 项测试覆盖元数据篡改、哈希、确认门禁、离线、回退、重放、最小 preload 和 CSP；`npm run verify:release` 扫描 42 个 ASAR 条目、resources 与两类 EXE，并生成 `release/SHA256SUMS.txt`。README 已记录 SmartScreen 与校验流程。
 
 ### Phase 8：端到端验证与 MVP 发布
 

@@ -15,6 +15,7 @@
     "test:e2e": "playwright test",
     "test:portable": "node scripts/verify-portable-startup.mjs",
     "test:installer": "node scripts/verify-installer-startup.mjs",
+    "verify:release": "node scripts/verify-release.mjs",
     "research:collect-leads": "node research/scripts/collect-reset-leads.mjs",
     "research:validate": "node research/scripts/validate-provisional-dataset.mjs",
     "research:collect-search": "node research/scripts/collect-fxtwitter-range.mjs",

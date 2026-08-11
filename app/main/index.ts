@@ -20,6 +20,12 @@ function createWindow(): void {
   })
 
   window.removeMenu()
+  window.webContents.session.setPermissionRequestHandler(
+    (_webContents, _permission, callback) => callback(false),
+  )
+  window.webContents.on('will-navigate', (event, url) => {
+    if (url !== window.webContents.getURL()) event.preventDefault()
+  })
   window.once('ready-to-show', () => window.show())
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https://')) void shell.openExternal(url)

@@ -14,9 +14,13 @@ export class RuleRegistry<Input, Output> {
     this.#currentVersion = initial.version
   }
 
-  install(engine: VersionedRuleEngine<Input, Output>): void {
+  install(
+    engine: VersionedRuleEngine<Input, Output>,
+    validate: (engine: VersionedRuleEngine<Input, Output>) => void,
+  ): void {
     if (this.#engines.has(engine.version))
       throw new Error(`规则版本已存在：${engine.version}`)
+    validate(engine)
     this.#engines.set(engine.version, engine)
     this.#previousVersion = this.#currentVersion
     this.#currentVersion = engine.version
