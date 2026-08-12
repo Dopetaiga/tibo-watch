@@ -54,6 +54,20 @@ describe('dashboard statistics', () => {
     })
   })
 
+  it('does not anchor the baseline to future or candidate messages', () => {
+    expect(resetOverview([events[2]])).toEqual({
+      lastObservedResetAt: null,
+      baselineNextResetAt: null,
+    })
+  })
+
+  it('does not anchor the baseline to a banked reset', () => {
+    expect(resetOverview([events[1]])).toEqual({
+      lastObservedResetAt: null,
+      baselineNextResetAt: null,
+    })
+  })
+
   it('renders untrusted detail payloads through React text nodes only', () => {
     const source = readFileSync('app/renderer/src/App.tsx', 'utf8')
     expect(source).not.toContain('dangerouslySetInnerHTML')

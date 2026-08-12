@@ -1,5 +1,11 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
 import { createInterface } from 'node:readline'
+import { existsSync } from 'node:fs'
+import { execFile } from 'node:child_process'
+import path from 'node:path'
+import { promisify } from 'node:util'
+
+const execFileAsync = promisify(execFile)
 
 export interface JsonRpcTransport {
   request<T>(method: string, params?: Record<string, unknown>): Promise<T>
@@ -25,8 +31,11 @@ export interface CodexRateLimitSnapshot {
 export class CodexAppServerClient {
   constructor(readonly transport: JsonRpcTransport) {}
 
-  static async connect(): Promise<CodexAppServerClient> {
-    const transport = new StdioJsonRpcTransport()
+  static async connect(
+    configuredExecutable?: string | null,
+  ): Promise<CodexAppServerClient> {
+    const executable = await resolveCodexExecutable(configuredExecutable)
+    const transport = new StdioJsonRpcTransport(executable)
     const client = new CodexAppServerClient(transport)
     await client.initialize()
     return client
@@ -86,7 +95,10 @@ export class CodexAppServerClient {
       .filter((value): value is CodexThreadSummary => Boolean(value))
   }
 
-  async resumeThread(threadId: string): Promise<{ turnId: string }> {
+  async resumeThread(
+    threadId: string,
+    instruction = '从上次中断处继续。先检查当前工作区和任务状态，避免重复已经完成的步骤；保持原有权限边界。',
+  ): Promise<{ turnId: string }> {
     if (!/^[A-Za-z0-9_-]{3,200}$/.test(threadId))
       throw new Error('Codex 线程 ID 无效')
     const read = await this.transport.request<{
@@ -102,7 +114,7 @@ export class CodexAppServerClient {
         input: [
           {
             type: 'text',
-            text: '从上次中断处继续。先检查当前工作区和任务状态，避免重复已经完成的步骤；保持原有权限边界。',
+            text: instruction,
           },
         ],
       },
@@ -128,10 +140,24 @@ class StdioJsonRpcTransport implements JsonRpcTransport {
   >()
   #id = 0
 
-  constructor() {
-    this.#child = spawn('codex', ['app-server', '--listen', 'stdio://'], {
+  constructor(executable: string) {
+    const windowsScript =
+      process.platform === 'win32' && /\.(?:cmd|bat)$/i.test(executable)
+    const command = windowsScript ? 'cmd.exe' : executable
+    const args = windowsScript
+      ? [
+          '/d',
+          '/s',
+          '/c',
+          'call "%TIBO_CODEX_EXECUTABLE%" app-server --listen stdio://',
+        ]
+      : ['app-server', '--listen', 'stdio://']
+    this.#child = spawn(command, args, {
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],
+      env: windowsScript
+        ? { ...process.env, TIBO_CODEX_EXECUTABLE: executable }
+        : process.env,
     })
     createInterface({ input: this.#child.stdout }).on('line', (line) =>
       this.#onLine(line),
@@ -194,6 +220,59 @@ class StdioJsonRpcTransport implements JsonRpcTransport {
     }
     this.#pending.clear()
   }
+}
+
+export async function resolveCodexExecutable(
+  configured?: string | null,
+): Promise<string> {
+  if (
+    configured &&
+    existsSync(configured) &&
+    !isPackagedWindowsAppPath(configured)
+  )
+    return configured
+  if (process.platform !== 'win32') return 'codex'
+  const localAppData = process.env.LOCALAPPDATA
+  if (localAppData) {
+    const managedExecutable = path.join(
+      localAppData,
+      'TiboWatch',
+      'codex-cli',
+      'node_modules',
+      '@openai',
+      'codex-win32-x64',
+      'vendor',
+      'x86_64-pc-windows-msvc',
+      'bin',
+      'codex.exe',
+    )
+    if (existsSync(managedExecutable)) return managedExecutable
+  }
+  const appData = process.env.APPDATA
+  if (appData) {
+    const npmShim = path.join(appData, 'npm', 'codex.cmd')
+    if (existsSync(npmShim)) return npmShim
+  }
+  try {
+    const script =
+      "$command=Get-Command codex.cmd -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Source; if ($command) { $command; exit 0 }; $command=Get-Command codex.exe -ErrorAction SilentlyContinue | Where-Object { $_.Source -notlike '*\\Program Files\\WindowsApps\\*' } | Select-Object -First 1 -ExpandProperty Source; if ($command) { $command }"
+    const { stdout } = await execFileAsync(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', script],
+      { windowsHide: true, timeout: 8_000 },
+    )
+    const candidate = stdout.trim()
+    if (candidate && existsSync(candidate)) return candidate
+  } catch {
+    // Report the actionable CLI requirement below.
+  }
+  throw new Error(
+    '检测到的 Codex 来自受保护的 Windows Desktop 安装包，第三方应用无法直接启动。请先安装独立 Codex CLI，然后重新探测。',
+  )
+}
+
+function isPackagedWindowsAppPath(value: string): boolean {
+  return /[\\/]Program Files[\\/]WindowsApps[\\/]/i.test(value)
 }
 
 function normalizeThread(value: unknown): CodexThreadSummary | null {

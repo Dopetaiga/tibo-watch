@@ -2,10 +2,10 @@
 
 1. 执行 `npm ci`、`npm run research:verify`、`npm run verify`。
 2. 使用组织信任的代码签名证书构建。electron-builder 从当前进程的 `CSC_LINK` 与 `CSC_KEY_PASSWORD` 读取证书位置和密码；不要把证书、密码或对应命令写入仓库、日志或 shell 历史。
-3. 执行 `npm run dist:win`，生成 NSIS 安装版和便携版，然后立即清除当前进程中的签名环境变量。
-4. 执行 `npm run verify:signing`。安装器、便携封装和 `win-unpacked/Tibo Watch.exe` 必须全部显示 `Valid`；组织策略是否信任该发布者仍需在目标 Windows 主机实测。
-5. 执行 `npm run test:installer`、`npm run test:portable`、`npm run verify:release`。
-6. 确认 `release/SHA256SUMS.txt`、安装版、便携版版本一致。
+3. 执行 `npm run dist:win`，生成 NSIS 安装版，然后立即清除当前进程中的签名环境变量。
+4. 执行 `npm run verify:signing`。安装器和 `win-unpacked/Tibo Watch.exe` 必须全部显示 `Valid`；组织策略是否信任该发布者仍需在目标 Windows 主机实测。
+5. 执行 `npm run test:installer`、`npm run verify:release`。
+6. 确认 `release/SHA256SUMS.txt` 与安装版版本一致。
 7. 在隔离测试目录验证首次启动、退出恢复、升级、卸载以及用户数据保留。
 8. 创建 GitHub Release 草稿，附签名发布者、SmartScreen 说明、变更摘要和 SHA-256；经用户批准后才能公开。
 

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { NotificationDispatcher } from '../../app/adapters/notifications/dispatcher'
 import type {
   NotificationChannel,
@@ -37,6 +38,15 @@ function channel(
 }
 
 describe('notification dispatcher', () => {
+  it('keeps configuration tests out of persistent notification history', () => {
+    const source = readFileSync('app/main/runtime-controller.ts', 'utf8')
+    const method = source.slice(
+      source.indexOf('async testWebhook'),
+      source.indexOf('async setCodexExecutablePath'),
+    )
+    expect(method).not.toContain('this.#notifications.put')
+  })
+
   it('isolates channel failure and sends each semantic version once', async () => {
     const windows = channel('windows', true)
     const http = channel('http', false)

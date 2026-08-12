@@ -1,14 +1,14 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 
 if (process.platform !== 'win32')
   throw new Error('Windows Authenticode 验证只能在 Windows 上执行')
 
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 const targets = [
   path.resolve('release/win-unpacked/Tibo Watch.exe'),
-  path.resolve('release/Tibo Watch Setup 0.1.0.exe'),
-  path.resolve('release/Tibo Watch-0.1.0-portable.exe'),
+  path.resolve(`release/Tibo Watch Setup ${version}.exe`),
 ]
 
 for (const target of targets) {

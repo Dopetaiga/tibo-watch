@@ -5,7 +5,7 @@ import type {
 } from '../adapters/ai/pipeline.js'
 import type { NotificationDispatcher } from '../adapters/notifications/dispatcher.js'
 import type { NotificationMessage } from '../adapters/notifications/types.js'
-import type { RuleResult } from '../rules/rules-v1.js'
+import { isExplicitCompletedReset, type RuleResult } from '../rules/rules-v1.js'
 import type { Analysis, Notification, Post, ResetEvent } from './models.js'
 
 export interface FactSink<T> {
@@ -39,15 +39,22 @@ export interface MonitoringResult {
 export class MonitoringPipeline {
   constructor(readonly options: MonitoringPipelineOptions) {}
 
-  async process(post: Post, signal: AbortSignal): Promise<MonitoringResult> {
+  async process(
+    post: Post,
+    signal: AbortSignal,
+    options: { manualAiReview?: boolean } = {},
+  ): Promise<MonitoringResult> {
     await this.options.posts.put(post)
     const ruleResult = this.options.evaluate(post)
     const analysisResult = await this.options.analyze.run(
       {
         ruleResult,
+        manual: options.manualAiReview,
+        manualConfirmed: options.manualAiReview,
         request: {
           postId: post.postId,
           postUrl: post.url,
+          postedAt: post.postedAt,
           text: post.text,
           parentText: null,
           quotedText: null,
@@ -70,7 +77,9 @@ export class MonitoringPipeline {
           ? []
           : await this.options.notifications.dispatch({
               schemaVersion: 1,
-              eventType: 'rule_candidate',
+              eventType: completedRuleEvent(event)
+                ? 'reset_observed'
+                : 'rule_candidate',
               eventId: event.eventId,
               semanticVersion: ruleResult.ruleVersion,
               title: event.titleZh,
@@ -85,7 +94,8 @@ export class MonitoringPipeline {
             this.options.notificationRecords.put(record),
           ),
         )
-        await this.options.eventAutomation?.onEvent(event, 'rule-only')
+        if (completedRuleEvent(event))
+          await this.options.eventAutomation?.onEvent(event, 'rule-only')
         return { post, ruleResult, analysisResult, event, notifications }
       }
       return {
@@ -137,12 +147,14 @@ export class MonitoringPipeline {
         this.options.notificationRecords.put(record),
       ),
     )
-    await this.options.eventAutomation?.onEvent(event, 'rule+ai')
+    if (event.status === 'confirmed' || event.status === 'expected')
+      await this.options.eventAutomation?.onEvent(event, 'rule+ai')
     return { post, ruleResult, analysisResult, event, notifications }
   }
 }
 
 function candidateEvent(post: Post, ruleResult: RuleResult): ResetEvent {
+  const completed = isExplicitCompletedReset(post.text)
   const eventId = `${post.postId}--${ruleResult.ruleVersion}--rule-candidate`
   const createdAt = new Date().toISOString()
   return {
@@ -155,14 +167,14 @@ function candidateEvent(post: Post, ruleResult: RuleResult): ResetEvent {
     eventId,
     postId: post.postId,
     analysisVersion: ruleResult.ruleVersion,
-    status: 'candidate',
-    eventType: 'vague_intent',
+    status: completed ? 'confirmed' : 'candidate',
+    eventType: completed ? 'completed' : 'vague_intent',
     resetKind: classifyResetKind(post.text),
     scope: '规则候选，范围待确认',
     expectedStart: null,
     expectedEnd: null,
-    confirmedAt: null,
-    titleZh: '发现可能的重置信号',
+    confirmedAt: completed ? post.postedAt : null,
+    titleZh: completed ? '已观察到额度重置' : '发现可能的重置信号',
   }
 }
 
@@ -188,9 +200,13 @@ function eventFromAnalysis(post: Post, analysis: Analysis): ResetEvent | null {
     scope: analysis.scope,
     expectedStart: analysis.expectedWindow.start,
     expectedEnd: analysis.expectedWindow.end,
-    confirmedAt: status === 'confirmed' ? createdAt : null,
+    confirmedAt: status === 'confirmed' ? post.postedAt : null,
     titleZh: analysis.summaryZh,
   }
+}
+
+function completedRuleEvent(event: ResetEvent): boolean {
+  return event.status === 'confirmed' && event.eventType === 'completed'
 }
 
 function formatWindow(analysis: Analysis): string {

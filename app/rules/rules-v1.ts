@@ -163,3 +163,11 @@ export function evaluateRulesV1(post: NormalizedPost): RuleResult {
     ruleVersion: RULES_V1_VERSION,
   }
 }
+
+export function isExplicitCompletedReset(text: string): boolean {
+  if (/\bbanked\s+reset|reset\s+(?:into\s+)?(?:the\s+)?bank\b/i.test(text))
+    return false
+  return /(?:\b(?:i|we)\s+(?:have|'ve|did)\s+(?:now\s+)?reset(?:ted)?\b|\b(?:usage|rate|codex)\s+limits?\s+(?:have|has)\s+(?:now\s+)?been\s+reset\b|\breset\s+button\s+pressed\b|\bstill\s+did\s+reset\s+the\s+usage\b)/i.test(
+    text,
+  )
+}

@@ -7,13 +7,16 @@
   "main": "dist-electron/main/index.js",
   "type": "module",
   "scripts": {
+    "start": "npm run build && electron .",
+    "clean": "node scripts/clean-workspace.mjs",
+    "clean:all": "node scripts/clean-workspace.mjs --release",
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "pretest:e2e": "npm run pack:dir",
     "test:e2e": "playwright test",
-    "test:portable": "node scripts/verify-portable-startup.mjs",
     "test:installer": "node scripts/verify-installer-startup.mjs",
     "verify:release": "node scripts/verify-release.mjs",
     "verify:signing": "node scripts/verify-windows-signing.mjs",
@@ -25,13 +28,14 @@
     "research:seed-reviews": "node research/scripts/seed-full-timeline-reviews.mjs",
     "research:review-leads": "node research/scripts/review-reset-leads.mjs",
     "research:evaluate-candidate": "node research/scripts/evaluate-candidate-rules.mjs",
+    "research:build-local-materials": "node research/scripts/build-local-reset-materials.mjs",
     "research:validate-timeline": "node research/scripts/validate-timeline-research.mjs",
     "research:verify": "npm run research:validate && npm run research:validate-timeline && npm run research:evaluate-candidate",
     "build:renderer": "vite build",
     "build:electron": "node scripts/clean-electron-output.mjs && tsc -p tsconfig.electron.json",
     "build": "npm run build:renderer && npm run build:electron && node scripts/verify-runtime-boundary.mjs",
     "pack:dir": "npm run build && electron-builder --dir",
-    "dist:win": "npm run build && electron-builder --win nsis portable",
+    "dist:win": "npm run build && electron-builder --win nsis",
     "verify": "npm run typecheck && npm run lint && npm test && npm run build"
   },
   "dependencies": {
@@ -71,16 +75,12 @@
     },
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        "nsis"
       ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
-    },
-    "portable": {
-      "artifactName": "${productName}-${version}-portable.${ext}"
     }
   }
 }

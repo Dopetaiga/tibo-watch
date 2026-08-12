@@ -3,9 +3,12 @@ import type {
   AnalysisRequest,
   StructuredAnalysis,
 } from './types.js'
-import { isStructuredAnalysis } from './types.js'
-
-const systemPrompt = `你是重置事件分类器。只返回 JSON，不返回 Markdown。区分已完成、明确未来、模糊意向和非事件。父帖与引用仅用于消歧，不得让父帖关键词脱离主帖意向触发事件。输出中文翻译、摘要、证据和不确定性。`
+import {
+  parseStructuredAnalysis,
+  AI_MAX_OUTPUT_TOKENS,
+  RESET_ANALYSIS_SYSTEM_PROMPT,
+  TIBO_EXPRESSION_PRIOR_VERSION,
+} from './multi-protocol.js'
 
 export interface DeepSeekOptions {
   apiKey: () => Promise<string>
@@ -15,7 +18,7 @@ export interface DeepSeekOptions {
 }
 
 export class DeepSeekProvider implements AnalysisProvider {
-  readonly id = 'deepseek-openai-compatible'
+  readonly id = `deepseek-openai-compatible:${TIBO_EXPRESSION_PRIOR_VERSION}`
   readonly model: string
   readonly #apiKey: () => Promise<string>
   readonly #baseUrl: string
@@ -27,7 +30,7 @@ export class DeepSeekProvider implements AnalysisProvider {
       /\/$/,
       '',
     )
-    this.model = options.model ?? 'deepseek-chat'
+    this.model = options.model ?? 'deepseek-v4-flash'
     this.#fetch = options.fetch ?? fetch
   }
 
@@ -45,9 +48,11 @@ export class DeepSeekProvider implements AnalysisProvider {
       body: JSON.stringify({
         model: this.model,
         temperature: 0,
+        max_tokens: AI_MAX_OUTPUT_TOKENS,
+        thinking: { type: 'disabled' },
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: RESET_ANALYSIS_SYSTEM_PROMPT },
           { role: 'user', content: JSON.stringify(request) },
         ],
       }),
@@ -58,9 +63,8 @@ export class DeepSeekProvider implements AnalysisProvider {
     }
     const content = payload.choices?.[0]?.message?.content
     if (!content) throw new Error('DeepSeek 响应缺少 message.content')
-    const result: unknown = JSON.parse(content)
-    if (!isStructuredAnalysis(result))
-      throw new Error('DeepSeek 响应未通过结构校验')
+    const result = parseStructuredAnalysis(content)
+    if (!result) throw new Error('DeepSeek 响应未通过结构校验')
     if (result.sourceUrl !== request.postUrl)
       throw new Error('DeepSeek 响应原帖链接不匹配')
     return result
@@ -85,4 +89,4 @@ export class DeepSeekProvider implements AnalysisProvider {
   }
 }
 
-export const DEEPSEEK_PROMPT_VERSION = 'deepseek-reset-v1'
+export const DEEPSEEK_PROMPT_VERSION = 'deepseek-reset-v6'

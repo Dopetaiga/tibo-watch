@@ -1,8 +1,16 @@
-import { app, BrowserWindow, ipcMain, Notification, shell } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Notification,
+  shell,
+} from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { RuntimeController } from './runtime-controller.js'
 import type { AiProviderConfig } from '../adapters/ai/multi-protocol.js'
+import { ensureV2MigrationBackup } from '../adapters/storage/v2-migration.js'
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url))
 let runtime: RuntimeController | null = null
@@ -23,6 +31,7 @@ function createWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      spellcheck: false,
     },
   })
 
@@ -41,13 +50,12 @@ function createWindow(): void {
   void window.loadFile(path.join(currentDirectory, '../../dist/index.html'))
 }
 
-void app.whenReady().then(() => {
-  runtime = new RuntimeController(
-    path.join(app.getPath('userData'), 'data'),
-    async (title, body) => {
-      if (Notification.isSupported()) new Notification({ title, body }).show()
-    },
-  )
+void app.whenReady().then(async () => {
+  const dataRoot = path.join(app.getPath('userData'), 'data')
+  await ensureV2MigrationBackup(dataRoot)
+  runtime = new RuntimeController(dataRoot, async (title, body) => {
+    if (Notification.isSupported()) new Notification({ title, body }).show()
+  })
   registerIpc(runtime)
   void runtime.restore()
   createWindow()
@@ -64,11 +72,37 @@ app.on('window-all-closed', () => {
 function registerIpc(controller: RuntimeController): void {
   ipcMain.handle('dashboard:get', () => controller.snapshot())
   ipcMain.handle('self-test:run-basic', () => controller.runBasicSelfTest())
+  ipcMain.handle('storage:status', () => controller.storageStatus())
+  ipcMain.handle('storage:maintain', () => controller.maintainStorage())
+  ipcMain.handle('storage:export', async () => {
+    const result = await dialog.showOpenDialog({
+      title: '选择本地数据导出文件夹',
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    const destination = result.filePaths[0]
+    if (!destination) return null
+    return {
+      destination,
+      records: await controller.exportData(destination),
+    }
+  })
   ipcMain.handle('source:set-enabled', (_event, enabled: unknown) => {
     if (typeof enabled !== 'boolean') throw new Error('enabled 必须是布尔值')
     return controller.setSourceEnabled(enabled)
   })
   ipcMain.handle('source:refresh', () => controller.refresh())
+  ipcMain.handle('history:backfill-status', () =>
+    controller.historyBackfillStatus(),
+  )
+  ipcMain.handle('history:backfill-retry', () =>
+    controller.retryHistoryBackfill(),
+  )
+  ipcMain.handle('source:configuration', () => controller.sourceConfiguration())
+  ipcMain.handle('source:set-custom-endpoint', (_event, value: unknown) => {
+    if (value !== null && typeof value !== 'string')
+      throw new Error('自定义数据源地址无效')
+    return controller.setCustomSourceEndpoint(value)
+  })
   ipcMain.handle('deepseek:set-key', (_event, secret: unknown) => {
     if (typeof secret !== 'string') throw new Error('API Key 必须是字符串')
     return controller.setDeepSeekKey(secret)
@@ -82,7 +116,27 @@ function registerIpc(controller: RuntimeController): void {
       throw new Error('AI Provider 配置无效')
     return controller.setAiProviderConfig(value as AiProviderConfig)
   })
+  ipcMain.handle('app:restart', () => {
+    setImmediate(() => {
+      app.relaunch()
+      app.exit(0)
+    })
+  })
   ipcMain.handle('codex:probe', () => controller.codexProbe())
+  ipcMain.handle('codex:executable:hint', () =>
+    controller.codexExecutableHint(),
+  )
+  ipcMain.handle('codex:executable:choose', async () => {
+    const result = await dialog.showOpenDialog({
+      title: '选择 Codex CLI 可执行文件',
+      properties: ['openFile'],
+      filters: [{ name: 'Codex CLI', extensions: ['exe'] }],
+    })
+    const selected = result.filePaths[0]
+    if (!selected) return null
+    await controller.setCodexExecutablePath(selected)
+    return selected
+  })
   ipcMain.handle('codex:threads', () => controller.codexThreads())
   ipcMain.handle('codex:resume-settings:get', () =>
     controller.codexResumeSettings(),

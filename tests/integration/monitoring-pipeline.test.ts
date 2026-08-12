@@ -167,6 +167,80 @@ describe('complete monitoring pipeline', () => {
     expect(notifications.dispatch).not.toHaveBeenCalled()
   })
 
+  it('uses AI history review for a semantic signal that rules did not match', async () => {
+    const provider: AnalysisProvider = {
+      id: 'mock-ai',
+      model: 'fixture-v1',
+      testConnection: async () => ({ ok: true, message: 'ok' }),
+      analyze: vi.fn(async (request) => ({
+        relevance: 'relevant' as const,
+        eventType: 'explicit_future' as const,
+        scope: 'Codex usage limits',
+        expectedWindow: {
+          start: '2026-08-13T00:00:00.000Z',
+          end: '2026-08-13T23:59:59.999Z',
+          original: 'tomorrow',
+        },
+        confidence: 'medium' as const,
+        translationZh: '明天会有惊喜。',
+        summaryZh: '结合上下文判断为明天可能重置。',
+        evidence: ['Little surprise for you tomorrow.'],
+        uncertainties: ['未直接使用 reset 一词'],
+        sourceUrl: request.postUrl,
+      })),
+    }
+    const analyses = sink<Analysis>()
+    const events =
+      sink<Parameters<MonitoringPipeline['options']['events']['put']>[0]>()
+    const pipeline = new MonitoringPipeline({
+      analyze: new AnalysisPipeline(provider, {
+        get: async () => null,
+        put: async () => undefined,
+      }),
+      notifications: { dispatch: vi.fn(async () => []) },
+      evaluate: (post) =>
+        evaluateRulesV1({
+          postId: post.postId,
+          excerpt: post.text,
+          contentHash: post.contentHash,
+        }),
+      posts: sink<Post>(),
+      analyses,
+      events,
+      notificationRecords: sink(),
+    })
+    const post: Post = {
+      schemaVersion: 1,
+      createdAt: '2026-08-12T06:21:00.000Z',
+      source: 'fixture',
+      contentHash: 'c'.repeat(64),
+      postId: 'semantic-history-signal',
+      url: 'https://x.com/thsottiaux/status/semantic-history-signal',
+      author: 'thsottiaux',
+      text: 'Little surprise for you tomorrow.',
+      postedAt: '2026-08-12T06:20:37.000Z',
+      kind: 'original',
+      parentPostId: null,
+      quotedPostId: null,
+    }
+
+    const result = await pipeline.process(post, new AbortController().signal, {
+      manualAiReview: true,
+    })
+
+    expect(result.ruleResult.candidate).toBe(false)
+    expect(provider.analyze).toHaveBeenCalledWith(
+      expect.objectContaining({ postedAt: post.postedAt }),
+      expect.any(AbortSignal),
+    )
+    expect(analyses.records).toHaveLength(1)
+    expect(events.records[0]).toMatchObject({
+      status: 'expected',
+      expectedStart: '2026-08-13T00:00:00.000Z',
+      expectedEnd: '2026-08-13T23:59:59.999Z',
+    })
+  })
+
   it('persists and notifies a rule candidate when AI is unavailable', async () => {
     const notifications = { dispatch: vi.fn(async () => []) }
     const events =
@@ -213,6 +287,78 @@ describe('complete monitoring pipeline', () => {
     expect(events.records).toHaveLength(1)
     expect(notifications.dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ eventType: 'rule_candidate' }),
+    )
+  })
+
+  it('forwards a future prediction to the automation scheduler', async () => {
+    const automation = { onEvent: vi.fn(async () => undefined) }
+    const pipeline = new MonitoringPipeline({
+      analyze: {
+        run: vi.fn(async () => ({
+          status: 'analyzed' as const,
+          analysis: {
+            schemaVersion: 1 as const,
+            createdAt: '2026-08-12T06:21:00.000Z',
+            source: 'fixture',
+            contentHash: 'd'.repeat(64),
+            postId: 'future-only',
+            analysisVersion: 'fixture-v1',
+            ruleVersion: 'rules-v1.0.0',
+            promptVersion: 'fixture-v1',
+            model: 'fixture',
+            relevance: 'relevant' as const,
+            eventType: 'explicit_future' as const,
+            scope: 'Codex',
+            expectedWindow: {
+              start: '2026-08-13T00:00:00.000Z',
+              end: '2026-08-13T23:59:59.999Z',
+              original: 'tomorrow',
+            },
+            confidence: 'medium' as const,
+            translationZh: '明天重置',
+            summaryZh: '预计明天重置',
+            evidence: ['tomorrow'],
+            uncertainties: [],
+            sourceUrl: 'https://x.com/thsottiaux/status/future-only',
+            responseHash: 'e'.repeat(64),
+          },
+        })),
+      },
+      notifications: { dispatch: vi.fn(async () => []) },
+      evaluate: () => ({
+        candidate: true,
+        matchedRuleIds: ['future'],
+        reasons: ['future'],
+        inputHash: 'f'.repeat(64),
+        ruleVersion: 'rules-v1.0.0',
+      }),
+      posts: sink<Post>(),
+      analyses: sink<Analysis>(),
+      events: sink(),
+      notificationRecords: sink(),
+      eventAutomation: automation,
+    })
+    const post: Post = {
+      schemaVersion: 1,
+      createdAt: '2026-08-12T06:21:00.000Z',
+      source: 'fixture',
+      contentHash: 'f'.repeat(64),
+      postId: 'future-only',
+      url: 'https://x.com/thsottiaux/status/future-only',
+      author: 'thsottiaux',
+      text: 'We will reset tomorrow.',
+      postedAt: '2026-08-12T06:20:37.000Z',
+      kind: 'original',
+      parentPostId: null,
+      quotedPostId: null,
+    }
+
+    const result = await pipeline.process(post, new AbortController().signal)
+
+    expect(result.event?.status).toBe('expected')
+    expect(automation.onEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'expected' }),
+      'rule+ai',
     )
   })
 })

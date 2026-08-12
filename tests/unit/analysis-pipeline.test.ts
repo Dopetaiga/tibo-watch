@@ -42,6 +42,7 @@ function fixtureCache(): AnalysisCache & { values: Map<string, Analysis> } {
 const request = {
   postId: '1',
   postUrl: 'https://x.com/thsottiaux/status/1',
+  postedAt: '2026-08-12T06:20:37.000Z',
   text: 'We will reset tomorrow.',
   parentText: null,
   quotedText: null,

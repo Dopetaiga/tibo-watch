@@ -5,6 +5,7 @@ release/
 .pack-staging/
 playwright-report/
 test-results/
+research/reports/local-materials/
 *.log
 .env*
 !.env.example

@@ -15,7 +15,7 @@ export function RuntimeApp() {
   }, [])
   useEffect(() => {
     const initial = window.setTimeout(() => void reload(), 0)
-    const timer = window.setInterval(() => void reload(), 15_000)
+    const timer = window.setInterval(() => void reload(), 2_000)
     return () => {
       window.clearTimeout(initial)
       window.clearInterval(timer)
@@ -28,16 +28,31 @@ export function RuntimeApp() {
           await reload()
         },
         runBasicSelfTest: () => window.tiboWatch!.runBasicSelfTest(),
+        storageStatus: () => window.tiboWatch!.storageStatus(),
+        maintainStorage: () => window.tiboWatch!.maintainStorage(),
+        exportData: () => window.tiboWatch!.exportData(),
         refresh: async () => {
           await window.tiboWatch!.refresh()
           await reload()
         },
+        historyBackfillStatus: () => window.tiboWatch!.historyBackfillStatus(),
+        retryHistoryBackfill: async () => {
+          const result = await window.tiboWatch!.retryHistoryBackfill()
+          await reload()
+          return result
+        },
+        sourceConfiguration: () => window.tiboWatch!.sourceConfiguration(),
+        setCustomSourceEndpoint: (value) =>
+          window.tiboWatch!.setCustomSourceEndpoint(value),
         setDeepSeekKey: (secret) => window.tiboWatch!.setDeepSeekKey(secret),
         deepSeekHint: () => window.tiboWatch!.deepSeekHint(),
         testDeepSeek: () => window.tiboWatch!.testDeepSeek(),
         setAiProvider: (config) => window.tiboWatch!.setAiProvider(config),
+        restartApp: () => window.tiboWatch!.restartApp(),
         testAiProvider: () => window.tiboWatch!.testAiProvider(),
         codexProbe: () => window.tiboWatch!.codexProbe(),
+        codexExecutableHint: () => window.tiboWatch!.codexExecutableHint(),
+        chooseCodexExecutable: () => window.tiboWatch!.chooseCodexExecutable(),
         codexThreads: () => window.tiboWatch!.codexThreads(),
         codexResumeSettings: () => window.tiboWatch!.codexResumeSettings(),
         setCodexResumeSettings: (value) =>

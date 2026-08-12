@@ -2,6 +2,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { DeepSeekProvider } from '../../app/adapters/ai/deepseek'
 
 describe('DeepSeek provider', () => {
+  it('uses deepseek-v4-flash as the default model', () => {
+    expect(
+      new DeepSeekProvider({ apiKey: async () => 'secret-key' }).model,
+    ).toBe('deepseek-v4-flash')
+  })
+
   it('uses a content-free models request for connection tests', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
@@ -36,6 +42,7 @@ describe('DeepSeek provider', () => {
         {
           postId: '1',
           postUrl: 'https://x.com/i/status/1',
+          postedAt: '2026-08-12T06:20:37.000Z',
           text: 'reset',
           parentText: null,
           quotedText: null,

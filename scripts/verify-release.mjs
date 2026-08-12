@@ -9,10 +9,7 @@ const asarPath = path.join(releaseRoot, 'win-unpacked', 'resources', 'app.asar')
 const { version } = JSON.parse(await readFile('package.json', 'utf8'))
 if (!/^\d+\.\d+\.\d+$/.test(version))
   throw new Error(`package.json 版本无效：${version}`)
-const artifacts = [
-  path.join(releaseRoot, `Tibo Watch Setup ${version}.exe`),
-  path.join(releaseRoot, `Tibo Watch-${version}-portable.exe`),
-]
+const artifacts = [path.join(releaseRoot, `Tibo Watch Setup ${version}.exe`)]
 const forbiddenPaths = [/(^|\/)research(\/|$)/i]
 const forbiddenText = ['codexreset.org']
 
@@ -79,7 +76,7 @@ for (const directive of [
 if (policy.includes("'unsafe-eval'") || policy.includes("'unsafe-inline'"))
   throw new Error('CSP 不得允许 unsafe-eval 或 unsafe-inline')
 
-console.log(`发布验证通过：${packagedFiles.length} 个 ASAR 条目，2 个 SHA-256`)
+console.log(`发布验证通过：${packagedFiles.length} 个 ASAR 条目，1 个 SHA-256`)
 
 async function filesUnder(directory) {
   const files = []

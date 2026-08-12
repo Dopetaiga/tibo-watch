@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   evaluateRulesV1,
+  isExplicitCompletedReset,
   RULES_V1,
   RULES_V1_SCHEMA_VERSION,
   RULES_V1_TEST_SET_HASH,
@@ -34,5 +35,28 @@ describe('rules-v1', () => {
       contentHash: 'counterexample-hash',
     })
     expect(result.candidate).toBe(false)
+  })
+
+  it('classifies only explicit completed reset statements as observed facts', () => {
+    expect(
+      isExplicitCompletedReset(
+        'We have reset usage limits for all Codex and ChatGPT Work users.',
+      ),
+    ).toBe(true)
+    expect(
+      isExplicitCompletedReset(
+        'The Codex usage limits have now been reset across all paid plans.',
+      ),
+    ).toBe(true)
+    expect(isExplicitCompletedReset('Reset button pressed, enjoy.')).toBe(true)
+    expect(isExplicitCompletedReset('I will reset usage limits tonight.')).toBe(
+      false,
+    )
+    expect(isExplicitCompletedReset('We are resetting the limits again.')).toBe(
+      false,
+    )
+    expect(
+      isExplicitCompletedReset('We added a banked reset to your account.'),
+    ).toBe(false)
   })
 })

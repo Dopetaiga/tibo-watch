@@ -10,12 +10,31 @@ declare global {
       platform: string
       getDashboard(): Promise<DashboardModel>
       runBasicSelfTest(): Promise<SelfTestResult>
+      storageStatus(): Promise<{
+        bytes: number
+        records: Record<string, number>
+      }>
+      maintainStorage(): Promise<{ deleted: number; indexesRebuilt: number }>
+      exportData(): Promise<{ destination: string; records: number } | null>
       setSourceEnabled(enabled: boolean): Promise<void>
       refresh(): Promise<void>
+      historyBackfillStatus(): Promise<{
+        complete: boolean
+        pagesFetched: number
+        postsStored: number
+      }>
+      retryHistoryBackfill(): Promise<{
+        complete: boolean
+        pagesFetched: number
+        postsStored: number
+      }>
+      sourceConfiguration(): Promise<{ customEndpoint: string | null }>
+      setCustomSourceEndpoint(value: string | null): Promise<void>
       setDeepSeekKey(secret: string): Promise<void>
       deepSeekHint(): Promise<string | null>
       testDeepSeek(): Promise<{ ok: boolean; message: string }>
       setAiProvider(config: AiProviderConfig): Promise<void>
+      restartApp(): Promise<void>
       aiProviderSummary(): Promise<{
         configured: boolean
         protocol: AiProviderConfig['protocol'] | null
@@ -35,18 +54,34 @@ declare global {
         } | null
         message: string
       }>
+      codexExecutableHint(): Promise<string | null>
+      chooseCodexExecutable(): Promise<string | null>
       codexThreads(): Promise<CodexThreadSummary[]>
       codexResumeSettings(): Promise<{
         enabled: boolean
         authorizedThreadIds: string[]
         lowerUsedPercent: number
         upperUsedPercent: number
+        afterResetEnabled: boolean
+        beforePredictionEnabled: boolean
+        beforePredictionHours: number
+        targetSpendPercent: number
+        minimumRemainingPercent: number
+        action: 'resume' | 'accelerate'
+        accelerationPrompt: string
       }>
       setCodexResumeSettings(value: {
         enabled: boolean
         authorizedThreadIds: string[]
         lowerUsedPercent: number
         upperUsedPercent: number
+        afterResetEnabled: boolean
+        beforePredictionEnabled: boolean
+        beforePredictionHours: number
+        targetSpendPercent: number
+        minimumRemainingPercent: number
+        action: 'resume' | 'accelerate'
+        accelerationPrompt: string
       }): Promise<void>
       resumeCodexThread(threadId: string): Promise<{ turnId: string }>
       setWebhook(

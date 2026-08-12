@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   CodexAppServerClient,
+  resolveCodexExecutable,
   type JsonRpcTransport,
 } from '../../app/adapters/codex/app-server'
 
@@ -15,6 +16,12 @@ function transport(results: Record<string, unknown>): JsonRpcTransport {
 }
 
 describe('Codex App Server client', () => {
+  it('honors an explicitly configured executable for portable environments', async () => {
+    await expect(resolveCodexExecutable(process.execPath)).resolves.toBe(
+      process.execPath,
+    )
+  })
+
   it('performs the required initialization handshake', async () => {
     const rpc = transport({ initialize: {} })
     const client = new CodexAppServerClient(rpc)
@@ -59,5 +66,21 @@ describe('Codex App Server client', () => {
       .mock.calls.find(([method]) => method === 'turn/start')
     expect(call?.[1]).not.toHaveProperty('cwd')
     expect(call?.[1]).not.toHaveProperty('sandboxPolicy')
+  })
+
+  it('injects an explicitly configured acceleration instruction', async () => {
+    const rpc = transport({
+      'thread/read': { thread: { status: { type: 'idle' } } },
+      'thread/resume': { thread: { id: 'thr_idle' } },
+      'turn/start': { turn: { id: 'turn_2' } },
+    })
+    const client = new CodexAppServerClient(rpc)
+    await client.resumeThread('thr_idle', '提高推理强度并继续当前目标。')
+    expect(rpc.request).toHaveBeenCalledWith(
+      'turn/start',
+      expect.objectContaining({
+        input: [{ type: 'text', text: '提高推理强度并继续当前目标。' }],
+      }),
+    )
   })
 })

@@ -3,3 +3,5 @@ dist-electron
 release
 node_modules
 package-lock.json
+research/dataset
+research/reports
