@@ -40,7 +40,7 @@ describe('dashboard statistics', () => {
     ).toMatchObject({ all: 2, last7: 2, forced: 1, banked: 1, compensation: 0 })
   })
 
-  it('groups calendar days in the system local timezone', () => {
+  it('groups calendar days in China Standard Time', () => {
     const calendar = calendarDays(events, new Date('2026-08-09T12:00:00.000Z'))
     expect(calendar.reduce((sum, day) => sum + day.count, 0)).toBe(2)
     expect(calendar).toHaveLength(28)

@@ -20,18 +20,36 @@ export function eventStatistics(events: DashboardEvent[], now = new Date()) {
 export function calendarDays(events: DashboardEvent[], now: Date) {
   const counts = new Map<string, number>()
   for (const event of events.filter(({ status }) => status === 'confirmed')) {
-    const key = localDateKey(new Date(event.occurredAt))
+    const key = chinaDateKey(new Date(event.occurredAt))
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
   return Array.from({ length: 28 }, (_, index) => {
-    const date = new Date(now)
-    date.setHours(12, 0, 0, 0)
-    date.setDate(date.getDate() - (27 - index))
-    const key = localDateKey(date)
-    return { date: key, day: date.getDate(), count: counts.get(key) ?? 0 }
+    const chinaNow = chinaDateParts(now)
+    const date = new Date(
+      Date.UTC(chinaNow.year, chinaNow.month - 1, chinaNow.day - (27 - index)),
+    )
+    const key = utcDateKey(date)
+    return { date: key, day: date.getUTCDate(), count: counts.get(key) ?? 0 }
   })
 }
 
-function localDateKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+function chinaDateKey(date: Date) {
+  const parts = chinaDateParts(date)
+  return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`
+}
+
+function chinaDateParts(date: Date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(date)
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value)
+  return { year: value('year'), month: value('month'), day: value('day') }
+}
+
+function utcDateKey(date: Date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`
 }
