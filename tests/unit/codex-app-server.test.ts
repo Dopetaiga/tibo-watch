@@ -83,4 +83,20 @@ describe('Codex App Server client', () => {
       }),
     )
   })
+
+  it('keeps the app server alive until the started turn is no longer active', async () => {
+    const rpc = transport({})
+    vi.mocked(rpc.request)
+      .mockResolvedValueOnce({ thread: { status: { type: 'active' } } })
+      .mockResolvedValueOnce({ thread: { status: { type: 'idle' } } })
+    const client = new CodexAppServerClient(rpc)
+
+    await expect(
+      client.waitForTurnCompletion('thr_idle', 'turn_1', {
+        timeoutMs: 100,
+        pollIntervalMs: 1,
+      }),
+    ).resolves.toBeUndefined()
+    expect(rpc.request).toHaveBeenCalledTimes(2)
+  })
 })

@@ -125,6 +125,89 @@ describe('initial AI history selection', () => {
     expect(result?.eventId).toBe('post-12-processed-first')
   })
 
+  it('clears fulfilled predictions as soon as a reset is confirmed', () => {
+    const expected: ResetEvent = {
+      schemaVersion: 1,
+      createdAt: '2026-08-12T06:21:00.000Z',
+      source: 'monitoring-pipeline',
+      contentHash: 'prediction'.padEnd(64, '0'),
+      eventId: 'prediction',
+      postId: 'promise',
+      analysisVersion: 'fixture',
+      status: 'expected',
+      eventType: 'explicit_future',
+      resetKind: 'forced',
+      scope: 'Codex',
+      expectedStart: '2026-08-13T00:00:00.000Z',
+      expectedEnd: '2026-08-13T02:00:00.000Z',
+      confirmedAt: null,
+      titleZh: '明天重置',
+    }
+    const confirmed: ResetEvent = {
+      ...expected,
+      contentHash: 'confirmed'.padEnd(64, '0'),
+      eventId: 'confirmed',
+      postId: 'done',
+      createdAt: '2026-08-13T01:02:00.000Z',
+      status: 'confirmed',
+      eventType: 'completed',
+      expectedStart: null,
+      expectedEnd: null,
+      confirmedAt: '2026-08-13T01:01:37.000Z',
+      titleZh: '重置已发放',
+    }
+
+    expect(
+      selectLatestExpectedEvent(
+        [expected, confirmed],
+        [
+          post('promise', '2026-08-12T06:20:37.000Z', 'Tomorrow.'),
+          post('done', '2026-08-13T01:01:37.000Z', 'Enjoy a reset.'),
+        ],
+      ),
+    ).toBeUndefined()
+  })
+
+  it('keeps a genuinely newer prediction after the latest confirmed reset', () => {
+    const makeEvent = (
+      id: string,
+      status: ResetEvent['status'],
+      confirmedAt: string | null,
+    ): ResetEvent => ({
+      schemaVersion: 1,
+      createdAt: confirmedAt ?? '2026-08-14T00:01:00.000Z',
+      source: 'monitoring-pipeline',
+      contentHash: id.padEnd(64, '0'),
+      eventId: id,
+      postId: id,
+      analysisVersion: 'fixture',
+      status,
+      eventType: status === 'confirmed' ? 'completed' : 'explicit_future',
+      resetKind: 'forced',
+      scope: 'Codex',
+      expectedStart: status === 'expected' ? '2026-08-15T00:00:00.000Z' : null,
+      expectedEnd: null,
+      confirmedAt,
+      titleZh: id,
+    })
+    const confirmed = makeEvent(
+      'confirmed',
+      'confirmed',
+      '2026-08-13T01:01:37.000Z',
+    )
+    const newer = makeEvent('newer', 'expected', null)
+
+    expect(
+      selectLatestExpectedEvent(
+        [confirmed, newer],
+        [
+          post('confirmed', '2026-08-13T01:01:37.000Z', 'Done.'),
+          post('newer', '2026-08-14T00:00:00.000Z', 'Another reset tomorrow.'),
+        ],
+      )?.eventId,
+    ).toBe('newer')
+  })
+
   it('builds and closes a rule-driven reset chain by post time', () => {
     const makeEvent = (
       eventId: string,

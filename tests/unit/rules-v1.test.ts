@@ -10,7 +10,7 @@ import {
 
 describe('rules-v1', () => {
   it('has frozen identity and one positive plus counterexample per rule', () => {
-    expect(RULES_V1_VERSION).toBe('rules-v1.0.0')
+    expect(RULES_V1_VERSION).toBe('rules-v1.1.0')
     expect(RULES_V1_SCHEMA_VERSION).toBe(1)
     expect(RULES_V1_TEST_SET_HASH).toMatch(/^[a-f0-9]{64}$/)
     expect(
@@ -49,6 +49,11 @@ describe('rules-v1', () => {
       ),
     ).toBe(true)
     expect(isExplicitCompletedReset('Reset button pressed, enjoy.')).toBe(true)
+    expect(
+      isExplicitCompletedReset(
+        'Enjoy a nice reset everyone. Landing in the next hour or so, go /fast.',
+      ),
+    ).toBe(true)
     expect(isExplicitCompletedReset('I will reset usage limits tonight.')).toBe(
       false,
     )
@@ -58,5 +63,30 @@ describe('rules-v1', () => {
     expect(
       isExplicitCompletedReset('We added a banked reset to your account.'),
     ).toBe(false)
+  })
+
+  it('recognizes the observed landing announcement without widening rule-only detection', () => {
+    const observed = evaluateRulesV1({
+      postId: '2087706104814023111',
+      excerpt:
+        'Old news, but crossed 15M. Enjoy a nice reset everyone. Landing in the next hour or so, go /fast.',
+      contentHash: 'observed',
+    })
+    expect(observed).toMatchObject({
+      candidate: true,
+      aiReviewRecommended: false,
+      matchedRuleIds: ['rv1-reset-dispatched-and-landing'],
+    })
+
+    const ambiguous = evaluateRulesV1({
+      postId: 'ambiguous',
+      excerpt: 'The reset may be propagating differently for some accounts.',
+      contentHash: 'ambiguous',
+    })
+    expect(ambiguous).toMatchObject({
+      candidate: false,
+      aiReviewRecommended: true,
+    })
+    expect(isExplicitCompletedReset(ambiguous.reasons.join(' '))).toBe(false)
   })
 })

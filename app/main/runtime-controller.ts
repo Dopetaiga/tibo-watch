@@ -526,7 +526,9 @@ export class RuntimeController {
       } else if (settings.action === 'accelerate') {
         throw new Error('无法读取账户额度时，不执行自动加速消耗')
       }
-      return await client.resumeThread(threadId, instruction)
+      const result = await client.resumeThread(threadId, instruction)
+      await client.waitForTurnCompletion(threadId, result.turnId)
+      return result
     } finally {
       client.close()
     }
@@ -763,8 +765,8 @@ export class RuntimeController {
             sourceUrl: signalPost?.url ?? postUrls.get(signal.postId) ?? null,
           }
         : null,
-      prediction24h: prediction(effectiveEvents, 24),
-      prediction48h: prediction(effectiveEvents, 48),
+      prediction24h: prediction(effectiveEvents, posts, 24),
+      prediction48h: prediction(effectiveEvents, posts, 48),
       latestSummary: latestAnalysis?.summaryZh ?? null,
       latestSourceUrl: latestAnalysis?.sourceUrl ?? null,
       latestEvidence: latestAnalysis?.evidence ?? [],
@@ -1289,13 +1291,14 @@ async function directorySize(directory: string): Promise<number> {
   return total
 }
 
-function prediction(events: ResetEvent[], hours: number): string | null {
+function prediction(
+  events: ResetEvent[],
+  posts: Post[],
+  hours: number,
+): string | null {
   const limit = Date.now() + hours * 60 * 60_000
-  const upcoming = events.find(
-    (event) =>
-      event.status === 'expected' &&
-      event.expectedStart &&
-      Date.parse(event.expectedStart) <= limit,
+  const upcoming = currentExpectedEvents(events, posts).find(
+    (event) => event.expectedStart && Date.parse(event.expectedStart) <= limit,
   )
   return upcoming ? upcoming.titleZh : null
 }
@@ -1347,14 +1350,45 @@ export function selectLatestExpectedEvent(
   const postedAtByPost = new Map(
     posts.map((post) => [post.postId, post.postedAt]),
   )
-  return [...events]
-    .filter((event) => event.status === 'expected')
-    .sort((left, right) => {
-      const postedAtOrder = (
-        postedAtByPost.get(right.postId) ?? ''
-      ).localeCompare(postedAtByPost.get(left.postId) ?? '')
-      return postedAtOrder || right.createdAt.localeCompare(left.createdAt)
-    })[0]
+  return currentExpectedEvents(events, posts).sort((left, right) => {
+    const postedAtOrder = (
+      postedAtByPost.get(right.postId) ?? ''
+    ).localeCompare(postedAtByPost.get(left.postId) ?? '')
+    return postedAtOrder || right.createdAt.localeCompare(left.createdAt)
+  })[0]
+}
+
+/**
+ * A confirmed reset closes every prediction published at or before it. This
+ * makes the dashboard return immediately to the confirmed-reset + 7 day
+ * baseline instead of continuing to display a promise that was just fulfilled.
+ */
+export function currentExpectedEvents(
+  events: ResetEvent[],
+  posts: Post[],
+): ResetEvent[] {
+  const postedAtByPost = new Map(
+    posts.map((post) => [post.postId, post.postedAt]),
+  )
+  const latestConfirmedAt = events
+    .filter(
+      (event) => event.status === 'confirmed' && event.resetKind !== 'banked',
+    )
+    .map(
+      (event) =>
+        event.confirmedAt ??
+        postedAtByPost.get(event.postId) ??
+        event.createdAt,
+    )
+    .filter((value) => !Number.isNaN(Date.parse(value)))
+    .sort((left, right) => right.localeCompare(left))[0]
+
+  return events.filter((event) => {
+    if (event.status !== 'expected') return false
+    if (!latestConfirmedAt) return true
+    const signalPostedAt = postedAtByPost.get(event.postId) ?? event.createdAt
+    return Date.parse(signalPostedAt) > Date.parse(latestConfirmedAt)
+  })
 }
 
 export function buildResetChains(

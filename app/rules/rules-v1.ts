@@ -8,6 +8,8 @@ export interface NormalizedPost {
 
 export interface RuleResult {
   candidate: boolean
+  /** Strong reset semantics worth AI review, but not safe enough for rule-only action. */
+  aiReviewRecommended?: boolean
   matchedRuleIds: string[]
   reasons: string[]
   inputHash: string
@@ -23,12 +25,20 @@ export interface FrozenRule {
   counterExampleId: string
 }
 
-export const RULES_V1_VERSION = 'rules-v1.0.0'
+export const RULES_V1_VERSION = 'rules-v1.1.0'
 export const RULES_V1_SCHEMA_VERSION = 1
 export const RULES_V1_TEST_SET_HASH =
   '686a28ce92bf19e2dbeb243ee6ac09ea2b21f9f51472ba9fb3d05055c7def378'
 
 export const RULES_V1: readonly FrozenRule[] = [
+  {
+    id: 'rv1-reset-dispatched-and-landing',
+    description: '明确向用户发放 reset，并说明额度正在传播到账',
+    pattern:
+      /\b(?:enjoy|have)\b[^.!?]{0,80}\b(?:a\s+)?(?:nice\s+)?reset\b[\s\S]{0,160}\b(?:landing|should\s+(?:land|show)|propagat(?:e|ing))\b/i,
+    positiveExampleId: '2087706104814023111',
+    counterExampleId: '2087156941303029855',
+  },
   {
     id: 'rv1-first-person-future-reset',
     description: '第一人称明确承诺未来执行 reset，并允许里程碑或时间修饰语',
@@ -155,6 +165,8 @@ export function evaluateRulesV1(post: NormalizedPost): RuleResult {
     .map(({ id }) => id)
   return {
     candidate: matchedRuleIds.length > 0,
+    aiReviewRecommended:
+      matchedRuleIds.length === 0 && shouldRecommendAiReview(post.excerpt),
     matchedRuleIds,
     reasons: RULES_V1.filter(({ id }) => matchedRuleIds.includes(id)).map(
       ({ description }) => description,
@@ -164,10 +176,24 @@ export function evaluateRulesV1(post: NormalizedPost): RuleResult {
   }
 }
 
+/**
+ * A deliberately narrow AI-only safety net. It never creates a rule-only
+ * event; it merely lets configured AI inspect uncommon reset phrasing.
+ */
+export function shouldRecommendAiReview(text: string): boolean {
+  if (suppressionPattern.test(text)) return false
+  return (
+    /\b(?:reset|resets)\b/i.test(text) &&
+    /\b(?:enjoy|landing|land|show|propagat(?:e|ing)|incoming|rolled?\s+out|credited?)\b/i.test(
+      text,
+    )
+  )
+}
+
 export function isExplicitCompletedReset(text: string): boolean {
   if (/\bbanked\s+reset|reset\s+(?:into\s+)?(?:the\s+)?bank\b/i.test(text))
     return false
-  return /(?:\b(?:i|we)\s+(?:have|'ve|did)\s+(?:now\s+)?reset(?:ted)?\b|\b(?:usage|rate|codex)\s+limits?\s+(?:have|has)\s+(?:now\s+)?been\s+reset\b|\breset\s+button\s+pressed\b|\bstill\s+did\s+reset\s+the\s+usage\b)/i.test(
+  return /(?:\b(?:i|we)\s+(?:have|'ve|did)\s+(?:now\s+)?reset(?:ted)?\b|\b(?:usage|rate|codex)\s+limits?\s+(?:have|has)\s+(?:now\s+)?been\s+reset\b|\breset\s+button\s+pressed\b|\bstill\s+did\s+reset\s+the\s+usage\b|\b(?:enjoy|have)\b[^.!?]{0,80}\b(?:a\s+)?(?:nice\s+)?reset\b[\s\S]{0,160}\b(?:landing|should\s+(?:land|show)|propagat(?:e|ing))\b)/i.test(
     text,
   )
 }

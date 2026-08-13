@@ -35,7 +35,11 @@ export class AnalysisPipeline {
     input: PipelineInput,
     signal: AbortSignal,
   ): Promise<PipelineResult> {
-    if (!input.ruleResult.candidate && !input.manual) {
+    if (
+      !input.ruleResult.candidate &&
+      !input.ruleResult.aiReviewRecommended &&
+      !input.manual
+    ) {
       return { status: 'skipped_not_candidate', analysis: null }
     }
     if (input.manual && !input.manualConfirmed) {

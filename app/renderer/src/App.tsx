@@ -138,10 +138,7 @@ export function App({
       <aside className="sidebar">
         <div className="brand">
           <span>TW</span>
-          <div>
-            <strong>Tibo Watch</strong>
-            <small>Personal signal assistant</small>
-          </div>
+          <strong>Tibo Watch</strong>
         </div>
         <nav aria-label="主导航">
           <NavButton
@@ -213,27 +210,20 @@ function MonitorPage({ model }: { model: DashboardModel }) {
             model.lastCheckedAt ? formatTime(model.lastCheckedAt) : '尚未检查'
           }
         />
-        <Metric label="运行状态" value={healthLabel(model.health)} />
-        <Metric label="当前能力" value={model.healthMessage} />
         <Metric label="监控模式" value={aiEnhanced ? 'AI 增强' : '仅规则'} />
         <Metric
           label="连续失败"
           value={`${model.consecutiveFailures} 次`}
           warning={model.consecutiveFailures > 0}
         />
-        <Metric
-          label="轮询间隔"
-          value={`${model.pollingIntervalMinutes} 分钟`}
-        />
       </section>
-      <section className="reset-grid">
+      <section className={`reset-grid ${aiEnhanced ? '' : 'rule-only'}`}>
         <article className="surface reset-primary">
           <SectionTitle label="LAST OBSERVED" title="最近一次重置" />
           <TimeValue
             value={model.lastObservedResetAt}
             empty="尚未观测到实际重置"
           />
-          <p>这是实际观测事实，新的确认事件出现后才会更新。</p>
         </article>
         <article className="surface">
           <SectionTitle
@@ -253,11 +243,6 @@ function MonitorPage({ model }: { model: DashboardModel }) {
               empty="等待首次重置事实"
             />
           )}
-          <p>
-            {model.signalPrediction
-              ? '根据近期有效消息更新；新的预测信号出现后会替代周期基线。'
-              : '按最近实际重置 + 7 天计算，不随当前时间滚动。'}
-          </p>
         </article>
         {aiEnhanced ? (
           <article className="surface signal-card">
@@ -285,16 +270,10 @@ function MonitorPage({ model }: { model: DashboardModel }) {
                 ) : null}
               </>
             ) : (
-              <Empty compact>AI 尚未确认新的重置承诺或预计窗口</Empty>
+              <Empty compact>暂无预测证据</Empty>
             )}
           </article>
-        ) : (
-          <article className="surface signal-card rule-mode-card">
-            <SectionTitle label="RULE MODE" title="规则模式" />
-            <p>当前只进行确定性规则筛选和推送，不生成语义预测。</p>
-            <small>保存 AI 配置并重启后，近期历史会进入智能复核。</small>
-          </article>
-        )}
+        ) : null}
       </section>
       <section className="two-column">
         <article className="surface messages">
@@ -308,7 +287,7 @@ function MonitorPage({ model }: { model: DashboardModel }) {
               .slice(0, 12)
               .map((post) => <PostRow key={post.id} post={post} />)
           ) : (
-            <Empty>规则尚未筛选出有效候选，无关回复不会在这里刷屏。</Empty>
+            <Empty>暂无有效候选</Empty>
           )}
         </article>
         <div className="stack">
@@ -333,7 +312,6 @@ function MonitorPage({ model }: { model: DashboardModel }) {
                 </div>
               ))}
             </div>
-            <p className="muted">按系统本地时区统计确认事件。</p>
           </article>
         </div>
       </section>
@@ -505,6 +483,58 @@ function CodexPage({ controls }: { controls?: DashboardControls }) {
   const [accelerationPrompt, setAccelerationPrompt] = useState('')
   const [busy, setBusy] = useState(false)
   const [executable, setExecutable] = useState<string | null>(null)
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const knownThreadIds = new Set(threads.map(({ id }) => id))
+  const managedThreads: CodexThreadSummary[] = [
+    ...threads,
+    ...authorized
+      .filter((id) => !knownThreadIds.has(id))
+      .map((id) => ({
+        id,
+        name: '已安排的历史任务',
+        cwd: null,
+        updatedAt: null,
+        status: { type: 'unavailable' },
+      })),
+  ]
+  const selectedThread = managedThreads.find(
+    ({ id }) => id === selectedThreadId,
+  )
+  const scheduledThreads = managedThreads.filter(({ id }) =>
+    authorized.includes(id),
+  )
+
+  const settingsValue = (nextAuthorized = authorized) => ({
+    enabled,
+    authorizedThreadIds: nextAuthorized,
+    lowerUsedPercent: lower,
+    upperUsedPercent: upper,
+    afterResetEnabled: afterReset,
+    beforePredictionEnabled: beforePrediction,
+    beforePredictionHours: beforeHours,
+    targetSpendPercent: targetSpend,
+    minimumRemainingPercent: minimumRemaining,
+    action,
+    accelerationPrompt,
+  })
+
+  const saveSettings = (
+    nextAuthorized = authorized,
+    notice = '自动任务已保存',
+  ) => {
+    if (!controls) return
+    setSaving(true)
+    void controls
+      .setCodexResumeSettings(settingsValue(nextAuthorized))
+      .then(() => {
+        setAuthorized(nextAuthorized)
+        setMessage(notice)
+      })
+      .catch(showError(setMessage))
+      .finally(() => setSaving(false))
+  }
 
   const detect = () => {
     if (!controls) return
@@ -540,17 +570,22 @@ function CodexPage({ controls }: { controls?: DashboardControls }) {
   return (
     <>
       <PageHeader eyebrow="CODEX" title="Codex" />
-      <div className="codex-page">
-        <section className="surface codex-safety">
-          <SectionTitle label="SAFETY BOUNDARY" title="运行安全边界" />
-          <p>
-            额度阈值只阻止新的恢复。Tibo Watch
-            不会暂停、终止或向正在运行的任务追加指令，也不会自动消耗 reset
-            credit。
-          </p>
-        </section>
-        <section className="surface codex-connect">
-          <SectionTitle label="LOCAL APP SERVER" title="连接与任务" />
+      <div className="codex-workspace">
+        <section className="surface codex-browser">
+          <header className="codex-browser-head">
+            <SectionTitle
+              label="TASKS"
+              title="任务"
+              action={`${threads.length}`}
+            />
+            <button
+              className="secondary"
+              disabled={!controls || busy}
+              onClick={detect}
+            >
+              {busy ? '扫描中…' : threads.length ? '重新扫描' : '扫描任务'}
+            </button>
+          </header>
           <div className="path-row">
             <div>
               <strong>Codex CLI</strong>
@@ -573,158 +608,273 @@ function CodexPage({ controls }: { controls?: DashboardControls }) {
                   .catch(showError(setMessage))
               }
             >
-              手动选择 codex.exe
+              更改
             </button>
           </div>
-          <button
-            className="primary"
-            disabled={!controls || busy}
-            onClick={detect}
-          >
-            {busy ? '正在探测…' : '探测并读取任务'}
-          </button>
           {threads.length ? (
-            <div className="thread-list">
+            <div className="codex-thread-list">
               {threads.map((thread) => (
-                <label key={thread.id}>
-                  <input
-                    type="checkbox"
-                    checked={authorized.includes(thread.id)}
-                    onChange={(event) =>
-                      setAuthorized((current) =>
-                        event.target.checked
-                          ? [...new Set([...current, thread.id])]
-                          : current.filter((id) => id !== thread.id),
-                      )
-                    }
-                  />
+                <button
+                  key={thread.id}
+                  className={selectedThreadId === thread.id ? 'active' : ''}
+                  onClick={() => setSelectedThreadId(thread.id)}
+                >
+                  <i className={thread.status.type} />
                   <span>
                     <strong>{thread.name ?? '未命名任务'}</strong>
-                    <small>
-                      {thread.status.type} · {thread.cwd ?? '未知目录'}
-                    </small>
+                    <small>{thread.cwd ?? '未知目录'}</small>
                   </span>
-                </label>
+                  <em>
+                    {authorized.includes(thread.id)
+                      ? '自动任务'
+                      : threadStatusLabel(thread.status.type)}
+                  </em>
+                  <b>›</b>
+                </button>
               ))}
             </div>
           ) : (
-            <Empty compact>探测成功后在这里选择允许恢复的任务。</Empty>
+            <Empty>扫描后选择一个任务进行操作</Empty>
           )}
         </section>
-        <section className="surface codex-policy">
-          <SectionTitle label="START GATE" title="自动恢复门禁" />
-          <Toggle
-            label="允许恢复已勾选任务"
-            checked={enabled}
-            onChange={setEnabled}
-          />
-          <Toggle
-            label="确认重置后自动开启任务"
-            checked={afterReset}
-            onChange={setAfterReset}
-          />
-          <Toggle
-            label="在预测重置时间前自动开启"
-            checked={beforePrediction}
-            onChange={setBeforePrediction}
-          />
-          {beforePrediction && (
-            <Field label="提前小时数（0–168）">
-              <input
-                type="number"
-                min="0"
-                max="168"
-                value={beforeHours}
-                onChange={(event) => setBeforeHours(Number(event.target.value))}
-              />
-            </Field>
+
+        <aside className={`codex-drawer ${selectedThread ? 'open' : ''}`}>
+          {selectedThread ? (
+            <>
+              <header>
+                <div>
+                  <small>{threadStatusLabel(selectedThread.status.type)}</small>
+                  <h2>{selectedThread.name ?? '未命名任务'}</h2>
+                  <p>{selectedThread.cwd ?? '未知目录'}</p>
+                </div>
+                <button
+                  aria-label="关闭"
+                  onClick={() => setSelectedThreadId(null)}
+                >
+                  ×
+                </button>
+              </header>
+              <div className="drawer-actions">
+                <button
+                  className="primary"
+                  disabled={
+                    !controls ||
+                    ['active', 'unavailable'].includes(
+                      selectedThread.status.type,
+                    ) ||
+                    !authorized.includes(selectedThread.id) ||
+                    !enabled
+                  }
+                  onClick={() =>
+                    void controls
+                      ?.resumeCodexThread(selectedThread.id)
+                      .then(({ turnId }) =>
+                        setMessage(`任务已继续 · ${turnId}`),
+                      )
+                      .catch(showError(setMessage))
+                  }
+                >
+                  立即继续
+                </button>
+                {authorized.includes(selectedThread.id) ? (
+                  <button
+                    className="secondary"
+                    disabled={saving}
+                    onClick={() =>
+                      saveSettings(
+                        authorized.filter((id) => id !== selectedThread.id),
+                        '已从自动任务移除',
+                      )
+                    }
+                  >
+                    移出自动任务
+                  </button>
+                ) : (
+                  <button
+                    className="secondary"
+                    disabled={saving}
+                    onClick={() =>
+                      saveSettings(
+                        [...new Set([...authorized, selectedThread.id])],
+                        '已加入自动任务',
+                      )
+                    }
+                  >
+                    加入自动任务
+                  </button>
+                )}
+              </div>
+              {selectedThread.status.type === 'active' && (
+                <p className="drawer-note">
+                  任务正在运行，不会暂停或追加指令。
+                </p>
+              )}
+              {selectedThread.status.type === 'unavailable' && (
+                <p className="drawer-note">
+                  本次扫描未返回该任务，但安排记录仍保留；你可以将它移出自动任务。
+                </p>
+              )}
+              {!enabled && authorized.includes(selectedThread.id) && (
+                <p className="drawer-note">
+                  已安排，但自动执行总开关当前关闭。
+                </p>
+              )}
+            </>
+          ) : (
+            <Empty>选择左侧任务</Empty>
           )}
-          <div className="budget-row">
-            <Field label="本轮目标消耗（%）">
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={targetSpend}
-                onChange={(event) => setTargetSpend(Number(event.target.value))}
-              />
-            </Field>
-            <Field label="至少保留可用额度（%）">
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={minimumRemaining}
+        </aside>
+
+        <section className="surface scheduled-panel">
+          <SectionTitle
+            label="AUTOMATION"
+            title="自动任务"
+            action={`${scheduledThreads.length}`}
+          />
+          {scheduledThreads.length ? (
+            scheduledThreads.map((thread) => (
+              <button
+                key={thread.id}
+                onClick={() => setSelectedThreadId(thread.id)}
+              >
+                <span>
+                  <strong>{thread.name ?? '未命名任务'}</strong>
+                  <small>
+                    {enabled
+                      ? automationSummary(
+                          afterReset,
+                          beforePrediction,
+                          beforeHours,
+                        )
+                      : '已停用自动执行'}
+                  </small>
+                </span>
+                <em className={enabled ? 'enabled' : ''}>
+                  {enabled ? '已启用' : '已停用'}
+                </em>
+              </button>
+            ))
+          ) : (
+            <Empty compact>尚未安排自动任务</Empty>
+          )}
+        </section>
+
+        <details className="surface automation-policy">
+          <summary>
+            <span>
+              <strong>自动执行策略</strong>
+              <small>
+                {enabled
+                  ? automationSummary(afterReset, beforePrediction, beforeHours)
+                  : '总开关已关闭'}
+              </small>
+            </span>
+            <b>设置</b>
+          </summary>
+          <div className="policy-fields">
+            <Toggle
+              label="启用自动执行"
+              checked={enabled}
+              onChange={setEnabled}
+            />
+            <Toggle
+              label="确认重置后执行"
+              checked={afterReset}
+              onChange={setAfterReset}
+            />
+            <Toggle
+              label="预测时间前执行"
+              checked={beforePrediction}
+              onChange={setBeforePrediction}
+            />
+            {beforePrediction && (
+              <Field label="提前小时">
+                <input
+                  type="number"
+                  min="0"
+                  max="168"
+                  value={beforeHours}
+                  onChange={(event) =>
+                    setBeforeHours(Number(event.target.value))
+                  }
+                />
+              </Field>
+            )}
+            <Field label="执行方式">
+              <select
+                value={action}
                 onChange={(event) =>
-                  setMinimumRemaining(Number(event.target.value))
+                  setAction(event.target.value as 'resume' | 'accelerate')
                 }
-              />
+              >
+                <option value="resume">继续原任务</option>
+                <option value="accelerate">注入加速提示词</option>
+              </select>
             </Field>
-          </div>
-          <Field label="执行方式">
-            <select
-              value={action}
-              onChange={(event) =>
-                setAction(event.target.value as 'resume' | 'accelerate')
-              }
+            {action === 'accelerate' && (
+              <Field label="加速提示词">
+                <textarea
+                  value={accelerationPrompt}
+                  onChange={(event) =>
+                    setAccelerationPrompt(event.target.value)
+                  }
+                />
+              </Field>
+            )}
+            <div className="budget-row">
+              <Field label="目标消耗 %">
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={targetSpend}
+                  onChange={(event) =>
+                    setTargetSpend(Number(event.target.value))
+                  }
+                />
+              </Field>
+              <Field label="至少保留 %">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={minimumRemaining}
+                  onChange={(event) =>
+                    setMinimumRemaining(Number(event.target.value))
+                  }
+                />
+              </Field>
+              <Field label="重新允许 ≤ %">
+                <input
+                  type="number"
+                  min="0"
+                  max="99"
+                  value={lower}
+                  onChange={(event) => setLower(Number(event.target.value))}
+                />
+              </Field>
+              <Field label="阻止新执行 ≥ %">
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={upper}
+                  onChange={(event) => setUpper(Number(event.target.value))}
+                />
+              </Field>
+            </div>
+            <p className="drawer-note">
+              额度门禁只阻止新的执行，不会暂停正在运行的任务。
+            </p>
+            <button
+              className="primary"
+              disabled={!controls || saving || lower >= upper}
+              onClick={() => saveSettings()}
             >
-              <option value="resume">继续原任务</option>
-              <option value="accelerate">注入加速提示词</option>
-            </select>
-          </Field>
-          {action === 'accelerate' && (
-            <Field label="加速提示词">
-              <textarea
-                value={accelerationPrompt}
-                onChange={(event) => setAccelerationPrompt(event.target.value)}
-              />
-            </Field>
-          )}
-          <div className="budget-row">
-            <Field label="重新允许（已用 ≤ %）">
-              <input
-                type="number"
-                min="0"
-                max="99"
-                value={lower}
-                onChange={(event) => setLower(Number(event.target.value))}
-              />
-            </Field>
-            <Field label="阻止新恢复（已用 ≥ %）">
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={upper}
-                onChange={(event) => setUpper(Number(event.target.value))}
-              />
-            </Field>
+              {saving ? '保存中…' : '保存策略'}
+            </button>
           </div>
-          <button
-            className="primary"
-            disabled={!controls || lower >= upper}
-            onClick={() =>
-              void controls
-                ?.setCodexResumeSettings({
-                  enabled,
-                  authorizedThreadIds: authorized,
-                  lowerUsedPercent: lower,
-                  upperUsedPercent: upper,
-                  afterResetEnabled: afterReset,
-                  beforePredictionEnabled: beforePrediction,
-                  beforePredictionHours: beforeHours,
-                  targetSpendPercent: targetSpend,
-                  minimumRemainingPercent: minimumRemaining,
-                  action,
-                  accelerationPrompt,
-                })
-                .then(() => setMessage('Codex 授权与门禁已保存'))
-                .catch(showError(setMessage))
-            }
-          >
-            保存
-          </button>
-        </section>
+        </details>
         {message && (
           <div className="toast" role="status">
             {message}
@@ -1414,6 +1564,27 @@ function NavButton({
     </button>
   )
 }
+
+function threadStatusLabel(status: string): string {
+  if (status === 'active') return '运行中'
+  if (status === 'idle') return '可继续'
+  if (status === 'archived') return '已归档'
+  if (status === 'unavailable') return '本次未扫描到'
+  return '空闲'
+}
+
+function automationSummary(
+  afterReset: boolean,
+  beforePrediction: boolean,
+  beforeHours: number,
+): string {
+  const triggers = [
+    afterReset ? '重置后' : null,
+    beforePrediction ? `预测前 ${beforeHours} 小时` : null,
+  ].filter(Boolean)
+  return triggers.length ? triggers.join(' · ') : '未选择触发条件'
+}
+
 function PageHeader({
   eyebrow,
   title,
@@ -1437,11 +1608,14 @@ function PageHeader({
   )
 }
 function HealthPill({ model }: { model: DashboardModel }) {
+  const detail = ['degraded', 'offline'].includes(model.health)
+    ? model.healthMessage
+    : null
   return (
     <div className={`health-pill ${model.health}`} role="status">
       <i />
       {healthLabel(model.health)}
-      {model.health === 'starting' ? '' : ` · ${model.healthMessage}`}
+      {detail ? ` · ${detail}` : ''}
       {model.stale && !['starting', 'disabled'].includes(model.health)
         ? ' · 数据过期'
         : ''}

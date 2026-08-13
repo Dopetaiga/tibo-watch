@@ -181,7 +181,11 @@ function candidateEvent(post: Post, ruleResult: RuleResult): ResetEvent {
 function eventFromAnalysis(post: Post, analysis: Analysis): ResetEvent | null {
   if (analysis.relevance !== 'relevant' || analysis.eventType === 'non_event')
     return null
-  const status = analysis.eventType === 'completed' ? 'confirmed' : 'expected'
+  const completedByRule = isExplicitCompletedReset(post.text)
+  const status =
+    analysis.eventType === 'completed' || completedByRule
+      ? 'confirmed'
+      : 'expected'
   const eventId = `${post.postId}--${analysis.analysisVersion}`
   const createdAt = new Date().toISOString()
   return {
@@ -195,7 +199,7 @@ function eventFromAnalysis(post: Post, analysis: Analysis): ResetEvent | null {
     postId: post.postId,
     analysisVersion: analysis.analysisVersion,
     status,
-    eventType: analysis.eventType,
+    eventType: completedByRule ? 'completed' : analysis.eventType,
     resetKind: classifyResetKind(post.text),
     scope: analysis.scope,
     expectedStart: analysis.expectedWindow.start,

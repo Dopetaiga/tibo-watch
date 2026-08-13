@@ -290,6 +290,77 @@ describe('complete monitoring pipeline', () => {
     )
   })
 
+  it('does not let AI downgrade a strict completed reset into a prediction', async () => {
+    const pipeline = new MonitoringPipeline({
+      analyze: {
+        run: vi.fn(async () => ({
+          status: 'analyzed' as const,
+          analysis: {
+            schemaVersion: 1 as const,
+            createdAt: '2026-08-13T01:02:00.000Z',
+            source: 'fixture',
+            contentHash: '1'.repeat(64),
+            postId: '2087706104814023111',
+            analysisVersion: 'fixture-v1',
+            ruleVersion: 'rules-v1.1.0',
+            promptVersion: 'fixture-v1',
+            model: 'fixture',
+            relevance: 'relevant' as const,
+            eventType: 'explicit_future' as const,
+            scope: 'Codex',
+            expectedWindow: {
+              start: '2026-08-13T01:01:37.000Z',
+              end: '2026-08-13T02:01:37.000Z',
+              original: 'Landing in the next hour or so',
+            },
+            confidence: 'high' as const,
+            translationZh: '重置将在一小时内到账。',
+            summaryZh: '重置已发放，正在传播到账。',
+            evidence: ['Enjoy a nice reset everyone.'],
+            uncertainties: [],
+            sourceUrl: 'https://x.com/thsottiaux/status/2087706104814023111',
+            responseHash: '2'.repeat(64),
+          },
+        })),
+      },
+      notifications: { dispatch: vi.fn(async () => []) },
+      evaluate: (post) =>
+        evaluateRulesV1({
+          postId: post.postId,
+          excerpt: post.text,
+          contentHash: post.contentHash,
+        }),
+      posts: sink<Post>(),
+      analyses: sink<Analysis>(),
+      events: sink(),
+      notificationRecords: sink(),
+    })
+    const postedAt = '2026-08-13T01:01:37.000Z'
+    const result = await pipeline.process(
+      {
+        schemaVersion: 1,
+        createdAt: postedAt,
+        source: 'fixture',
+        contentHash: '3'.repeat(64),
+        postId: '2087706104814023111',
+        url: 'https://x.com/thsottiaux/status/2087706104814023111',
+        author: 'thsottiaux',
+        text: 'Enjoy a nice reset everyone. Landing in the next hour or so, go /fast.',
+        postedAt,
+        kind: 'original',
+        parentPostId: null,
+        quotedPostId: null,
+      },
+      new AbortController().signal,
+    )
+
+    expect(result.event).toMatchObject({
+      status: 'confirmed',
+      eventType: 'completed',
+      confirmedAt: postedAt,
+    })
+  })
+
   it('forwards a future prediction to the automation scheduler', async () => {
     const automation = { onEvent: vi.fn(async () => undefined) }
     const pipeline = new MonitoringPipeline({

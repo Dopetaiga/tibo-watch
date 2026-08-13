@@ -69,6 +69,22 @@ describe('analysis pipeline', () => {
     expect(provider.analyze).not.toHaveBeenCalled()
   })
 
+  it('uses AI for strong reset semantics outside strict action rules', async () => {
+    const provider = fixtureProvider()
+    const result = await new AnalysisPipeline(provider, fixtureCache()).run(
+      {
+        request: {
+          ...request,
+          text: 'The reset is propagating and should show soon.',
+        },
+        ruleResult: { ...noCandidate, aiReviewRecommended: true },
+      },
+      new AbortController().signal,
+    )
+    expect(result.status).toBe('analyzed')
+    expect(provider.analyze).toHaveBeenCalledTimes(1)
+  })
+
   it('makes zero AI calls for cache hits', async () => {
     const provider = fixtureProvider()
     const cache = fixtureCache()

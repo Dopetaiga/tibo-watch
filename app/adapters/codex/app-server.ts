@@ -123,9 +123,32 @@ export class CodexAppServerClient {
     return { turnId: result.turn.id }
   }
 
+  async waitForTurnCompletion(
+    threadId: string,
+    turnId: string,
+    options: { timeoutMs?: number; pollIntervalMs?: number } = {},
+  ): Promise<void> {
+    const timeoutMs = options.timeoutMs ?? 10 * 60_000
+    const pollIntervalMs = options.pollIntervalMs ?? 1_000
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      const read = await this.transport.request<{
+        thread?: { status?: { type?: string } }
+      }>('thread/read', { threadId, includeTurns: false })
+      const status = read.thread?.status?.type
+      if (status && status !== 'active') return
+      await delay(pollIntervalMs)
+    }
+    throw new Error(`Codex turn 等待超时：${turnId}`)
+  }
+
   close(): void {
     this.transport.close()
   }
+}
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }
 
 class StdioJsonRpcTransport implements JsonRpcTransport {
