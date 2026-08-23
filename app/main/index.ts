@@ -4,6 +4,7 @@ import {
   dialog,
   ipcMain,
   Notification,
+  screen,
   shell,
 } from 'electron'
 import path from 'node:path'
@@ -20,11 +21,14 @@ if (portableRoot)
   app.setPath('userData', path.join(portableRoot, 'Tibo Watch Data'))
 
 function createWindow(): void {
+  const { width: workWidth, height: workHeight } =
+    screen.getPrimaryDisplay().workAreaSize
   const window = new BrowserWindow({
-    width: 1200,
-    height: 780,
+    width: Math.min(1440, Math.floor(workWidth * 0.94)),
+    height: Math.min(960, Math.floor(workHeight * 0.94)),
     minWidth: 900,
-    minHeight: 600,
+    minHeight: 680,
+    center: true,
     show: false,
     webPreferences: {
       preload: path.join(currentDirectory, '../preload/index.cjs'),

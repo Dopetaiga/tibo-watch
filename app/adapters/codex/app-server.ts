@@ -26,6 +26,17 @@ export interface CodexRateLimitSnapshot {
   resetsAt: number | null
   windowDurationMins: number | null
   availableResetCredits: number | null
+  resetCredits: CodexResetCredit[] | null
+}
+
+export interface CodexResetCredit {
+  id: string
+  grantedAt: number
+  expiresAt: number | null
+  status: 'available' | 'redeeming' | 'redeemed' | 'unknown'
+  resetType: 'codexRateLimits' | 'unknown'
+  title: string | null
+  description: string | null
 }
 
 export class CodexAppServerClient {
@@ -73,7 +84,18 @@ export class CodexAppServerClient {
           windowDurationMins?: number
         }
       }
-      rateLimitResetCredits?: { availableCount?: number } | null
+      rateLimitResetCredits?: {
+        availableCount?: number
+        credits?: Array<{
+          id?: string
+          grantedAt?: number
+          expiresAt?: number | null
+          status?: string
+          resetType?: string
+          title?: string | null
+          description?: string | null
+        }> | null
+      } | null
     }>('account/rateLimits/read')
     const primary = result.rateLimits?.primary
     return {
@@ -82,6 +104,33 @@ export class CodexAppServerClient {
       windowDurationMins: primary?.windowDurationMins ?? null,
       availableResetCredits:
         result.rateLimitResetCredits?.availableCount ?? null,
+      resetCredits:
+        result.rateLimitResetCredits?.credits
+          ?.filter(
+            (credit) =>
+              typeof credit.id === 'string' &&
+              typeof credit.grantedAt === 'number',
+          )
+          .map((credit) => ({
+            id: credit.id as string,
+            grantedAt: credit.grantedAt as number,
+            expiresAt:
+              typeof credit.expiresAt === 'number' ? credit.expiresAt : null,
+            status: ['available', 'redeeming', 'redeemed'].includes(
+              credit.status ?? '',
+            )
+              ? (credit.status as 'available' | 'redeeming' | 'redeemed')
+              : 'unknown',
+            resetType:
+              credit.resetType === 'codexRateLimits'
+                ? 'codexRateLimits'
+                : 'unknown',
+            title: typeof credit.title === 'string' ? credit.title : null,
+            description:
+              typeof credit.description === 'string'
+                ? credit.description
+                : null,
+          })) ?? null,
     }
   }
 
@@ -162,6 +211,7 @@ class StdioJsonRpcTransport implements JsonRpcTransport {
     }
   >()
   #id = 0
+  #stderr = ''
 
   constructor(executable: string) {
     const windowsScript =
@@ -175,20 +225,24 @@ class StdioJsonRpcTransport implements JsonRpcTransport {
           'call "%TIBO_CODEX_EXECUTABLE%" app-server --listen stdio://',
         ]
       : ['app-server', '--listen', 'stdio://']
+    const env = codexProcessEnvironment(executable, windowsScript)
     this.#child = spawn(command, args, {
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: windowsScript
-        ? { ...process.env, TIBO_CODEX_EXECUTABLE: executable }
-        : process.env,
+      env,
     })
     createInterface({ input: this.#child.stdout }).on('line', (line) =>
       this.#onLine(line),
     )
     this.#child.once('error', (error) => this.#failAll(error))
+    this.#child.stderr.on('data', (chunk: Buffer | string) => {
+      this.#stderr = `${this.#stderr}${chunk.toString()}`.slice(-4_000)
+    })
     this.#child.once('exit', (code) =>
       this.#failAll(
-        new Error(`Codex App Server 已退出（code=${code ?? 'unknown'}）`),
+        new Error(
+          `Codex App Server 已退出（code=${code ?? 'unknown'}）${this.#stderr.trim() ? `：${this.#stderr.trim()}` : ''}`,
+        ),
       ),
     )
   }
@@ -243,6 +297,25 @@ class StdioJsonRpcTransport implements JsonRpcTransport {
     }
     this.#pending.clear()
   }
+}
+
+function codexProcessEnvironment(
+  executable: string,
+  windowsScript = false,
+): NodeJS.ProcessEnv {
+  const env = { ...process.env }
+  if (process.platform === 'win32' && !env.CODEX_HOME) {
+    const userProfile =
+      env.USERPROFILE ||
+      (env.HOMEDRIVE && env.HOMEPATH
+        ? `${env.HOMEDRIVE}${env.HOMEPATH}`
+        : env.APPDATA
+          ? path.dirname(env.APPDATA)
+          : null)
+    if (userProfile) env.CODEX_HOME = path.join(userProfile, '.codex')
+  }
+  if (windowsScript) env.TIBO_CODEX_EXECUTABLE = executable
+  return env
 }
 
 export async function resolveCodexExecutable(

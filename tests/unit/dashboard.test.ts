@@ -61,6 +61,31 @@ describe('dashboard statistics', () => {
     })
   })
 
+  it('rolls the baseline forward when an expected reset time is reached', () => {
+    const expected = {
+      ...events[2],
+      status: 'expected' as const,
+      occurredAt: '2026-08-10T01:00:00.000Z',
+    }
+    expect(
+      resetOverview([expected], Date.parse('2026-08-10T01:00:01.000Z')),
+    ).toEqual({
+      lastObservedResetAt: '2026-08-10T01:00:00.000Z',
+      baselineNextResetAt: '2026-08-17T01:00:00.000Z',
+    })
+  })
+
+  it('keeps a future expected reset out of the current baseline', () => {
+    const expected = {
+      ...events[2],
+      status: 'expected' as const,
+      occurredAt: '2026-08-10T01:00:00.000Z',
+    }
+    expect(
+      resetOverview([expected], Date.parse('2026-08-10T00:59:59.000Z')),
+    ).toEqual({ lastObservedResetAt: null, baselineNextResetAt: null })
+  })
+
   it('does not anchor the baseline to a banked reset', () => {
     expect(resetOverview([events[1]])).toEqual({
       lastObservedResetAt: null,

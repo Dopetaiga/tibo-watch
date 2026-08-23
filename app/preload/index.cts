@@ -42,10 +42,23 @@ contextBridge.exposeInMainWorld('tiboWatch', {
     afterResetEnabled: boolean
     beforePredictionEnabled: boolean
     beforePredictionHours: number
+    maximumRunsPerCycle: number
     targetSpendPercent: number
     minimumRemainingPercent: number
     action: 'resume' | 'accelerate'
     accelerationPrompt: string
+    threadSettings: Record<
+      string,
+      {
+        afterResetEnabled: boolean
+        beforePredictionEnabled: boolean
+        beforePredictionHours: number
+        targetSpendPercent: number
+        minimumRemainingPercent: number
+        action: 'resume' | 'accelerate'
+        accelerationPrompt: string
+      }
+    >
   }) => ipcRenderer.invoke('codex:resume-settings:set', value),
   resumeCodexThread: (threadId: string) =>
     ipcRenderer.invoke('codex:resume', threadId),

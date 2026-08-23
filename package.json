@@ -18,6 +18,8 @@
     "pretest:e2e": "npm run pack:dir",
     "test:e2e": "playwright test",
     "test:installer": "node scripts/verify-installer-startup.mjs",
+    "scan:codex": "node scripts/scan-codex-tasks.mjs",
+    "create:codex-test": "node scripts/scan-codex-tasks.mjs --create-test-session",
     "verify:release": "node scripts/verify-release.mjs",
     "verify:signing": "node scripts/verify-windows-signing.mjs",
     "research:collect-leads": "node research/scripts/collect-reset-leads.mjs",

@@ -51,6 +51,15 @@ declare global {
           resetsAt: number | null
           windowDurationMins: number | null
           availableResetCredits: number | null
+          resetCredits: Array<{
+            id: string
+            grantedAt: number
+            expiresAt: number | null
+            status: 'available' | 'redeeming' | 'redeemed' | 'unknown'
+            resetType: 'codexRateLimits' | 'unknown'
+            title: string | null
+            description: string | null
+          }> | null
         } | null
         message: string
       }>
@@ -65,10 +74,23 @@ declare global {
         afterResetEnabled: boolean
         beforePredictionEnabled: boolean
         beforePredictionHours: number
+        maximumRunsPerCycle: number
         targetSpendPercent: number
         minimumRemainingPercent: number
         action: 'resume' | 'accelerate'
         accelerationPrompt: string
+        threadSettings: Record<
+          string,
+          {
+            afterResetEnabled: boolean
+            beforePredictionEnabled: boolean
+            beforePredictionHours: number
+            targetSpendPercent: number
+            minimumRemainingPercent: number
+            action: 'resume' | 'accelerate'
+            accelerationPrompt: string
+          }
+        >
       }>
       setCodexResumeSettings(value: {
         enabled: boolean
@@ -78,10 +100,23 @@ declare global {
         afterResetEnabled: boolean
         beforePredictionEnabled: boolean
         beforePredictionHours: number
+        maximumRunsPerCycle: number
         targetSpendPercent: number
         minimumRemainingPercent: number
         action: 'resume' | 'accelerate'
         accelerationPrompt: string
+        threadSettings: Record<
+          string,
+          {
+            afterResetEnabled: boolean
+            beforePredictionEnabled: boolean
+            beforePredictionHours: number
+            targetSpendPercent: number
+            minimumRemainingPercent: number
+            action: 'resume' | 'accelerate'
+            accelerationPrompt: string
+          }
+        >
       }): Promise<void>
       resumeCodexThread(threadId: string): Promise<{ turnId: string }>
       setWebhook(

@@ -54,6 +54,8 @@ export interface DashboardDetail {
 
 export interface DashboardModel {
   monitorMode: 'rule-only' | 'ai-enhanced'
+  serviceStatus: 'starting' | 'running' | 'stopped'
+  dataStatus: 'updating' | 'current' | 'stale' | 'error' | 'disabled'
   health: DashboardHealth
   healthMessage: string
   lastCheckedAt: string | null
@@ -75,6 +77,15 @@ export interface DashboardModel {
   latestSummary: string | null
   latestSourceUrl: string | null
   latestEvidence: string[]
+  resetCredits: {
+    availableCount: number | null
+    nextExpiryAt: string | null
+    lastUsedAt: string | null
+    lastUseConfidence: 'confirmed' | 'inferred' | null
+    usesLast28Days: number
+    expiredLast28Days: number
+    detailSource: 'api' | 'count-only' | 'inferred' | 'unavailable'
+  }
   posts: DashboardPost[]
   events: DashboardEvent[]
   resetChains: DashboardResetChain[]
@@ -89,11 +100,18 @@ export interface DashboardModel {
 
 export function resetOverview(
   events: DashboardEvent[],
+  now = Date.now(),
 ): Pick<DashboardModel, 'lastObservedResetAt' | 'baselineNextResetAt'> {
   const latest = events
-    .filter(({ status, type }) => status === 'confirmed' && type !== 'banked')
+    .filter(
+      ({ status, type }) =>
+        (status === 'confirmed' || status === 'expected') && type !== 'banked',
+    )
     .map(({ occurredAt }) => occurredAt)
-    .filter((value) => !Number.isNaN(Date.parse(value)))
+    .filter((value) => {
+      const timestamp = Date.parse(value)
+      return !Number.isNaN(timestamp) && timestamp <= now
+    })
     .sort((a, b) => b.localeCompare(a))[0]
   if (!latest) return { lastObservedResetAt: null, baselineNextResetAt: null }
   return {

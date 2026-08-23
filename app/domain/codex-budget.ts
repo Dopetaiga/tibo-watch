@@ -3,9 +3,7 @@ export interface CodexBudgetPolicy {
   upperUsedPercent: number
 }
 
-export interface CodexAutomationSettings extends CodexBudgetPolicy {
-  enabled: boolean
-  authorizedThreadIds: string[]
+export interface CodexThreadAutomationSettings {
   afterResetEnabled: boolean
   beforePredictionEnabled: boolean
   beforePredictionHours: number
@@ -13,6 +11,20 @@ export interface CodexAutomationSettings extends CodexBudgetPolicy {
   minimumRemainingPercent: number
   action: 'resume' | 'accelerate'
   accelerationPrompt: string
+}
+
+export interface CodexAutomationSettings extends CodexBudgetPolicy {
+  enabled: boolean
+  authorizedThreadIds: string[]
+  afterResetEnabled: boolean
+  beforePredictionEnabled: boolean
+  beforePredictionHours: number
+  maximumRunsPerCycle: number
+  targetSpendPercent: number
+  minimumRemainingPercent: number
+  action: 'resume' | 'accelerate'
+  accelerationPrompt: string
+  threadSettings: Record<string, CodexThreadAutomationSettings>
 }
 
 export function maximumAllowedUsedPercent(
@@ -39,6 +51,12 @@ export function validateAutomationSettings(
   )
     throw new Error('预测前触发时间必须位于 0–168 小时')
   if (
+    !Number.isInteger(settings.maximumRunsPerCycle) ||
+    settings.maximumRunsPerCycle < 1 ||
+    settings.maximumRunsPerCycle > 50
+  )
+    throw new Error('每周期最多任务数必须位于 1–50')
+  if (
     !Number.isFinite(settings.targetSpendPercent) ||
     settings.targetSpendPercent < 1 ||
     settings.targetSpendPercent > 100
@@ -46,6 +64,33 @@ export function validateAutomationSettings(
     throw new Error('单轮目标消耗必须位于 1–100%')
   if (!['resume', 'accelerate'].includes(settings.action))
     throw new Error('Codex 自动化动作无效')
+  if (settings.accelerationPrompt.length > 2000)
+    throw new Error('加速提示词不能超过 2000 个字符')
+  for (const [threadId, thread] of Object.entries(settings.threadSettings)) {
+    if (!/^[A-Za-z0-9_-]{3,200}$/.test(threadId))
+      throw new Error('Codex 单任务配置包含无效任务 ID')
+    validateThreadAutomationSettings(thread)
+  }
+}
+
+export function validateThreadAutomationSettings(
+  settings: CodexThreadAutomationSettings,
+): void {
+  maximumAllowedUsedPercent(settings.minimumRemainingPercent)
+  if (
+    !Number.isFinite(settings.beforePredictionHours) ||
+    settings.beforePredictionHours < 0 ||
+    settings.beforePredictionHours > 168
+  )
+    throw new Error('预测前触发时间必须位于 0–168 小时')
+  if (
+    !Number.isFinite(settings.targetSpendPercent) ||
+    settings.targetSpendPercent < 1 ||
+    settings.targetSpendPercent > 100
+  )
+    throw new Error('单任务额度预留必须位于 1–100%')
+  if (!['resume', 'accelerate'].includes(settings.action))
+    throw new Error('Codex 单任务动作无效')
   if (settings.accelerationPrompt.length > 2000)
     throw new Error('加速提示词不能超过 2000 个字符')
 }

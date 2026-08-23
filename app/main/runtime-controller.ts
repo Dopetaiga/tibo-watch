@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { mkdir, readdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { resetOverview, type DashboardModel } from '../domain/dashboard.js'
+import { summarizeResetCredits } from '../domain/reset-credits.js'
 import type {
   Analysis,
   Notification,
@@ -9,6 +10,7 @@ import type {
   ResetEvent,
   RuntimeState,
   CodexResumeAudit,
+  CodexRateLimitObservation,
 } from '../domain/models.js'
 import {
   isAnalysis,
@@ -17,6 +19,7 @@ import {
   isResetEvent,
   isRuntimeState,
   isCodexResumeAudit,
+  isCodexRateLimitObservation,
   recordKeys,
 } from '../domain/schemas.js'
 import { MonitoringPipeline } from '../domain/monitoring-pipeline.js'
@@ -78,6 +81,7 @@ export class RuntimeController {
   readonly #notifications: JsonRecordStore<Notification>
   readonly #runtime: JsonRecordStore<RuntimeState>
   readonly #codexResumes: JsonRecordStore<CodexResumeAudit>
+  readonly #codexRateLimits: JsonRecordStore<CodexRateLimitObservation>
   readonly #credentials = new WindowsCredentialManager()
   #provider: AnalysisProvider
   #pipeline: MonitoringPipeline
@@ -93,6 +97,7 @@ export class RuntimeController {
   #backgroundActivity: string | null = null
   #budgetGate: BudgetGateState = 'allow-new-resumes'
   #cleanupTimer: NodeJS.Timeout | null = null
+  #codexRateLimitTimer: NodeJS.Timeout | null = null
   readonly #predictionTimers = new Map<string, NodeJS.Timeout>()
 
   constructor(
@@ -126,6 +131,12 @@ export class RuntimeController {
       'codex-resumes',
       recordKeys.codexResume,
       isCodexResumeAudit,
+    )
+    this.#codexRateLimits = store(
+      dataRoot,
+      'codex-rate-limits',
+      recordKeys.codexRateLimit,
+      isCodexRateLimitObservation,
     )
     this.#provider = new DeepSeekProvider({
       apiKey: async () => {
@@ -227,6 +238,13 @@ export class RuntimeController {
   async #finishBackgroundInitialization(
     sourceEndpoint: string | null,
   ): Promise<void> {
+    // Codex quota is independent from the Tibo history bootstrap. Start it
+    // immediately so the dashboard does not wait for backfill or AI review.
+    void this.#refreshCodexRateLimit()
+    this.#codexRateLimitTimer = setInterval(
+      () => void this.#refreshCodexRateLimit(),
+      5 * 60_000,
+    )
     if (this.#enabled) {
       try {
         await this.#runInitialHistoryBackfill(sourceEndpoint)
@@ -258,14 +276,25 @@ export class RuntimeController {
     await this.#restorePredictionAutomations()
     await this.#pruneIrrelevantCache()
     this.#cleanupTimer = setInterval(
-      () => void this.#pruneIrrelevantCache(),
+      () => {
+        void this.#pruneIrrelevantCache()
+        void this.#pruneCodexRateLimits()
+      },
       24 * 60 * 60_000,
     )
   }
 
   async #restorePredictionAutomations(): Promise<void> {
     const settings = await this.codexResumeSettings()
-    if (!settings.enabled || !settings.beforePredictionEnabled) return
+    if (
+      !settings.enabled ||
+      !settings.authorizedThreadIds.some(
+        (threadId) =>
+          (settings.threadSettings[threadId] ?? settings)
+            .beforePredictionEnabled,
+      )
+    )
+      return
     const expected = deduplicateEventsByPost(await this.#events.list()).filter(
       (event) => event.status === 'expected' && event.expectedStart,
     )
@@ -412,6 +441,7 @@ export class RuntimeController {
       client = await this.#codexClient()
       const account = await client.account()
       const rateLimit = account.authenticated ? await client.rateLimits() : null
+      if (rateLimit) await this.#recordCodexRateLimit(rateLimit)
       return {
         available: true,
         authenticated: account.authenticated,
@@ -443,6 +473,60 @@ export class RuntimeController {
     }
   }
 
+  async #refreshCodexRateLimit(): Promise<void> {
+    let client: CodexAppServerClient | null = null
+    try {
+      client = await this.#codexClient()
+      const account = await client.account()
+      if (!account.authenticated) return
+      await this.#recordCodexRateLimit(await client.rateLimits())
+    } catch {
+      // Codex is optional; monitoring continues with the last local snapshot.
+    } finally {
+      client?.close()
+    }
+  }
+
+  async #recordCodexRateLimit(
+    rateLimit: Awaited<ReturnType<CodexAppServerClient['rateLimits']>>,
+  ): Promise<void> {
+    const observedAt = new Date().toISOString()
+    const latest = (await this.#codexRateLimits.list()).sort((a, b) =>
+      b.observedAt.localeCompare(a.observedAt),
+    )[0]
+    if (latest) {
+      const age = Date.parse(observedAt) - Date.parse(latest.observedAt)
+      const usedDelta =
+        latest.usedPercent === null || rateLimit.usedPercent === null
+          ? Number.POSITIVE_INFINITY
+          : Math.abs(latest.usedPercent - rateLimit.usedPercent)
+      const creditsChanged =
+        latest.availableResetCredits !== rateLimit.availableResetCredits ||
+        JSON.stringify(latest.resetCredits) !==
+          JSON.stringify(rateLimit.resetCredits)
+      if (age < 30 * 60_000 && usedDelta < 5 && !creditsChanged) return
+    }
+    const facts = {
+      observationId: String(Date.now()),
+      observedAt,
+      ...rateLimit,
+    }
+    await this.#codexRateLimits.put({
+      schemaVersion: 1,
+      createdAt: observedAt,
+      source: 'codex-app-server',
+      contentHash: contentHash(facts),
+      ...facts,
+    })
+  }
+
+  async #pruneCodexRateLimits(now = Date.now()): Promise<number> {
+    const cutoff = now - 35 * 86_400_000
+    return this.#codexRateLimits.deleteWhere(
+      (observation) => Date.parse(observation.observedAt) < cutoff,
+    )
+  }
+
   async codexResumeSettings(): Promise<CodexAutomationSettings> {
     const serialized = await this.#credentials.get('codex-resume', 'settings')
     if (!serialized)
@@ -454,11 +538,13 @@ export class RuntimeController {
         afterResetEnabled: true,
         beforePredictionEnabled: false,
         beforePredictionHours: 2,
+        maximumRunsPerCycle: 1,
         targetSpendPercent: 20,
         minimumRemainingPercent: 20,
         action: 'resume',
         accelerationPrompt:
           '额度即将重置。请继续当前目标，在不扩大权限范围的前提下提高推理强度并优先推进最有价值的未完成工作；不要为了消耗额度制造无意义工作。',
+        threadSettings: {},
       }
     const saved = JSON.parse(serialized) as Partial<CodexAutomationSettings>
     return {
@@ -469,12 +555,31 @@ export class RuntimeController {
       afterResetEnabled: saved.afterResetEnabled ?? true,
       beforePredictionEnabled: saved.beforePredictionEnabled ?? false,
       beforePredictionHours: saved.beforePredictionHours ?? 2,
+      maximumRunsPerCycle: saved.maximumRunsPerCycle ?? 1,
       targetSpendPercent: saved.targetSpendPercent ?? 20,
       minimumRemainingPercent: saved.minimumRemainingPercent ?? 20,
       action: saved.action ?? 'resume',
       accelerationPrompt:
         saved.accelerationPrompt ??
         '额度即将重置。请继续当前目标，在不扩大权限范围的前提下提高推理强度并优先推进最有价值的未完成工作；不要为了消耗额度制造无意义工作。',
+      threadSettings:
+        saved.threadSettings ??
+        Object.fromEntries(
+          (saved.authorizedThreadIds ?? []).map((threadId) => [
+            threadId,
+            {
+              afterResetEnabled: saved.afterResetEnabled ?? true,
+              beforePredictionEnabled: saved.beforePredictionEnabled ?? false,
+              beforePredictionHours: saved.beforePredictionHours ?? 2,
+              targetSpendPercent: saved.targetSpendPercent ?? 20,
+              minimumRemainingPercent: saved.minimumRemainingPercent ?? 20,
+              action: saved.action ?? 'resume',
+              accelerationPrompt:
+                saved.accelerationPrompt ??
+                '额度即将重置。请继续当前目标，在不扩大权限范围的前提下提高推理强度并优先推进最有价值的未完成工作；不要为了消耗额度制造无意义工作。',
+            },
+          ]),
+        ),
     }
   }
 
@@ -503,15 +608,30 @@ export class RuntimeController {
     threadId: string,
     instruction?: string,
   ): Promise<{ turnId: string }> {
-    const settings = await this.codexResumeSettings()
-    if (!settings.enabled) throw new Error('Codex 自动恢复总开关尚未启用')
+    const client = await this.#codexClient()
+    try {
+      const result = await client.resumeThread(threadId, instruction)
+      await client.waitForTurnCompletion(threadId, result.turnId)
+      return result
+    } finally {
+      client.close()
+    }
+  }
+
+  async #resumeAuthorizedCodexThread(
+    threadId: string,
+    instruction: string | undefined,
+    settings: CodexAutomationSettings,
+  ): Promise<{ turnId: string }> {
+    if (!settings.enabled) throw new Error('Codex 自动执行总开关尚未启用')
     if (!settings.authorizedThreadIds.includes(threadId))
-      throw new Error('该 Codex 线程未获得恢复授权')
+      throw new Error('该 Codex 任务未加入自动计划')
     const client = await this.#codexClient()
     try {
       const account = await client.account()
       if (account.authenticated) {
         const rate = await client.rateLimits()
+        await this.#recordCodexRateLimit(rate)
         this.#budgetGate = nextBudgetGate(
           settings,
           this.#budgetGate,
@@ -562,6 +682,7 @@ export class RuntimeController {
       ['events', (await this.#events.list()).length] as const,
       ['notifications', (await this.#notifications.list()).length] as const,
       ['resumes', (await this.#codexResumes.list()).length] as const,
+      ['rateLimits', (await this.#codexRateLimits.list()).length] as const,
     ])
     return {
       bytes: await directorySize(this.#dataRoot),
@@ -573,7 +694,9 @@ export class RuntimeController {
     deleted: number
     indexesRebuilt: number
   }> {
-    const deleted = await this.#pruneIrrelevantCache()
+    const deleted =
+      (await this.#pruneIrrelevantCache()) +
+      (await this.#pruneCodexRateLimits())
     const indexesRebuilt = (
       await Promise.all([
         this.#posts.rebuildIndex(),
@@ -581,6 +704,7 @@ export class RuntimeController {
         this.#events.rebuildIndex(),
         this.#notifications.rebuildIndex(),
         this.#codexResumes.rebuildIndex(),
+        this.#codexRateLimits.rebuildIndex(),
       ])
     ).reduce((sum, count) => sum + count, 0)
     return { deleted, indexesRebuilt }
@@ -594,6 +718,7 @@ export class RuntimeController {
       ['events', await this.#events.list()],
       ['notifications', await this.#notifications.list()],
       ['codex-resumes', await this.#codexResumes.list()],
+      ['codex-rate-limits', await this.#codexRateLimits.list()],
     ] as const
     let count = 0
     for (const [name, records] of exports) {
@@ -704,15 +829,15 @@ export class RuntimeController {
   }
 
   async snapshot(): Promise<DashboardModel> {
-    const [posts, analyses, events, notifications, resumes] = await Promise.all(
-      [
+    const [posts, analyses, events, notifications, resumes, rateLimits] =
+      await Promise.all([
         this.#posts.list(),
         this.#analyses.list(),
         this.#events.list(),
         this.#notifications.list(),
         this.#codexResumes.list(),
-      ],
-    )
+        this.#codexRateLimits.list(),
+      ])
     const scheduler = this.#scheduler.snapshot()
     const health = this.#dashboardHealth(scheduler.sourceStatus)
     const analysesByPost = latestAnalysesByPost(analyses)
@@ -732,19 +857,48 @@ export class RuntimeController {
           : event.status === 'expected'
             ? ('expected' as const)
             : ('candidate' as const),
-      occurredAt: event.confirmedAt ?? event.createdAt,
+      occurredAt: event.confirmedAt ?? event.expectedStart ?? event.createdAt,
       sourceUrl: postUrls.get(event.postId) ?? '',
     }))
     const overview = resetOverview(dashboardEvents)
-    const signal = selectLatestExpectedEvent(effectiveEvents, posts)
+    const signalCandidate = selectLatestExpectedEvent(effectiveEvents, posts)
+    const signalBoundary = signalCandidate
+      ? (signalCandidate.expectedEnd ?? signalCandidate.expectedStart)
+      : null
+    const signal =
+      signalCandidate &&
+      (!signalBoundary || Date.parse(signalBoundary) > Date.now())
+        ? signalCandidate
+        : undefined
     const signalAnalysis = signal
       ? analysesByPost.get(signal.postId)
       : undefined
     const signalPost = signal
       ? posts.find((post) => post.postId === signal.postId)
       : undefined
+    const resetCredits = summarizeResetCredits(rateLimits, [
+      {
+        start: overview.baselineNextResetAt,
+        end: overview.baselineNextResetAt,
+      },
+      {
+        start: signal?.expectedStart ?? null,
+        end: signal?.expectedEnd ?? null,
+      },
+    ])
     return {
       monitorMode: this.#aiConfigured ? 'ai-enhanced' : 'rule-only',
+      serviceStatus: !this.#startupComplete ? 'starting' : 'running',
+      dataStatus: !this.#enabled
+        ? 'disabled'
+        : this.#backgroundActivity
+          ? 'updating'
+          : scheduler.sourceStatus === 'offline' ||
+              scheduler.sourceStatus === 'degraded'
+            ? 'error'
+            : scheduler.stale
+              ? 'stale'
+              : 'current',
       health,
       healthMessage: this.#healthMessage(health),
       lastCheckedAt: scheduler.lastCheckedAt,
@@ -770,6 +924,7 @@ export class RuntimeController {
       latestSummary: latestAnalysis?.summaryZh ?? null,
       latestSourceUrl: latestAnalysis?.sourceUrl ?? null,
       latestEvidence: latestAnalysis?.evidence ?? [],
+      resetCredits,
       posts: [...posts]
         .sort((a, b) => b.postedAt.localeCompare(a.postedAt))
         .slice(0, 50)
@@ -850,13 +1005,7 @@ export class RuntimeController {
     if (!this.#startupComplete) return 'starting'
     if (!this.#enabled || sourceStatus === 'disabled') return 'disabled'
     if (sourceStatus === 'offline') return 'offline'
-    if (
-      sourceStatus === 'degraded' ||
-      !this.#aiConfigured ||
-      this.#startupWarning ||
-      this.#backgroundActivity
-    )
-      return 'degraded'
+    if (sourceStatus === 'degraded') return 'degraded'
     return 'healthy'
   }
 
@@ -876,6 +1025,8 @@ export class RuntimeController {
     this.#scheduler.stop()
     if (this.#cleanupTimer) clearInterval(this.#cleanupTimer)
     this.#cleanupTimer = null
+    if (this.#codexRateLimitTimer) clearInterval(this.#codexRateLimitTimer)
+    this.#codexRateLimitTimer = null
     for (const timer of this.#predictionTimers.values()) clearTimeout(timer)
     this.#predictionTimers.clear()
   }
@@ -1107,11 +1258,11 @@ export class RuntimeController {
     const settings = await this.codexResumeSettings()
     if (!settings.enabled || settings.authorizedThreadIds.length === 0) return
     if (event.status === 'expected') {
-      if (!settings.beforePredictionEnabled || !event.expectedStart) return
+      if (!event.expectedStart) return
       this.#schedulePredictionAutomation(event, triggerMode, settings)
       return
     }
-    if (event.status !== 'confirmed' || !settings.afterResetEnabled) return
+    if (event.status !== 'confirmed') return
     await this.#runCodexAutomation(event, triggerMode, settings, 'after-reset')
   }
 
@@ -1122,24 +1273,29 @@ export class RuntimeController {
   ): void {
     if (!event.expectedStart) return
     if (event.expectedEnd && Date.parse(event.expectedEnd) < Date.now()) return
-    const runAt =
-      Date.parse(event.expectedStart) -
-      settings.beforePredictionHours * 3_600_000
-    const delay = Math.max(0, runAt - Date.now())
     const maximumTimerDelay = 2_147_000_000
-    if (delay > maximumTimerDelay) return
-    const existing = this.#predictionTimers.get(event.eventId)
-    if (existing) clearTimeout(existing)
-    const timer = setTimeout(() => {
-      this.#predictionTimers.delete(event.eventId)
-      void this.#runCodexAutomation(
-        event,
-        triggerMode,
-        settings,
-        'before-prediction',
-      )
-    }, delay)
-    this.#predictionTimers.set(event.eventId, timer)
+    for (const threadId of settings.authorizedThreadIds) {
+      const plan = settings.threadSettings[threadId] ?? settings
+      if (!plan.beforePredictionEnabled) continue
+      const runAt =
+        Date.parse(event.expectedStart) - plan.beforePredictionHours * 3_600_000
+      const delay = Math.max(0, runAt - Date.now())
+      if (delay > maximumTimerDelay) continue
+      const timerId = `${event.eventId}--${threadId}`
+      const existing = this.#predictionTimers.get(timerId)
+      if (existing) clearTimeout(existing)
+      const timer = setTimeout(() => {
+        this.#predictionTimers.delete(timerId)
+        void this.#runCodexAutomationForThread(
+          event,
+          triggerMode,
+          settings,
+          'before-prediction',
+          threadId,
+        )
+      }, delay)
+      this.#predictionTimers.set(timerId, timer)
+    }
   }
 
   async #runCodexAutomation(
@@ -1148,7 +1304,33 @@ export class RuntimeController {
     settings: CodexAutomationSettings,
     phase: 'after-reset' | 'before-prediction',
   ): Promise<void> {
-    const threadId = settings.authorizedThreadIds[0]
+    const eligible = settings.authorizedThreadIds.filter((threadId) => {
+      const plan = settings.threadSettings[threadId] ?? settings
+      return phase === 'after-reset'
+        ? plan.afterResetEnabled
+        : plan.beforePredictionEnabled
+    })
+    for (const threadId of eligible.slice(0, settings.maximumRunsPerCycle))
+      await this.#runCodexAutomationForThread(
+        event,
+        triggerMode,
+        settings,
+        phase,
+        threadId,
+      )
+  }
+
+  async #runCodexAutomationForThread(
+    event: ResetEvent,
+    triggerMode: 'rule-only' | 'rule+ai',
+    settings: CodexAutomationSettings,
+    phase: 'after-reset' | 'before-prediction',
+    threadId: string,
+  ): Promise<void> {
+    const plan = settings.threadSettings[threadId] ?? settings
+    if (phase === 'after-reset' && !plan.afterResetEnabled) return
+    if (phase === 'before-prediction' && !plan.beforePredictionEnabled) return
+    const effectiveSettings = { ...settings, ...plan }
     const resumeId = `${event.eventId}--${phase}--${threadId}`
     try {
       await this.#codexResumes.get(resumeId)
@@ -1165,10 +1347,12 @@ export class RuntimeController {
     )
     try {
       const instruction =
-        settings.action === 'accelerate'
-          ? settings.accelerationPrompt
-          : undefined
-      const { turnId } = await this.resumeCodexThread(threadId, instruction)
+        plan.action === 'accelerate' ? plan.accelerationPrompt : undefined
+      const { turnId } = await this.#resumeAuthorizedCodexThread(
+        threadId,
+        instruction,
+        effectiveSettings,
+      )
       await this.#codexResumes.put(
         resumeAudit({
           resumeId,
@@ -1266,7 +1450,8 @@ function store<
     | ResetEvent
     | Notification
     | RuntimeState
-    | CodexResumeAudit,
+    | CodexResumeAudit
+    | CodexRateLimitObservation,
 >(
   rootDirectory: string,
   collection: string,

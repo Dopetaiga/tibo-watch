@@ -4,6 +4,7 @@ import {
   mayStartNewResume,
   maximumAllowedUsedPercent,
   nextBudgetGate,
+  validateAutomationSettings,
 } from '../../app/domain/codex-budget'
 
 describe('Codex budget start gate', () => {
@@ -53,5 +54,43 @@ describe('Codex budget start gate', () => {
         targetSpendPercent: 20,
       }),
     ).toBe(false)
+  })
+
+  it('limits how many tasks one reset cycle may start', () => {
+    const settings = {
+      enabled: true,
+      authorizedThreadIds: ['thread-1'],
+      lowerUsedPercent: 40,
+      upperUsedPercent: 80,
+      afterResetEnabled: true,
+      beforePredictionEnabled: false,
+      beforePredictionHours: 2,
+      maximumRunsPerCycle: 1,
+      targetSpendPercent: 20,
+      minimumRemainingPercent: 20,
+      action: 'resume' as const,
+      accelerationPrompt: '',
+      threadSettings: {},
+    }
+    expect(() => validateAutomationSettings(settings)).not.toThrow()
+    expect(() =>
+      validateAutomationSettings({ ...settings, maximumRunsPerCycle: 0 }),
+    ).toThrow('每周期最多任务数')
+    expect(() =>
+      validateAutomationSettings({
+        ...settings,
+        threadSettings: {
+          'thread-1': {
+            afterResetEnabled: true,
+            beforePredictionEnabled: true,
+            beforePredictionHours: 169,
+            targetSpendPercent: 20,
+            minimumRemainingPercent: 20,
+            action: 'resume',
+            accelerationPrompt: '',
+          },
+        },
+      }),
+    ).toThrow('预测前触发时间')
   })
 })

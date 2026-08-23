@@ -6,6 +6,7 @@ import {
   type ResetEvent,
   type RuntimeState,
   type CodexResumeAudit,
+  type CodexRateLimitObservation,
 } from './models.js'
 
 function object(value: unknown): Record<string, unknown> | null {
@@ -107,6 +108,22 @@ export function isCodexResumeAudit(value: unknown): value is CodexResumeAudit {
   )
 }
 
+export function isCodexRateLimitObservation(
+  value: unknown,
+): value is CodexRateLimitObservation {
+  const record = object(value)
+  return Boolean(
+    isFactRecord(value) &&
+    record &&
+    string(record.observationId) &&
+    string(record.observedAt) &&
+    (record.usedPercent === null || typeof record.usedPercent === 'number') &&
+    (record.availableResetCredits === null ||
+      typeof record.availableResetCredits === 'number') &&
+    (record.resetCredits === null || Array.isArray(record.resetCredits)),
+  )
+}
+
 export const recordKeys = {
   post: (post: Pick<Post, 'postId'>) => post.postId,
   analysis: (analysis: Pick<Analysis, 'postId' | 'analysisVersion'>) =>
@@ -116,4 +133,7 @@ export const recordKeys = {
     notification.notificationId,
   runtime: () => 'runtime',
   codexResume: (audit: Pick<CodexResumeAudit, 'resumeId'>) => audit.resumeId,
+  codexRateLimit: (
+    observation: Pick<CodexRateLimitObservation, 'observationId'>,
+  ) => observation.observationId,
 } as const

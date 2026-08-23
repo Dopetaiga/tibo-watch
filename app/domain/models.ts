@@ -90,8 +90,32 @@ export interface CodexResumeAudit extends FactRecord {
   errorCode: string | null
 }
 
+export interface CodexRateLimitObservation extends FactRecord {
+  observationId: string
+  observedAt: string
+  usedPercent: number | null
+  resetsAt: number | null
+  windowDurationMins: number | null
+  availableResetCredits: number | null
+  resetCredits: Array<{
+    id: string
+    grantedAt: number
+    expiresAt: number | null
+    status: 'available' | 'redeeming' | 'redeemed' | 'unknown'
+    resetType: 'codexRateLimits' | 'unknown'
+    title: string | null
+    description: string | null
+  }> | null
+}
+
 export type StoredRecord =
-  Post | Analysis | ResetEvent | Notification | RuntimeState | CodexResumeAudit
+  | Post
+  | Analysis
+  | ResetEvent
+  | Notification
+  | RuntimeState
+  | CodexResumeAudit
+  | CodexRateLimitObservation
 
 export function isFactRecord(value: unknown): value is FactRecord {
   if (!value || typeof value !== 'object') return false

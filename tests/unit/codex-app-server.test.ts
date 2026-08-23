@@ -35,6 +35,40 @@ describe('Codex App Server client', () => {
     expect(rpc.notify).toHaveBeenCalledWith('initialized')
   })
 
+  it('keeps reset-credit expiry details from the account response', async () => {
+    const rpc = transport({
+      'account/rateLimits/read': {
+        rateLimits: { primary: { usedPercent: 75 } },
+        rateLimitResetCredits: {
+          availableCount: 1,
+          credits: [
+            {
+              id: 'credit-1',
+              grantedAt: 100,
+              expiresAt: 200,
+              status: 'available',
+              resetType: 'codexRateLimits',
+              title: 'Celebration reset',
+              description: null,
+            },
+          ],
+        },
+      },
+    })
+    const client = new CodexAppServerClient(rpc)
+    await expect(client.rateLimits()).resolves.toMatchObject({
+      availableResetCredits: 1,
+      resetCredits: [
+        {
+          id: 'credit-1',
+          grantedAt: 100,
+          expiresAt: 200,
+          status: 'available',
+        },
+      ],
+    })
+  })
+
   it('refuses to touch an already active thread', async () => {
     const rpc = transport({
       'thread/read': { thread: { status: { type: 'active' } } },
