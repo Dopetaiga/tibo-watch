@@ -131,8 +131,14 @@ describe('dashboard statistics', () => {
   })
 
   it('renders untrusted detail payloads through React text nodes only', () => {
-    const source = readFileSync('app/renderer/src/App.tsx', 'utf8')
-    expect(source).not.toContain('dangerouslySetInnerHTML')
-    expect(source).toContain('JSON.stringify(selected.payload')
+    const appSource = readFileSync('app/renderer/src/App.tsx', 'utf8')
+    expect(appSource).not.toContain('dangerouslySetInnerHTML')
+    // The audit inspector lives in the history page after the P2 split.
+    const historySource = readFileSync(
+      'app/renderer/src/pages/history-page.tsx',
+      'utf8',
+    )
+    expect(historySource).not.toContain('dangerouslySetInnerHTML')
+    expect(historySource).toContain('JSON.stringify(selected.payload')
   })
 })
