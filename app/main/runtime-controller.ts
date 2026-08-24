@@ -32,6 +32,12 @@ export {
   selectLatestExpectedEvent,
 } from '../domain/event-selection.js'
 import { MonitoringPipeline } from '../domain/monitoring-pipeline.js'
+import {
+  NotificationHub,
+  defaultNotificationPolicy,
+  validateNotificationPolicy,
+  type NotificationPolicy,
+} from './notification-hub.js'
 import { DashboardService } from './dashboard-service.js'
 import {
   currentExpectedEvents,
@@ -52,10 +58,8 @@ import type { AnalysisProvider } from '../adapters/ai/types.js'
 import { WindowsCredentialManager } from '../adapters/credentials/windows-credential-manager.js'
 import type { CredentialStore } from '../adapters/credentials/types.js'
 import { NotificationDispatcher } from '../adapters/notifications/dispatcher.js'
-import { WindowsNotificationChannel } from '../adapters/notifications/windows.js'
 import { WebhookNotificationChannel } from '../adapters/notifications/webhook.js'
 import type {
-  NotificationChannel,
   NotificationMessage,
   AutomationEventType,
 } from '../adapters/notifications/types.js'
@@ -86,10 +90,6 @@ import {
 
 const credentialService = 'deepseek'
 const credentialAccount = 'api-key'
-type NotificationPolicy = Record<
-  AutomationEventType,
-  Array<'windows' | 'feishu' | 'http'>
->
 
 export class RuntimeController {
   readonly #dataRoot: string
@@ -117,11 +117,11 @@ export class RuntimeController {
   #cleanupTimer: NodeJS.Timeout | null = null
   #codexRateLimitTimer: NodeJS.Timeout | null = null
   readonly #predictionTimers = new Map<string, NodeJS.Timeout>()
-  readonly #notificationDispatcher: NotificationDispatcher
-  readonly #codexResumeInflight = new Map<string, Promise<void>>()
-  #resumeMutex: Promise<unknown> = Promise.resolve()
   #processingWarning: string | null = null
   readonly #dashboardService: DashboardService
+  readonly #notificationHub: NotificationHub
+  readonly #codexResumeInflight = new Map<string, Promise<void>>()
+  #resumeMutex: Promise<unknown> = Promise.resolve()
 
   constructor(
     dataRoot: string,
@@ -192,9 +192,10 @@ export class RuntimeController {
       put: async (_key, value) => void (await this.#analyses.put(value)),
     }
     this.#pipeline = this.#createPipeline()
-    this.#notificationDispatcher = new NotificationDispatcher({
-      channels: (message) =>
-        this.#resolveNotificationChannels(message.eventType),
+    this.#notificationHub = new NotificationHub({
+      readPolicy: () => this.notificationPolicy(),
+      resolveWebhook: (kind) => this.#webhookChannel(kind),
+      showNotification: (title, body) => this.#showNotification(title, body),
     })
     this.#dashboardService = new DashboardService(
       {
@@ -979,6 +980,10 @@ export class RuntimeController {
     return this.#dashboardService.snapshot()
   }
 
+  #dispatch(message: NotificationMessage): Promise<Notification[]> {
+    return this.#notificationHub.dispatch(message)
+  }
+
   stop(): void {
     this.#scheduler.stop()
     if (this.#cleanupTimer) clearInterval(this.#cleanupTimer)
@@ -1209,29 +1214,6 @@ export class RuntimeController {
         analysis.relevance === 'irrelevant',
     )
     return deletedPosts + deletedAnalyses
-  }
-
-  async #resolveNotificationChannels(
-    eventType: AutomationEventType,
-  ): Promise<NotificationChannel[]> {
-    const enabled = new Set((await this.notificationPolicy())[eventType])
-    const channels: NotificationChannel[] = []
-    if (enabled.has('windows'))
-      channels.push(
-        new WindowsNotificationChannel(async ({ title, body }) =>
-          this.#showNotification(title, body),
-        ),
-      )
-    for (const kind of ['feishu', 'http'] as const) {
-      if (!enabled.has(kind)) continue
-      const configured = await this.#webhookChannel(kind)
-      if (configured) channels.push(configured)
-    }
-    return channels
-  }
-
-  async #dispatch(message: NotificationMessage): Promise<Notification[]> {
-    return this.#notificationDispatcher.dispatch(message)
   }
 
   async #autoResumeForEvent(
@@ -1550,45 +1532,6 @@ function automationCycleId(
   return `${event.resetKind}--${day}`
 }
 
-const automationEventTypes: AutomationEventType[] = [
-  'rule_candidate',
-  'ai_confirmed',
-  'reset_observed',
-  'codex_resume_started',
-  'codex_resume_waiting_approval',
-  'codex_resume_completed',
-  'codex_resume_failed',
-]
-
-function defaultNotificationPolicy(): NotificationPolicy {
-  return Object.fromEntries(
-    automationEventTypes.map((eventType) => [
-      eventType,
-      ['windows', 'feishu', 'http'],
-    ]),
-  ) as NotificationPolicy
-}
-
-function validateNotificationPolicy(value: unknown): NotificationPolicy {
-  if (!value || typeof value !== 'object' || Array.isArray(value))
-    throw new Error('通知策略无效')
-  const object = value as Record<string, unknown>
-  const result = {} as NotificationPolicy
-  for (const eventType of automationEventTypes) {
-    const channels = object[eventType]
-    if (
-      !Array.isArray(channels) ||
-      !channels.every((channel) =>
-        ['windows', 'feishu', 'http'].includes(String(channel)),
-      )
-    )
-      throw new Error(`通知策略无效：${eventType}`)
-    result[eventType] = [...new Set(channels)] as Array<
-      'windows' | 'feishu' | 'http'
-    >
-  }
-  return result
-}
 
 export function validateWebhook(
   channel: 'feishu' | 'http',
