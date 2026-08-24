@@ -1,8 +1,7 @@
 import { createHash } from 'node:crypto'
 import { mkdir, readdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { resetOverview, type DashboardModel } from '../domain/dashboard.js'
-import { summarizeResetCredits } from '../domain/reset-credits.js'
+import type { DashboardModel } from '../domain/dashboard.js'
 import type {
   Analysis,
   Notification,
@@ -22,7 +21,24 @@ import {
   isCodexRateLimitObservation,
   recordKeys,
 } from '../domain/schemas.js'
+
+// Re-exported for backward compatibility with existing test imports; the
+// implementations live in the pure domain layer now.
+export {
+  buildResetChains,
+  currentExpectedEvents,
+  deduplicateEventsByPost,
+  selectInitialReviewPosts,
+  selectLatestExpectedEvent,
+} from '../domain/event-selection.js'
 import { MonitoringPipeline } from '../domain/monitoring-pipeline.js'
+import { DashboardService } from './dashboard-service.js'
+import {
+  currentExpectedEvents,
+  deduplicateEventsByPost,
+  evaluatePost,
+  selectInitialReviewPosts,
+} from '../domain/event-selection.js'
 import {
   AnalysisPipeline,
   type AnalysisCache,
@@ -105,6 +121,7 @@ export class RuntimeController {
   readonly #codexResumeInflight = new Map<string, Promise<void>>()
   #resumeMutex: Promise<unknown> = Promise.resolve()
   #processingWarning: string | null = null
+  readonly #dashboardService: DashboardService
 
   constructor(
     dataRoot: string,
@@ -179,6 +196,29 @@ export class RuntimeController {
       channels: (message) =>
         this.#resolveNotificationChannels(message.eventType),
     })
+    this.#dashboardService = new DashboardService(
+      {
+        posts: this.#posts,
+        analyses: this.#analyses,
+        events: this.#events,
+        notifications: this.#notifications,
+        codexResumes: this.#codexResumes,
+        codexRateLimits: this.#codexRateLimits,
+      },
+      {
+        readState: () => ({
+          aiConfigured: this.#aiConfigured,
+          enabled: this.#enabled,
+          startupComplete: this.#startupComplete,
+          backgroundActivity: this.#backgroundActivity,
+          startupWarning: this.#startupWarning,
+          lastAiReviewSummary: this.#lastAiReviewSummary,
+          processingWarning: this.#processingWarning,
+        }),
+        schedulerState: () => this.#scheduler.snapshot(),
+        requestLogs: this.#requestLogs,
+      },
+    )
     this.#scheduler = this.#createScheduler()
   }
 
@@ -934,209 +974,9 @@ export class RuntimeController {
     )
   }
 
-  async snapshot(): Promise<DashboardModel> {
-    const [posts, analyses, events, notifications, resumes, rateLimits] =
-      await Promise.all([
-        this.#posts.list(),
-        this.#analyses.list(),
-        this.#events.list(),
-        this.#notifications.list(),
-        this.#codexResumes.list(),
-        this.#codexRateLimits.list(),
-      ])
-    const scheduler = this.#scheduler.snapshot()
-    const health = this.#dashboardHealth(scheduler.sourceStatus)
-    const analysesByPost = latestAnalysesByPost(analyses)
-    const eventsByPost = new Map(events.map((item) => [item.postId, item]))
-    const latestAnalysis = [...analyses].sort((a, b) =>
-      b.createdAt.localeCompare(a.createdAt),
-    )[0]
-    const postUrls = new Map(posts.map((post) => [post.postId, post.url]))
-    const effectiveEvents = deduplicateEventsByPost(events)
-    const dashboardEvents = effectiveEvents.map((event) => ({
-      id: event.eventId,
-      title: event.titleZh,
-      type: event.resetKind,
-      status:
-        event.status === 'confirmed'
-          ? ('confirmed' as const)
-          : event.status === 'expected'
-            ? ('expected' as const)
-            : ('candidate' as const),
-      occurredAt:
-        event.confirmedAt ??
-        (event.status === 'expected' ? event.expectedStart : null) ??
-        '',
-      sourceUrl: postUrls.get(event.postId) ?? '',
-    }))
-    const overview = resetOverview(dashboardEvents)
-    const signalCandidate = selectLatestExpectedEvent(
-      effectiveEvents,
-      posts,
-      Date.now(),
-    )
-    const signalBoundary = signalCandidate
-      ? (signalCandidate.expectedEnd ?? signalCandidate.expectedStart)
-      : null
-    const signal =
-      signalCandidate &&
-      (!signalBoundary || Date.parse(signalBoundary) > Date.now())
-        ? signalCandidate
-        : undefined
-    const signalAnalysis = signal
-      ? analysesByPost.get(signal.postId)
-      : undefined
-    const signalPost = signal
-      ? posts.find((post) => post.postId === signal.postId)
-      : undefined
-    const resetCredits = summarizeResetCredits(rateLimits, [
-      {
-        start: overview.baselinePreviousResetAt,
-        end: overview.baselinePreviousResetAt,
-      },
-      {
-        start: overview.baselineNextResetAt,
-        end: overview.baselineNextResetAt,
-      },
-      {
-        start: signal?.expectedStart ?? null,
-        end: signal?.expectedEnd ?? null,
-      },
-    ])
-    return {
-      monitorMode: this.#aiConfigured ? 'ai-enhanced' : 'rule-only',
-      serviceStatus: !this.#startupComplete ? 'starting' : 'running',
-      dataStatus: !this.#enabled
-        ? 'disabled'
-        : this.#backgroundActivity
-          ? 'updating'
-          : scheduler.sourceStatus === 'offline' ||
-              scheduler.sourceStatus === 'degraded'
-            ? 'error'
-            : scheduler.stale
-              ? 'stale'
-              : 'current',
-      health,
-      healthMessage: this.#healthMessage(health),
-      lastCheckedAt: scheduler.lastCheckedAt,
-      consecutiveFailures: scheduler.consecutiveFailures,
-      pollingIntervalMinutes: Math.round(scheduler.nextDelayMs / 60_000),
-      stale: this.#enabled ? scheduler.stale : true,
-      ...overview,
-      signalPrediction: signal
-        ? {
-            start: signal.expectedStart,
-            end: signal.expectedEnd,
-            title: signal.titleZh,
-            sourceText:
-              signalPost?.text ??
-              signalAnalysis?.evidence.join('；') ??
-              signal.titleZh,
-            sourcePostedAt: signalPost?.postedAt ?? null,
-            sourceUrl: signalPost?.url ?? postUrls.get(signal.postId) ?? null,
-          }
-        : null,
-      prediction24h: prediction(effectiveEvents, posts, 24),
-      prediction48h: prediction(effectiveEvents, posts, 48),
-      latestSummary: latestAnalysis?.summaryZh ?? null,
-      latestSourceUrl: latestAnalysis?.sourceUrl ?? null,
-      latestEvidence: latestAnalysis?.evidence ?? [],
-      resetCredits,
-      posts: [...posts]
-        .sort((a, b) => b.postedAt.localeCompare(a.postedAt))
-        .slice(0, 50)
-        .map((post) => ({
-          id: post.postId,
-          sourceUrl: post.url,
-          kind: post.kind,
-          excerpt: post.text.slice(0, 180),
-          postedAt: post.postedAt,
-          ruleMatched: evaluatePost(post),
-          aiCalled: analysesByPost.has(post.postId),
-          formedEvent: eventsByPost.has(post.postId),
-          relevance:
-            analysesByPost.get(post.postId)?.relevance ??
-            (evaluatePost(post) ? 'candidate' : 'irrelevant'),
-          eventType: analysesByPost.get(post.postId)?.eventType ?? null,
-        })),
-      events: dashboardEvents,
-      resetChains: buildResetChains(effectiveEvents, posts),
-      requestLogs: this.#requestLogs.map((log) => ({
-        timestamp: log.timestamp,
-        target: log.targetCategory,
-        status: String(log.status),
-        durationMs: log.durationMs,
-      })),
-      details: {
-        post: posts.map((post) =>
-          detail(
-            post.postId,
-            post.text,
-            post,
-            `schema-${post.schemaVersion}`,
-            post.url,
-            post.postedAt,
-          ),
-        ),
-        analysis: analyses.map((analysis) =>
-          detail(
-            `${analysis.postId}--${analysis.analysisVersion}`,
-            analysis.summaryZh,
-            analysis,
-            analysis.analysisVersion,
-            analysis.sourceUrl,
-          ),
-        ),
-        event: events.map((event) =>
-          detail(
-            event.eventId,
-            event.titleZh,
-            event,
-            event.analysisVersion,
-            postUrls.get(event.postId),
-          ),
-        ),
-        notification: notifications.map((notification) =>
-          detail(
-            notification.notificationId,
-            `${notification.channel} · ${notification.status}`,
-            notification,
-            notification.semanticVersion,
-          ),
-        ),
-        resume: resumes.map((resume) =>
-          detail(
-            resume.resumeId,
-            `${resume.status} · ${resume.threadId}`,
-            resume,
-            'codex-resume-v1',
-          ),
-        ),
-      },
-    }
-  }
-
-  #dashboardHealth(
-    sourceStatus: 'disabled' | 'healthy' | 'degraded' | 'offline',
-  ): DashboardModel['health'] {
-    if (!this.#startupComplete) return 'starting'
-    if (!this.#enabled || sourceStatus === 'disabled') return 'disabled'
-    if (sourceStatus === 'offline') return 'offline'
-    if (sourceStatus === 'degraded') return 'degraded'
-    return 'healthy'
-  }
-
-  #healthMessage(health: DashboardModel['health']): string {
-    if (health === 'starting') return '正在恢复配置与初始化监控'
-    if (health === 'disabled') return '数据源与监控尚未启用'
-    if (health === 'offline') return '数据源异常，仅历史记录可用'
-    if (this.#backgroundActivity) return this.#backgroundActivity
-    if (this.#startupWarning) return this.#startupWarning
-    if (this.#processingWarning) return this.#processingWarning
-    if (this.#lastAiReviewSummary) return this.#lastAiReviewSummary
-    if (!this.#aiConfigured) return 'AI 未配置，当前使用规则模式'
-    if (health === 'degraded') return '数据源不稳定，监控已降级运行'
-    return '规则、AI 与数据源均已就绪'
+  /** Assembled by DashboardService; kept as the stable facade for IPC. */
+  snapshot(): Promise<DashboardModel> {
+    return this.#dashboardService.snapshot()
   }
 
   stop(): void {
@@ -1670,212 +1510,13 @@ async function directorySize(directory: string): Promise<number> {
   return total
 }
 
-function prediction(
-  events: ResetEvent[],
-  posts: Post[],
-  hours: number,
-): string | null {
-  const now = Date.now()
-  const limit = now + hours * 60 * 60_000
-  const upcoming = currentExpectedEvents(events, posts, now)
-    .filter(
-      (event) =>
-        event.expectedStart && Date.parse(event.expectedStart) <= limit,
-    )
-    .sort(
-      (left, right) =>
-        Date.parse(left.expectedStart ?? '') -
-        Date.parse(right.expectedStart ?? ''),
-    )[0]
-  return upcoming ? upcoming.titleZh : null
-}
 
 function shortError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error)
   return message.replace(/[\r\n]+/g, ' ').slice(0, 160)
 }
 
-function evaluatePost(post: Post): boolean {
-  return evaluateRulesV1({
-    postId: post.postId,
-    excerpt: post.text,
-    contentHash: post.contentHash,
-  }).candidate
-}
 
-export function selectInitialReviewPosts(
-  posts: Post[],
-  now = Date.now(),
-): Post[] {
-  const cutoff = now - 7 * 24 * 60 * 60 * 1000
-  return [...posts]
-    .filter((post) => Date.parse(post.postedAt) >= cutoff)
-    .filter((post) => evaluatePost(post))
-    .sort((left, right) => right.postedAt.localeCompare(left.postedAt))
-}
-
-export function deduplicateEventsByPost(events: ResetEvent[]): ResetEvent[] {
-  const selected = new Map<string, ResetEvent>()
-  for (const event of events) {
-    const existing = selected.get(event.postId)
-    const eventIsAi = event.source === 'monitoring-pipeline'
-    const existingIsAi = existing?.source === 'monitoring-pipeline'
-    if (
-      !existing ||
-      (eventIsAi && !existingIsAi) ||
-      (eventIsAi === existingIsAi && event.createdAt > existing.createdAt)
-    )
-      selected.set(event.postId, event)
-  }
-  return [...selected.values()]
-}
-
-export function selectLatestExpectedEvent(
-  events: ResetEvent[],
-  posts: Post[],
-  now?: number,
-): ResetEvent | undefined {
-  const postedAtByPost = new Map(
-    posts.map((post) => [post.postId, post.postedAt]),
-  )
-  return currentExpectedEvents(events, posts, now).sort((left, right) => {
-    const postedAtOrder = (
-      postedAtByPost.get(right.postId) ?? ''
-    ).localeCompare(postedAtByPost.get(left.postId) ?? '')
-    return postedAtOrder || right.createdAt.localeCompare(left.createdAt)
-  })[0]
-}
-
-/**
- * A confirmed reset closes every prediction published at or before it. This
- * makes the dashboard return immediately to the confirmed-reset + 7 day
- * baseline instead of continuing to display a promise that was just fulfilled.
- */
-export function currentExpectedEvents(
-  events: ResetEvent[],
-  posts: Post[],
-  now?: number,
-): ResetEvent[] {
-  const postedAtByPost = new Map(
-    posts.map((post) => [post.postId, post.postedAt]),
-  )
-  const latestConfirmedAt = events
-    .filter(
-      (event) => event.status === 'confirmed' && event.resetKind !== 'banked',
-    )
-    .map(
-      (event) =>
-        event.confirmedAt ??
-        postedAtByPost.get(event.postId) ??
-        event.createdAt,
-    )
-    .filter((value) => !Number.isNaN(Date.parse(value)))
-    .sort((left, right) => right.localeCompare(left))[0]
-
-  return events.filter((event) => {
-    if (event.status !== 'expected' || !event.expectedStart) return false
-    if (
-      now !== undefined &&
-      event.expectedEnd &&
-      Date.parse(event.expectedEnd) < now
-    )
-      return false
-    if (!latestConfirmedAt) return true
-    const signalPostedAt = postedAtByPost.get(event.postId) ?? event.createdAt
-    return Date.parse(signalPostedAt) > Date.parse(latestConfirmedAt)
-  })
-}
-
-export function buildResetChains(
-  events: ResetEvent[],
-  posts: Post[],
-): DashboardModel['resetChains'] {
-  const postsById = new Map(posts.map((post) => [post.postId, post]))
-  const ordered = events
-    .map((event) => ({ event, post: postsById.get(event.postId) }))
-    .filter((item): item is { event: ResetEvent; post: Post } =>
-      Boolean(item.post),
-    )
-    .sort((left, right) =>
-      left.post.postedAt.localeCompare(right.post.postedAt),
-    )
-  const chains: DashboardModel['resetChains'] = []
-  const open = new Map<ResetEvent['resetKind'], (typeof chains)[number]>()
-  const sevenDays = 7 * 86_400_000
-
-  for (const { event, post } of ordered) {
-    let chain = open.get(event.resetKind)
-    if (
-      chain &&
-      Date.parse(post.postedAt) - Date.parse(chain.startedAt) > sevenDays
-    ) {
-      open.delete(event.resetKind)
-      chain = undefined
-    }
-    if (!chain) {
-      chain = {
-        id: `${event.resetKind}--${post.postId}`,
-        kind: event.resetKind,
-        status: 'tracking',
-        startedAt: post.postedAt,
-        completedAt: null,
-        items: [],
-      }
-      chains.push(chain)
-      open.set(event.resetKind, chain)
-    }
-    chain.items.push({
-      eventId: event.eventId,
-      postId: post.postId,
-      postedAt: post.postedAt,
-      status:
-        event.status === 'confirmed'
-          ? 'confirmed'
-          : event.status === 'expected'
-            ? 'expected'
-            : 'candidate',
-      title: event.titleZh,
-      text: post.text,
-      sourceUrl: post.url,
-    })
-    if (event.status === 'confirmed') {
-      chain.status = 'completed'
-      chain.completedAt = post.postedAt
-      open.delete(event.resetKind)
-    }
-  }
-  return chains.sort((left, right) =>
-    right.startedAt.localeCompare(left.startedAt),
-  )
-}
-
-function latestAnalysesByPost(analyses: Analysis[]): Map<string, Analysis> {
-  const selected = new Map<string, Analysis>()
-  for (const analysis of analyses) {
-    const existing = selected.get(analysis.postId)
-    if (!existing || analysis.createdAt > existing.createdAt)
-      selected.set(analysis.postId, analysis)
-  }
-  return selected
-}
-
-function detail(
-  id: string,
-  title: string,
-  payload: Post | Analysis | ResetEvent | Notification | CodexResumeAudit,
-  version = `schema-${payload.schemaVersion}`,
-  sourceUrl?: string,
-  timestamp = payload.createdAt,
-) {
-  return {
-    id,
-    title,
-    timestamp,
-    version,
-    sourceUrl,
-    payload: { ...payload },
-  }
-}
 
 function resumeAudit(
   facts: Omit<
