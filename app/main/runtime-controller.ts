@@ -34,6 +34,7 @@ import {
 } from '../adapters/ai/multi-protocol.js'
 import type { AnalysisProvider } from '../adapters/ai/types.js'
 import { WindowsCredentialManager } from '../adapters/credentials/windows-credential-manager.js'
+import type { CredentialStore } from '../adapters/credentials/types.js'
 import { NotificationDispatcher } from '../adapters/notifications/dispatcher.js'
 import { WindowsNotificationChannel } from '../adapters/notifications/windows.js'
 import { WebhookNotificationChannel } from '../adapters/notifications/webhook.js'
@@ -83,7 +84,7 @@ export class RuntimeController {
   readonly #runtime: JsonRecordStore<RuntimeState>
   readonly #codexResumes: JsonRecordStore<CodexResumeAudit>
   readonly #codexRateLimits: JsonRecordStore<CodexRateLimitObservation>
-  readonly #credentials = new WindowsCredentialManager()
+  readonly #credentials: CredentialStore
   #provider: AnalysisProvider
   #pipeline: MonitoringPipeline
   readonly #analysisCache: AnalysisCache
@@ -108,9 +109,11 @@ export class RuntimeController {
   constructor(
     dataRoot: string,
     showNotification: (title: string, body: string) => Promise<void>,
+    credentials: CredentialStore = new WindowsCredentialManager(),
   ) {
     this.#dataRoot = dataRoot
     this.#showNotification = showNotification
+    this.#credentials = credentials
     this.#posts = store(dataRoot, 'posts', recordKeys.post, isPost)
     this.#analyses = store(
       dataRoot,
