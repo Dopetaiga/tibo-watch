@@ -1,4 +1,11 @@
-import { StrictMode, useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  StrictMode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { createRoot } from 'react-dom/client'
 import { App, type DashboardControls } from './App'
 import type { DashboardModel } from '../../domain/dashboard'
@@ -10,10 +17,16 @@ if (!root) throw new Error('缺少应用根节点')
 
 export function RuntimeApp() {
   const [model, setModel] = useState<DashboardModel | undefined>()
+  const lastPayloadRef = useRef<string | null>(null)
   const reload = useCallback(async () => {
     if (!window.tiboWatch) return
     try {
-      setModel(await window.tiboWatch.getDashboard())
+      const model = await window.tiboWatch.getDashboard()
+      // Skip reconciliation entirely when nothing changed between polls.
+      const serialized = JSON.stringify(model)
+      if (serialized === lastPayloadRef.current) return
+      lastPayloadRef.current = serialized
+      setModel(model)
     } catch {
       // Keep showing the last known dashboard state on transient IPC errors.
     }

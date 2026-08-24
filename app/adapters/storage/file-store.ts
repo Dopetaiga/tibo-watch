@@ -59,6 +59,9 @@ export class JsonRecordStore<T extends FactRecord> {
   readonly #indexPath: string
   readonly #quarantineDirectory: string
   readonly #queue = new SerialWriteQueue()
+  // In-process authoritative cache. All writes go through this instance's
+  // serial queue, so the cache never diverges from disk within the app.
+  #cache: Map<string, T> | null = null
 
   constructor(readonly options: StoreOptions<T>) {
     this.#recordsDirectory = path.join(
@@ -95,11 +98,16 @@ export class JsonRecordStore<T extends FactRecord> {
       // Duplicate ids are legal after content-hash updates; readers take the
       // last occurrence and ensureIndexIntact() compacts when counts drift.
       await this.#appendIndexEntry(id, record.createdAt, record.contentHash)
+      if (this.#cache) this.#cache.set(id, record)
       return { created: true, record }
     })
   }
 
   async get(id: string): Promise<T> {
+    if (this.#cache) {
+      const cached = this.#cache.get(id)
+      if (cached) return cached
+    }
     const value: unknown = JSON.parse(
       await readFile(this.recordPath(id), 'utf8'),
     )
@@ -109,24 +117,39 @@ export class JsonRecordStore<T extends FactRecord> {
   }
 
   async list(): Promise<T[]> {
+    if (this.#cache) return [...this.#cache.values()]
+    return this.#readAllFromDisk()
+  }
+
+  async #readAllFromDisk(): Promise<T[]> {
     await mkdir(this.#recordsDirectory, { recursive: true })
     const names = (await readdir(this.#recordsDirectory))
       .filter((name) => name.endsWith('.json'))
       .sort()
     const records: T[] = []
+    const cache = new Map<string, T>()
     for (const name of names) {
       const id = name.slice(0, -5)
       try {
-        records.push(await this.get(id))
+        const value: unknown = JSON.parse(
+          await readFile(this.recordPath(id), 'utf8'),
+        )
+        if (!this.options.validate(value))
+          throw new Error(`记录 ${id} 未通过 schema 校验`)
+        records.push(value)
+        cache.set(id, value)
       } catch {
         await this.quarantine(id)
       }
     }
+    this.#cache = cache
     return records
   }
 
   async rebuildIndex(): Promise<number> {
-    const records = await this.list()
+    // Force a disk pass so externally drifted state (files added/removed
+    // outside this process) is picked up and the cache resynchronized.
+    const records = await this.#readAllFromDisk()
     const lines = records.map((record) =>
       JSON.stringify({
         id: this.options.idOf(record),
@@ -236,6 +259,7 @@ export class JsonRecordStore<T extends FactRecord> {
         if (!predicate(record)) continue
         try {
           await unlink(this.recordPath(this.options.idOf(record)))
+          this.#cache?.delete(this.options.idOf(record))
           deleted += 1
         } catch (error) {
           if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
@@ -261,6 +285,7 @@ export class JsonRecordStore<T extends FactRecord> {
     try {
       await stat(source)
       await rename(source, target)
+      this.#cache?.delete(id)
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
     }
