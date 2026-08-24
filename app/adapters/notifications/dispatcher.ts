@@ -11,8 +11,14 @@ interface ChannelState {
   openUntil: number
 }
 
+export type NotificationChannels =
+  | NotificationChannel[]
+  | ((
+      message: NotificationMessage,
+    ) => Promise<NotificationChannel[]> | NotificationChannel[])
+
 export interface DispatcherOptions {
-  channels: NotificationChannel[]
+  channels: NotificationChannels
   timeoutMs?: number
   maximumAttempts?: number
   circuitFailureThreshold?: number
@@ -38,11 +44,17 @@ export class NotificationDispatcher {
   }
 
   async dispatch(message: NotificationMessage): Promise<Notification[]> {
+    const channels = await this.#resolveChannels(message)
     return Promise.all(
-      this.#options.channels.map((channel) =>
-        this.#dispatchChannel(channel, message),
-      ),
+      channels.map((channel) => this.#dispatchChannel(channel, message)),
     )
+  }
+
+  async #resolveChannels(
+    message: NotificationMessage,
+  ): Promise<NotificationChannel[]> {
+    const channels = this.#options.channels
+    return typeof channels === 'function' ? await channels(message) : channels
   }
 
   async #dispatchChannel(
@@ -69,6 +81,15 @@ export class NotificationDispatcher {
       )
       try {
         last = await channel.send(message, controller.signal)
+      } catch (error) {
+        last = {
+          channel: channel.id,
+          ok: false,
+          attemptedAt: new Date().toISOString(),
+          statusCode: null,
+          errorCode:
+            error instanceof Error ? error.name : 'CHANNEL_UNEXPECTED_ERROR',
+        }
       } finally {
         clearTimeout(timeout)
       }

@@ -88,6 +88,47 @@ describe('notification dispatcher', () => {
     expect(result.isTest).toBe(true)
     expect(result.notificationId).toContain('--test')
   })
+
+  it('converts unexpected channel exceptions into failed deliveries', async () => {
+    const throwing: NotificationChannel = {
+      id: 'http',
+      send: vi.fn(async () => {
+        throw new TypeError('fetch failed unexpectedly')
+      }),
+    }
+    const windows = channel('windows', true)
+    const dispatcher = new NotificationDispatcher({
+      channels: [throwing, windows],
+      maximumAttempts: 1,
+    })
+    const results = await dispatcher.dispatch(message)
+    expect(results.map(({ status }) => status)).toEqual(['failed', 'sent'])
+    expect(results[0].errorCode).toBe('TypeError')
+    expect(results[1].status).toBe('sent')
+  })
+
+  it('accepts a channel factory so circuit state survives across dispatches', async () => {
+    const http = channel('http', false)
+    const dispatcher = new NotificationDispatcher({
+      channels: () => [http],
+      maximumAttempts: 1,
+      circuitFailureThreshold: 2,
+      now: () => 1_000,
+    })
+    await dispatcher.dispatch({ ...message, semanticVersion: 'a' })
+    const second = await dispatcher.dispatch({
+      ...message,
+      semanticVersion: 'b',
+    })
+    expect(second[0].status).toBe('failed')
+    const third = await dispatcher.dispatch({
+      ...message,
+      semanticVersion: 'c',
+    })
+    expect(third[0].status).toBe('suppressed')
+    expect(third[0].errorCode).toBe('CIRCUIT_OPEN')
+    expect(http.send).toHaveBeenCalledTimes(2)
+  })
 })
 
 describe('notification channels', () => {
@@ -118,6 +159,20 @@ describe('notification channels', () => {
     const body = String(fetchMock.mock.calls[0][1]?.body)
     expect(body).toContain('msg_type')
     expect(body).not.toContain('secret-token')
+  })
+
+  it('never follows webhook redirects so custom secret headers stay put', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('{}', { status: 200 }))
+    const http = new WebhookNotificationChannel({
+      id: 'http',
+      url: async () => 'https://example.test/hook',
+      headers: async () => ({ 'x-signature': 'secret' }),
+      fetch: fetchMock,
+    })
+    await http.send(message, new AbortController().signal)
+    expect(fetchMock.mock.calls[0][1]?.redirect).toBe('manual')
   })
 
   it('wraps generic HTTP payloads in a versioned event envelope', async () => {

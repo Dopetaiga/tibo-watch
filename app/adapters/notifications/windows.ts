@@ -15,8 +15,19 @@ export class WindowsNotificationChannel implements NotificationChannel {
 
   constructor(readonly show: ShowWindowsNotification) {}
 
-  async send(message: NotificationMessage): Promise<NotificationDelivery> {
+  async send(
+    message: NotificationMessage,
+    signal?: AbortSignal,
+  ): Promise<NotificationDelivery> {
     const attemptedAt = new Date().toISOString()
+    if (signal?.aborted)
+      return {
+        channel: this.id,
+        ok: false,
+        attemptedAt,
+        statusCode: null,
+        errorCode: 'TimeoutError',
+      }
     try {
       await this.show({
         title: message.isTest ? `[测试] ${message.title}` : message.title,

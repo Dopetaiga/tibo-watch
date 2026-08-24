@@ -35,6 +35,9 @@ export class WebhookNotificationChannel implements NotificationChannel {
       const response = await this.#fetch(await this.#url(), {
         method: 'POST',
         signal,
+        // Never follow redirects: a 302 must not leak custom secret headers
+        // (signatures, tokens) to another origin, nor downgrade to http.
+        redirect: 'manual',
         headers: {
           'content-type': 'application/json',
           ...(await this.#headers?.()),
@@ -81,13 +84,15 @@ function httpBody(message: NotificationMessage) {
 }
 
 function eventTypeLabel(value: NotificationMessage['eventType']): string {
-  return {
-    rule_candidate: '规则候选',
-    ai_confirmed: 'AI 已确认',
-    reset_observed: '已观测重置',
-    codex_resume_started: 'Codex 恢复已开始',
-    codex_resume_waiting_approval: 'Codex 等待批准',
-    codex_resume_completed: 'Codex 恢复已完成',
-    codex_resume_failed: 'Codex 恢复失败',
-  }[value]
+  return (
+    {
+      rule_candidate: '规则候选',
+      ai_confirmed: 'AI 已确认',
+      reset_observed: '已观测重置',
+      codex_resume_started: 'Codex 恢复已开始',
+      codex_resume_waiting_approval: 'Codex 等待批准',
+      codex_resume_completed: 'Codex 恢复已完成',
+      codex_resume_failed: 'Codex 恢复失败',
+    }[value] ?? String(value)
+  )
 }
