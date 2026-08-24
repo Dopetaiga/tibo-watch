@@ -33,6 +33,8 @@ contextBridge.exposeInMainWorld('tiboWatch', {
   codexExecutableHint: () => ipcRenderer.invoke('codex:executable:hint'),
   chooseCodexExecutable: () => ipcRenderer.invoke('codex:executable:choose'),
   codexThreads: () => ipcRenderer.invoke('codex:threads'),
+  codexDryRun: (threadId: string) =>
+    ipcRenderer.invoke('codex:dry-run', threadId),
   codexResumeSettings: () => ipcRenderer.invoke('codex:resume-settings:get'),
   setCodexResumeSettings: (value: {
     enabled: boolean

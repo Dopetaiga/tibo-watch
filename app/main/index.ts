@@ -73,10 +73,7 @@ void app.whenReady().then(async () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
   } catch (error) {
-    dialog.showErrorBox(
-      'Tibo Watch 启动失败',
-      startupErrorMessage(error),
-    )
+    dialog.showErrorBox('Tibo Watch 启动失败', startupErrorMessage(error))
     app.exit(1)
   }
 })
@@ -167,6 +164,10 @@ function registerIpc(controller: RuntimeController): void {
     return selected
   })
   ipcMain.handle('codex:threads', () => controller.codexThreads())
+  ipcMain.handle('codex:dry-run', (_event, threadId: unknown) => {
+    if (typeof threadId !== 'string') throw new Error('Codex 线程 ID 无效')
+    return controller.codexDryRun(threadId)
+  })
   ipcMain.handle('codex:resume-settings:get', () =>
     controller.codexResumeSettings(),
   )

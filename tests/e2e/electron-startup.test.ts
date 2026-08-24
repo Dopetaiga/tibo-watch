@@ -87,6 +87,7 @@ test('packaged Windows dashboard starts with an isolated local profile', async (
         'codexExecutableHint',
         'codexResumeSettings',
         'codexThreads',
+        'codexDryRun',
         'getDashboard',
         'historyBackfillStatus',
         'retryHistoryBackfill',

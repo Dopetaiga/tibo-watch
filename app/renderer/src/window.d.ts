@@ -66,6 +66,21 @@ declare global {
       codexExecutableHint(): Promise<string | null>
       chooseCodexExecutable(): Promise<string | null>
       codexThreads(): Promise<CodexThreadSummary[]>
+      codexDryRun(threadId: string): Promise<{
+        afterReset: {
+          gateState: string
+          blockReason: string | null
+          instruction: string | null
+          plannedAt: string | null
+        }
+        beforePrediction: {
+          gateState: string
+          blockReason: string | null
+          instruction: string | null
+          plannedAt: string | null
+        }
+        usedPercent: number | null
+      }>
       codexResumeSettings(): Promise<{
         enabled: boolean
         authorizedThreadIds: string[]

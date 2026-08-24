@@ -47,6 +47,7 @@ import {
   deduplicateEventsByPost,
   evaluatePost,
   selectInitialReviewPosts,
+  selectLatestExpectedEvent,
 } from '../domain/event-selection.js'
 import {
   AnalysisPipeline,
@@ -85,8 +86,10 @@ import {
   mayStartNewResume,
   mayStartAutomation,
   nextBudgetGate,
+  traceAutomation,
   validateAutomationSettings,
   validateBudgetPolicy,
+  type AutomationTrace,
   type BudgetGateState,
   type CodexAutomationSettings,
   type CodexBudgetPolicy,
@@ -714,6 +717,67 @@ export class RuntimeController {
   #clearPredictionTimers(): void {
     for (const timer of this.#predictionTimers.values()) clearTimeout(timer)
     this.#predictionTimers.clear()
+  }
+
+  /**
+   * Pure preview of both automation legs for one authorized thread. Shares
+   * the real gate predicates but never touches a codex client.
+   */
+  async codexDryRun(threadId: string): Promise<{
+    afterReset: AutomationTrace
+    beforePrediction: AutomationTrace
+    usedPercent: number | null
+  }> {
+    if (!/^[A-Za-z0-9_-]{3,200}$/.test(threadId))
+      throw new Error('Codex 线程 ID 无效')
+    const settings = await this.codexResumeSettings()
+    const posts = await this.#posts.list()
+    const effectiveEvents = deduplicateEventsByPost(await this.#events.list())
+    const event =
+      selectLatestExpectedEvent(effectiveEvents, posts) ??
+      [...effectiveEvents]
+        .filter((item) => item.status === 'confirmed')
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ??
+      ({
+        eventId: 'preview',
+        postId: 'preview',
+        analysisVersion: 'preview',
+        status: 'confirmed',
+        eventType: 'completed',
+        resetKind: 'forced',
+        scope: '',
+        expectedStart: null,
+        expectedEnd: null,
+        confirmedAt: null,
+        createdAt: new Date().toISOString(),
+        titleZh: '预览事件',
+        schemaVersion: 1,
+        source: 'dry-run',
+        contentHash: '0'.repeat(64),
+      } satisfies ResetEvent)
+    const observations = await this.#codexRateLimits.list()
+    const usedPercent =
+      [...observations]
+        .sort((a, b) => b.observedAt.localeCompare(a.observedAt))
+        .at(-1)?.usedPercent ?? null
+    const shared = {
+      event: {
+        status: event.status as string,
+        expectedStart: event.expectedStart,
+      },
+      threadId,
+      settings,
+      currentGate: this.#budgetGate,
+      usedPercent,
+    }
+    return {
+      afterReset: traceAutomation({ ...shared, phase: 'after-reset' }),
+      beforePrediction: traceAutomation({
+        ...shared,
+        phase: 'before-prediction',
+      }),
+      usedPercent,
+    }
   }
 
   async resumeCodexThread(
@@ -1379,6 +1443,7 @@ export class RuntimeController {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
     }
     const startedAt = new Date().toISOString()
+    const startedAtMs = Date.now()
     // Persist the intent before starting so concurrent triggers and restarts
     // observe the run instead of launching it twice.
     await this.#codexResumes.put(
@@ -1393,6 +1458,9 @@ export class RuntimeController {
         turnId: null,
         usedPercent: null,
         errorCode: null,
+        phase: 'running',
+        turnSummary: null,
+        durationMs: null,
       }),
     )
     await this.#dispatchResumeNotification(
@@ -1401,6 +1469,7 @@ export class RuntimeController {
       'codex_resume_started',
       '开始恢复已授权的 Codex 任务',
     )
+    let sawApprovalWait = false
     try {
       const instruction =
         plan.action === 'accelerate' ? plan.accelerationPrompt : undefined
@@ -1408,14 +1477,45 @@ export class RuntimeController {
         threadId,
         instruction,
         effectiveSettings,
-        () =>
-          this.#dispatchResumeNotification(
+        async () => {
+          if (sawApprovalWait) return
+          sawApprovalWait = true
+          await this.#codexResumes.put(
+            resumeAudit({
+              resumeId,
+              eventId: event.eventId,
+              threadId,
+              triggerMode,
+              status: 'started',
+              startedAt,
+              finishedAt: null,
+              turnId: null,
+              usedPercent: null,
+              errorCode: null,
+              phase: 'waiting_approval',
+              turnSummary: null,
+              durationMs: Date.now() - startedAtMs,
+            }),
+          )
+          await this.#dispatchResumeNotification(
             event,
             threadId,
             'codex_resume_waiting_approval',
             '任务需要你在 Codex 中批准一个操作；Tibo Watch 不会代为批准。',
-          ),
+          )
+        },
       )
+      let turnSummary: string | null = null
+      try {
+        const summaryLease = await this.#codexConnections.acquire()
+        try {
+          turnSummary = await summaryLease.client.turnSummary(threadId, turnId)
+        } finally {
+          summaryLease.release()
+        }
+      } catch {
+        // Summary is best-effort telemetry.
+      }
       await this.#codexResumes.put(
         resumeAudit({
           resumeId,
@@ -1428,13 +1528,16 @@ export class RuntimeController {
           turnId,
           usedPercent: null,
           errorCode: null,
+          phase: 'done',
+          turnSummary,
+          durationMs: Date.now() - startedAtMs,
         }),
       )
       await this.#dispatchResumeNotification(
         event,
         threadId,
         'codex_resume_completed',
-        `恢复指令已启动（turn ${turnId}）`,
+        `恢复指令已启动（turn ${turnId}）${turnSummary ? `\n${turnSummary}` : ''}`,
       )
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -1452,6 +1555,9 @@ export class RuntimeController {
           turnId: null,
           usedPercent: null,
           errorCode: message.slice(0, 300),
+          phase: sawApprovalWait ? 'waiting_approval' : 'done',
+          turnSummary: null,
+          durationMs: Date.now() - startedAtMs,
         }),
       )
       await this.#dispatchResumeNotification(

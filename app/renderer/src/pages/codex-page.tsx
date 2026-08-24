@@ -83,6 +83,10 @@ export function CodexPage({
   )
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [dryRunBusy, setDryRunBusy] = useState(false)
+  const [dryRunResult, setDryRunResult] = useState<Awaited<
+    ReturnType<NonNullable<DashboardControls['codexDryRun']>>
+  > | null>(null)
   const autoScanStarted = useRef(Boolean(bootstrap))
 
   const authorizedIds = useMemo(() => new Set(authorized), [authorized])
@@ -445,6 +449,45 @@ export function CodexPage({
                         加入自动任务
                       </button>
                     )}
+                  </div>
+                  <div className="codex-action-block">
+                    <span>预演</span>
+                    <strong>Dry-Run 触发链检查</strong>
+                    <small>按真实门禁推演两条触发路径，不下发任何指令。</small>
+                    <button
+                      className="secondary"
+                      disabled={!controls || dryRunBusy}
+                      onClick={() => {
+                        if (!controls) return
+                        setDryRunBusy(true)
+                        setDryRunResult(null)
+                        controls
+                          .codexDryRun(selectedThread.id)
+                          .then(setDryRunResult)
+                          .catch(showError(setMessage))
+                          .finally(() => setDryRunBusy(false))
+                      }}
+                    >
+                      {dryRunBusy ? '推演中…' : '运行预演'}
+                    </button>
+                    {dryRunResult ? (
+                      <div className="dry-run-result">
+                        <p>{`当前额度：${dryRunResult.usedPercent ?? '—'}% · 门禁：${dryRunResult.afterReset.gateState === 'allow-new-resumes' ? '放行' : '阻止'}`}</p>
+                        {(
+                          [
+                            ['重置后执行', dryRunResult.afterReset],
+                            ['预测前执行', dryRunResult.beforePrediction],
+                          ] as const
+                        ).map(([label, trace]) => (
+                          <p key={label}>
+                            <strong>{label}</strong>：
+                            {trace.blockReason
+                              ? `将阻止 — ${trace.blockReason}`
+                              : `将通过${trace.instruction ? '（注入加速提示词）' : ''}${trace.plannedAt ? `，计划 ${formatTime(trace.plannedAt)}` : ''}`}
+                          </p>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
                 {authorizedIds.has(selectedThread.id) && selectedPlan ? (

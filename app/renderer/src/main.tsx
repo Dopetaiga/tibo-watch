@@ -77,6 +77,7 @@ export function RuntimeApp() {
             chooseCodexExecutable: () =>
               window.tiboWatch!.chooseCodexExecutable(),
             codexThreads: () => window.tiboWatch!.codexThreads(),
+            codexDryRun: (threadId) => window.tiboWatch!.codexDryRun(threadId),
             codexResumeSettings: () => window.tiboWatch!.codexResumeSettings(),
             setCodexResumeSettings: (value) =>
               window.tiboWatch!.setCodexResumeSettings(value),

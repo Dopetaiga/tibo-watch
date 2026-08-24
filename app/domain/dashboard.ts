@@ -115,13 +115,15 @@ export function resetOverview(
 > {
   const latest = (status: DashboardEvent['status']) =>
     events
-    .filter(({ status: value, type }) => value === status && type !== 'banked')
-    .map(({ occurredAt }) => occurredAt)
-    .filter((value) => {
-      const timestamp = Date.parse(value)
-      return !Number.isNaN(timestamp) && timestamp <= now
-    })
-    .sort((a, b) => b.localeCompare(a))[0]
+      .filter(
+        ({ status: value, type }) => value === status && type !== 'banked',
+      )
+      .map(({ occurredAt }) => occurredAt)
+      .filter((value) => {
+        const timestamp = Date.parse(value)
+        return !Number.isNaN(timestamp) && timestamp <= now
+      })
+      .sort((a, b) => b.localeCompare(a))[0]
   const confirmed = latest('confirmed')
   const elapsedForecast = latest('expected')
   const inferred =

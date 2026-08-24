@@ -93,8 +93,7 @@ export class AnalysisPipeline {
         // transient ones back off exponentially instead of hammering.
         if (attempt === this.maximumAttempts) break
         if (signal.aborted) break
-        const message =
-          error instanceof Error ? error.message : String(error)
+        const message = error instanceof Error ? error.message : String(error)
         if (/HTTP (?:400|401|403|404)\b/.test(message)) break
         await new Promise((resolve) => {
           setTimeout(resolve, this.retryBackoffMs * 2 ** (attempt - 1))

@@ -298,6 +298,33 @@ export class CodexAppServerClient {
     }
   }
 
+  /** Best-effort short summary of the newest assistant text in the turn. */
+  async turnSummary(
+    threadId: string,
+    turnId: string,
+    maximumChars = 200,
+  ): Promise<string | null> {
+    try {
+      const result = await this.transport.request<{
+        data?: Array<{
+          id?: string
+          items?: Array<{ type?: string; text?: string }>
+        }>
+      }>('thread/turns/list', { threadId, includeItems: true })
+      const turns = result.data ?? []
+      const turn = turns.find((entry) => entry.id === turnId) ?? turns.at(-1)
+      if (!turn) return null
+      const texts = (turn.items ?? [])
+        .filter((item) => item.type === 'assistantMessage' || item.text)
+        .map((item) => item.text ?? '')
+        .filter((text) => text.trim().length > 0)
+      const joined = texts.join('\n').trim()
+      return joined ? joined.slice(0, maximumChars) : null
+    } catch {
+      return null
+    }
+  }
+
   close(): void {
     this.transport.close()
   }

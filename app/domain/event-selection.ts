@@ -176,7 +176,9 @@ export function buildResetChains(
   )
 }
 
-export function latestAnalysesByPost(analyses: Analysis[]): Map<string, Analysis> {
+export function latestAnalysesByPost(
+  analyses: Analysis[],
+): Map<string, Analysis> {
   const selected = new Map<string, Analysis>()
   for (const analysis of analyses) {
     const existing = selected.get(analysis.postId)

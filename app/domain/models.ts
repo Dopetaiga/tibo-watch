@@ -88,6 +88,10 @@ export interface CodexResumeAudit extends FactRecord {
   turnId: string | null
   usedPercent: number | null
   errorCode: string | null
+  /** Optional additive fields (schemaVersion stays 1). */
+  phase?: 'waiting_approval' | 'running' | 'done'
+  turnSummary?: string | null
+  durationMs?: number | null
 }
 
 export interface CodexRateLimitObservation extends FactRecord {

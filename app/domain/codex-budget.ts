@@ -149,3 +149,91 @@ export function validateBudgetPolicy(policy: CodexBudgetPolicy): void {
 export function mayStartNewResume(state: BudgetGateState): boolean {
   return state === 'allow-new-resumes'
 }
+
+export interface AutomationTrace {
+  gateState: BudgetGateState
+  /** Human-readable reason when the run would be blocked; null otherwise. */
+  blockReason: string | null
+  /** Instruction that would be injected; null means plain resume. */
+  instruction: string | null
+  /** For before-prediction runs: the moment the trigger would fire. */
+  plannedAt: string | null
+}
+
+/**
+ * Pure preview of one automation leg. Shares the exact gate predicates the
+ * real runner uses but never touches a client or writes any state.
+ */
+export function traceAutomation(input: {
+  event: {
+    status: string
+    expectedStart: string | null
+  }
+  phase: 'after-reset' | 'before-prediction'
+  threadId: string
+  settings: CodexAutomationSettings
+  planOverride?: CodexThreadAutomationSettings
+  currentGate: BudgetGateState
+  usedPercent: number | null
+  now?: number
+}): AutomationTrace {
+  const { event, phase, threadId, settings, currentGate, usedPercent } = input
+  const nowMs = input.now ?? Date.now()
+  const plan =
+    input.planOverride ?? settings.threadSettings[threadId] ?? settings
+  const base: AutomationTrace = {
+    gateState: currentGate,
+    blockReason: null,
+    instruction: plan.action === 'accelerate' ? plan.accelerationPrompt : null,
+    plannedAt: null,
+  }
+  if (!settings.enabled) return { ...base, blockReason: '总开关未启用' }
+  if (!settings.authorizedThreadIds.includes(threadId))
+    return { ...base, blockReason: '该任务未加入自动计划' }
+  if (phase === 'after-reset' && !plan.afterResetEnabled)
+    return { ...base, blockReason: '该任务未启用“重置后执行”' }
+  if (phase === 'before-prediction') {
+    if (!plan.beforePredictionEnabled)
+      return { ...base, blockReason: '该任务未启用“预测前执行”' }
+    if (!event.expectedStart)
+      return {
+        ...base,
+        blockReason: '事件缺少预测开始时间',
+        plannedAt: null,
+      }
+    const plannedAt =
+      Date.parse(event.expectedStart) - plan.beforePredictionHours * 3_600_000
+    if (!Number.isFinite(plannedAt))
+      return { ...base, blockReason: '预测时间无法解析', plannedAt: null }
+    base.plannedAt = new Date(Math.max(0, plannedAt)).toISOString()
+    if (plannedAt < nowMs)
+      return {
+        ...base,
+        blockReason: '计划时刻已过，等待下次事件',
+        plannedAt: null,
+      }
+  }
+  if (event.status !== 'confirmed' && phase === 'after-reset')
+    return { ...base, blockReason: '仅确认事件会触发重置后执行' }
+  const projectedGate = nextBudgetGate(settings, currentGate, usedPercent)
+  base.gateState = projectedGate
+  if (!mayStartNewResume(projectedGate))
+    return {
+      ...base,
+      blockReason: `当前额度达到上限（${usedPercent ?? '?'}%），将阻止启动`,
+    }
+  if (
+    usedPercent !== null &&
+    !mayStartAutomation(usedPercent, {
+      minimumRemainingPercent: plan.minimumRemainingPercent,
+      targetSpendPercent: plan.targetSpendPercent,
+    })
+  )
+    return {
+      ...base,
+      blockReason: `额度不足以满足目标消耗（当前 ${usedPercent}%，保留线 ${plan.minimumRemainingPercent}%）`,
+    }
+  if (usedPercent === null && plan.action === 'accelerate')
+    return { ...base, blockReason: '无法读取额度时不执行自动加速消耗' }
+  return base
+}
