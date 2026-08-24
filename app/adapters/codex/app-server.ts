@@ -10,6 +10,10 @@ const execFileAsync = promisify(execFile)
 export interface JsonRpcTransport {
   request<T>(method: string, params?: Record<string, unknown>): Promise<T>
   notify(method: string, params?: Record<string, unknown>): void
+  /** Subscribe to server-initiated notifications; returns an unsubscribe. */
+  onNotification?(
+    handler: (method: string, params: unknown) => void,
+  ): () => void
   close(): void
 }
 
@@ -208,29 +212,95 @@ export class CodexAppServerClient {
   async waitForTurnCompletion(
     threadId: string,
     turnId: string,
-    options: { timeoutMs?: number; pollIntervalMs?: number } = {},
+    options: {
+      timeoutMs?: number
+      pollIntervalMs?: number
+      onStatus?: (status: { type: string; activeFlags?: string[] }) => void
+    } = {},
   ): Promise<void> {
     const timeoutMs = options.timeoutMs ?? 10 * 60_000
     const pollIntervalMs = options.pollIntervalMs ?? 1_000
     const deadline = Date.now() + timeoutMs
-    while (Date.now() < deadline) {
+
+    const pollFinished = async (): Promise<boolean> => {
       const read = await this.transport.request<{
-        thread?: { status?: { type?: string } }
+        thread?: {
+          status?: { type?: string; activeFlags?: string[] }
+        }
       }>('thread/read', { threadId, includeTurns: false })
-      const status = read.thread?.status?.type
-      if (status && status !== 'active') return
-      await delay(pollIntervalMs)
+      const type = read.thread?.status?.type
+      options.onStatus?.({
+        type: typeof type === 'string' ? type : 'unknown',
+        activeFlags: Array.isArray(read.thread?.status?.activeFlags)
+          ? (read.thread?.status?.activeFlags as string[])
+          : undefined,
+      })
+      return Boolean(type && type !== 'active' && type !== 'notLoaded')
     }
-    throw new Error(`Codex turn 等待超时：${turnId}`)
+
+    // Server pushes turn/thread lifecycle notifications; use them to skip
+    // sleep intervals instead of relying purely on the 1s poll cadence.
+    let resolvePush: (() => void) | null = null
+    const pushPromise = new Promise<'push'>((resolve) => {
+      resolvePush = () => resolve('push')
+    })
+    const unsubscribe =
+      this.transport.onNotification?.((method, params) => {
+        const payload = (params ?? {}) as {
+          threadId?: string
+          turnId?: string
+          status?: { type?: string } | string
+        }
+        if (payload.threadId && payload.threadId !== threadId) return
+        if (
+          /^turn\//.test(method) &&
+          payload.turnId &&
+          payload.turnId !== turnId
+        )
+          return
+        if (/turn\/(completed|failed)|turn\/error/i.test(method))
+          resolvePush?.()
+        else if (method === 'thread/status/changed') {
+          const status = payload.status
+          const type =
+            typeof status === 'string'
+              ? status
+              : (status as { type?: string } | undefined)?.type
+          if (typeof type === 'string' && type !== 'active') resolvePush?.()
+        }
+      }) ?? null
+    const notified = pushPromise.catch(() => 'push' as const)
+
+    try {
+      while (Date.now() < deadline) {
+        if (await pollFinished()) return
+        const remaining = Math.max(0, deadline - Date.now())
+        if (remaining === 0) break
+        // A pushed terminal lifecycle event is authoritative: the server has
+        // already settled the turn, so do not let a racing read extend the
+        // wait. Polling remains the fallback for transports without push.
+        const how = await Promise.race([
+          notified,
+          new Promise<'tick'>((resolve) =>
+            globalThis.setTimeout(resolve, Math.min(pollIntervalMs, remaining)),
+          ).then(() => 'tick' as const),
+        ])
+        if (how === 'push') {
+          options.onStatus?.({ type: 'completed' })
+          return
+        }
+      }
+      // Authoritative final check so a slow-but-finished turn is not misread.
+      if (await pollFinished()) return
+      throw new Error(`Codex turn 等待超时：${turnId}`)
+    } finally {
+      unsubscribe?.()
+    }
   }
 
   close(): void {
     this.transport.close()
   }
-}
-
-function delay(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }
 
 /**
@@ -252,6 +322,9 @@ class StdioJsonRpcTransport implements JsonRpcTransport {
       reject(error: Error): void
       timer: NodeJS.Timeout
     }
+  >()
+  readonly #notificationHandlers = new Set<
+    (method: string, params: unknown) => void
   >()
   #id = 0
   #stderr = ''
@@ -312,6 +385,12 @@ class StdioJsonRpcTransport implements JsonRpcTransport {
   notify(method: string, params?: Record<string, unknown>): void {
     this.#write({ method, ...(params ? { params } : {}) })
   }
+  onNotification(
+    handler: (method: string, params: unknown) => void,
+  ): () => void {
+    this.#notificationHandlers.add(handler)
+    return () => this.#notificationHandlers.delete(handler)
+  }
   close(): void {
     const pid = this.#child.pid
     // A cmd.exe wrapper would otherwise survive kill() and leave an orphaned
@@ -331,16 +410,28 @@ class StdioJsonRpcTransport implements JsonRpcTransport {
     this.#child.stdin.write(`${JSON.stringify(value)}\n`, 'utf8')
   }
   #onLine(line: string): void {
-    let value: { id?: number; result?: unknown; error?: { message?: string } }
+    let value: {
+      id?: number
+      method?: string
+      params?: unknown
+      result?: unknown
+      error?: { message?: string }
+    }
     try {
       value = JSON.parse(line) as typeof value
     } catch {
       return
     }
-    if (typeof value.id !== 'number') return
+    if (typeof value.id !== 'number') {
+      // Server-initiated notification/request (no id): fan out to subscribers.
+      if (value.method)
+        for (const handler of this.#notificationHandlers)
+          handler(value.method, value.params ?? null)
+      return
+    }
     const pending = this.#pending.get(value.id)
     if (!pending) return
-    clearTimeout(pending.timer)
+    globalThis.clearTimeout(pending.timer)
     this.#pending.delete(value.id)
     if (value.error)
       pending.reject(

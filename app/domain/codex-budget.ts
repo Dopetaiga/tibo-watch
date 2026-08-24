@@ -24,6 +24,8 @@ export interface CodexAutomationSettings extends CodexBudgetPolicy {
   minimumRemainingPercent: number
   action: 'resume' | 'accelerate'
   accelerationPrompt: string
+  /** Upper bound for waiting on a started turn; optional additive field. */
+  turnTimeoutMinutes?: number
   threadSettings: Record<string, CodexThreadAutomationSettings>
 }
 
@@ -66,6 +68,14 @@ export function validateAutomationSettings(
     throw new Error('Codex 自动化动作无效')
   if (settings.accelerationPrompt.length > 2000)
     throw new Error('加速提示词不能超过 2000 个字符')
+  if (
+    settings.turnTimeoutMinutes !== undefined &&
+    (!Number.isFinite(settings.turnTimeoutMinutes) ||
+      !Number.isInteger(settings.turnTimeoutMinutes) ||
+      settings.turnTimeoutMinutes < 5 ||
+      settings.turnTimeoutMinutes > 120)
+  )
+    throw new Error('Turn 等待超时必须位于 5–120 分钟')
   for (const [threadId, thread] of Object.entries(settings.threadSettings)) {
     if (!/^[A-Za-z0-9_-]{3,200}$/.test(threadId))
       throw new Error('Codex 单任务配置包含无效任务 ID')

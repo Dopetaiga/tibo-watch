@@ -80,6 +80,7 @@ import {
   type CodexThreadSummary,
   type CodexUsageSnapshot,
 } from '../adapters/codex/app-server.js'
+import { CodexConnectionManager } from '../adapters/codex/connection.js'
 import {
   mayStartNewResume,
   mayStartAutomation,
@@ -125,6 +126,10 @@ export class RuntimeController {
   #latestUsage: CodexUsageSnapshot | null = null
   readonly #dashboardService: DashboardService
   readonly #notificationHub: NotificationHub
+  readonly #codexConnections = new CodexConnectionManager({
+    executable: () => this.codexExecutableHint(),
+    idleCloseMs: 90_000,
+  })
   readonly #codexResumeInflight = new Map<string, Promise<void>>()
   #resumeMutex: Promise<unknown> = Promise.resolve()
 
@@ -566,11 +571,12 @@ export class RuntimeController {
     rateLimit: Awaited<ReturnType<CodexAppServerClient['rateLimits']>> | null
     message: string
   }> {
-    let client: CodexAppServerClient | null = null
+    const lease = await this.#codexConnections.acquire()
     try {
-      client = await this.#codexClient()
-      const account = await client.account()
-      const rateLimit = account.authenticated ? await client.rateLimits() : null
+      const account = await lease.client.account()
+      const rateLimit = account.authenticated
+        ? await lease.client.rateLimits()
+        : null
       if (rateLimit) await this.#recordCodexRateLimit(rateLimit)
       return {
         available: true,
@@ -590,36 +596,38 @@ export class RuntimeController {
         message: error instanceof Error ? error.message : 'Codex 探测失败',
       }
     } finally {
-      client?.close()
+      lease.release()
     }
   }
 
   async codexThreads(): Promise<CodexThreadSummary[]> {
-    const client = await this.#codexClient()
+    const lease = await this.#codexConnections.acquire()
     try {
-      return await client.threads()
+      return await lease.client.threads()
     } finally {
-      client.close()
+      lease.release()
     }
   }
 
   async #refreshCodexRateLimit(): Promise<void> {
-    let client: CodexAppServerClient | null = null
+    let authenticated = false
+    const lease = await this.#codexConnections.acquire()
     try {
-      client = await this.#codexClient()
-      const account = await client.account()
+      const account = await lease.client.account()
       if (!account.authenticated) return
-      await this.#recordCodexRateLimit(await client.rateLimits())
+      authenticated = true
+      await this.#recordCodexRateLimit(await lease.client.rateLimits())
       try {
-        this.#latestUsage = await client.usage()
+        this.#latestUsage = await lease.client.usage()
       } catch {
         // Usage is optional; savings metrics degrade to unavailable.
       }
     } catch {
       // Codex is optional; monitoring continues with the last local snapshot.
     } finally {
-      client?.close()
+      lease.release()
     }
+    void authenticated
   }
 
   async #recordCodexRateLimit(
@@ -712,13 +720,13 @@ export class RuntimeController {
     threadId: string,
     instruction?: string,
   ): Promise<{ turnId: string }> {
-    const client = await this.#codexClient()
+    const lease = await this.#codexConnections.acquire()
     try {
-      const result = await client.resumeThread(threadId, instruction)
-      await client.waitForTurnCompletion(threadId, result.turnId)
+      const result = await lease.client.resumeThread(threadId, instruction)
+      await lease.client.waitForTurnCompletion(threadId, result.turnId)
       return result
     } finally {
-      client.close()
+      lease.release()
     }
   }
 
@@ -735,15 +743,18 @@ export class RuntimeController {
     threadId: string,
     instruction: string | undefined,
     settings: CodexAutomationSettings,
+    onWaitingApproval?: () => Promise<void>,
   ): Promise<{ turnId: string }> {
     if (!settings.enabled) throw new Error('Codex 自动执行总开关尚未启用')
     if (!settings.authorizedThreadIds.includes(threadId))
       throw new Error('该 Codex 任务未加入自动计划')
+    const timeoutMs = (settings.turnTimeoutMinutes ?? 10) * 60_000
     // Serialize quota read → gate → start so concurrent triggers cannot both
     // pass the budget gate against the same pre-spend snapshot.
     return this.#withResumeLock(async () => {
-      const client = await this.#codexClient()
+      const lease = await this.#codexConnections.acquire()
       try {
+        const client = lease.client
         const account = await client.account()
         if (account.authenticated) {
           const rate = await client.rateLimits()
@@ -763,10 +774,22 @@ export class RuntimeController {
           throw new Error('无法读取账户额度时，不执行自动加速消耗')
         }
         const result = await client.resumeThread(threadId, instruction)
-        await client.waitForTurnCompletion(threadId, result.turnId)
+        let approvalNotified = false
+        await client.waitForTurnCompletion(threadId, result.turnId, {
+          timeoutMs,
+          onStatus: (status) => {
+            if (
+              approvalNotified ||
+              !status.activeFlags?.some((flag) => /approv/i.test(flag))
+            )
+              return
+            approvalNotified = true
+            void onWaitingApproval?.().catch(() => {})
+          },
+        })
         return result
       } finally {
-        client.close()
+        lease.release()
       }
     })
   }
@@ -922,10 +945,6 @@ export class RuntimeController {
     return resolved
   }
 
-  async #codexClient(): Promise<CodexAppServerClient> {
-    return CodexAppServerClient.connect(await this.codexExecutableHint())
-  }
-
   async notificationPolicy(): Promise<NotificationPolicy> {
     const serialized = await this.#credentials.get(
       'notification-policy',
@@ -961,6 +980,7 @@ export class RuntimeController {
     if (this.#codexRateLimitTimer) clearInterval(this.#codexRateLimitTimer)
     this.#codexRateLimitTimer = null
     this.#clearPredictionTimers()
+    void this.#codexConnections.closeNow().catch(() => {})
   }
 
   async #processPosts(sourcePosts: SourcePost[]): Promise<void> {
@@ -1388,6 +1408,13 @@ export class RuntimeController {
         threadId,
         instruction,
         effectiveSettings,
+        () =>
+          this.#dispatchResumeNotification(
+            event,
+            threadId,
+            'codex_resume_waiting_approval',
+            '任务需要你在 Codex 中批准一个操作；Tibo Watch 不会代为批准。',
+          ),
       )
       await this.#codexResumes.put(
         resumeAudit({
@@ -1441,7 +1468,10 @@ export class RuntimeController {
     threadId: string,
     eventType: Extract<
       AutomationEventType,
-      'codex_resume_started' | 'codex_resume_completed' | 'codex_resume_failed'
+      | 'codex_resume_started'
+      | 'codex_resume_waiting_approval'
+      | 'codex_resume_completed'
+      | 'codex_resume_failed'
     >,
     summaryZh: string,
   ): Promise<void> {
