@@ -86,6 +86,41 @@ describe('FxTwitter source adapter', () => {
     expect(logs[0]).not.toContain('thsottiaux')
   })
 
+  it('skips malformed statuses instead of failing the whole batch', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: 200,
+          results: [
+            {
+              type: 'status',
+              id: '1',
+              url: 'https://x.com/thsottiaux/status/1',
+              text: 'valid',
+              created_at: 'Sun Aug 09 01:00:00 +0000 2026',
+              author: { screen_name: 'thsottiaux' },
+            },
+            {
+              type: 'status',
+              id: 'broken',
+              url: 'https://x.com/thsottiaux/status/broken',
+              text: 'invalid date',
+              created_at: 'not-a-date',
+              author: { screen_name: 'thsottiaux' },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    )
+    const adapter = new FxTwitterAdapter({ fetch: fetchMock })
+    const result = await adapter.fetchLatest(
+      {},
+      new AbortController().signal,
+    )
+    expect(result.posts.map(({ id }) => id)).toEqual(['1'])
+  })
+
   it('allows HTTP only for local custom endpoints', () => {
     expect(
       () => new CustomEndpointAdapter({ baseUrl: 'http://example.com' }),

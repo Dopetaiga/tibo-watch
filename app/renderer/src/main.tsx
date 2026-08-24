@@ -11,7 +11,12 @@ if (!root) throw new Error('缺少应用根节点')
 export function RuntimeApp() {
   const [model, setModel] = useState<DashboardModel | undefined>()
   const reload = useCallback(async () => {
-    if (window.tiboWatch) setModel(await window.tiboWatch.getDashboard())
+    if (!window.tiboWatch) return
+    try {
+      setModel(await window.tiboWatch.getDashboard())
+    } catch {
+      // Keep showing the last known dashboard state on transient IPC errors.
+    }
   }, [])
   useEffect(() => {
     const initial = window.setTimeout(() => void reload(), 0)

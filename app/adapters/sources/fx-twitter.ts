@@ -85,9 +85,15 @@ export class FxTwitterAdapter implements PostSourceAdapter {
       if (payload.code !== 200 || !Array.isArray(payload.results)) {
         throw new Error('FxTwitter 返回无效数据')
       }
-      const posts = payload.results
-        .map((item) => normalize(item, this.#handle))
-        .filter((post): post is SourcePost => post !== null)
+      const posts = payload.results.flatMap((item) => {
+        // One malformed status must not abort the whole batch.
+        try {
+          const post = normalize(item, this.#handle)
+          return post ? [post] : []
+        } catch {
+          return []
+        }
+      })
       resultCount = posts.length
       return {
         posts: uniqueNewest(posts),
@@ -133,16 +139,20 @@ export class FxTwitterAdapter implements PostSourceAdapter {
 }
 
 function normalize(status: FxStatus, handle: string): SourcePost | null {
+  const author = status.author?.screen_name
   if (
     status.type !== 'status' ||
     !status.id ||
     !status.url ||
     !status.created_at ||
-    status.author?.screen_name?.toLowerCase() !== handle.toLowerCase() ||
+    !author ||
+    author.toLowerCase() !== handle.toLowerCase() ||
     /^RT\s+@/i.test(status.text ?? '')
   ) {
     return null
   }
+  const createdAt = new Date(status.created_at)
+  if (Number.isNaN(createdAt.getTime())) return null
   const parentPostId =
     typeof status.replying_to === 'object' && status.replying_to
       ? (status.replying_to.status_id ?? null)
@@ -150,9 +160,9 @@ function normalize(status: FxStatus, handle: string): SourcePost | null {
   return {
     id: status.id,
     url: status.url,
-    author: status.author.screen_name!,
+    author,
     text: status.text ?? '',
-    createdAt: new Date(status.created_at).toISOString(),
+    createdAt: createdAt.toISOString(),
     kind: parentPostId ? 'reply' : status.quote ? 'quote' : 'original',
     parentPostId,
     quotedPostId: status.quote?.id ?? null,
