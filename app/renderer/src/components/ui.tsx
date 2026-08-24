@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { DashboardModel } from '../../../domain/dashboard'
 import {
   formatTime,
@@ -119,7 +120,11 @@ export function Count({
   )
 }
 
-export function PostRow({ post }: { post: DashboardModel['posts'][number] }) {
+export const PostRow = memo(function PostRow({
+  post,
+}: {
+  post: DashboardModel['posts'][number]
+}) {
   return (
     <a className="post-row" href={post.sourceUrl}>
       <div className={`post-icon ${post.relevance}`}>
@@ -134,7 +139,7 @@ export function PostRow({ post }: { post: DashboardModel['posts'][number] }) {
       <span>↗</span>
     </a>
   )
-}
+})
 export function Empty({
   children,
   compact,

@@ -354,6 +354,16 @@ a:focus-visible {
   overflow: auto;
   scrollbar-gutter: stable;
 }
+/* Skip rendering off-screen rows in long history/audit lists. */
+.history-list > .post-row,
+.chain-list > .reset-chain {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 72px;
+}
+.audit-browser nav > button {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 58px;
+}
 .monitor-feed {
   height: 360px;
   max-height: 360px;

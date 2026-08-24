@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import type { DashboardModel } from '../../../domain/dashboard'
 import { calendarDays, eventStatistics } from '../dashboard-model'
 import {
@@ -31,13 +31,15 @@ export function MonitorPage({
     string | null
   >(null)
   const aiEnhanced = model.monitorMode === 'ai-enhanced'
+  // Aggregations render at lower priority so urgent updates stay responsive.
+  const deferredEvents = useDeferredValue(model.events)
   const statistics = useMemo(
-    () => eventStatistics(model.events),
-    [model.events],
+    () => eventStatistics(deferredEvents),
+    [deferredEvents],
   )
   const calendar = useMemo(
-    () => calendarDays(model.events, new Date()),
-    [model.events],
+    () => calendarDays(deferredEvents, new Date()),
+    [deferredEvents],
   )
   const candidates = useMemo(
     () =>

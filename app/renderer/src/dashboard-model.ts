@@ -1,25 +1,47 @@
-import type { DashboardEvent } from '../../domain/dashboard'
+import type { DashboardEvent, DashboardModel } from '../../domain/dashboard'
 
 export type { DashboardEvent } from '../../domain/dashboard'
 
-export function eventStatistics(events: DashboardEvent[], now = new Date()) {
-  const confirmed = events.filter(({ status }) => status === 'confirmed')
-  const age = (event: DashboardEvent) =>
-    now.getTime() - new Date(event.occurredAt).getTime()
-  return {
-    all: confirmed.length,
-    last7: confirmed.filter((event) => age(event) <= 7 * 86_400_000).length,
-    last30: confirmed.filter((event) => age(event) <= 30 * 86_400_000).length,
-    forced: confirmed.filter(({ type }) => type === 'forced').length,
-    compensation: confirmed.filter(({ type }) => type === 'compensation')
-      .length,
-    banked: confirmed.filter(({ type }) => type === 'banked').length,
+export interface EventStatistics {
+  all: number
+  last7: number
+  last30: number
+  forced: number
+  compensation: number
+  banked: number
+}
+
+/** Single pass over confirmed events; O(n) instead of six filter passes. */
+export function eventStatistics(
+  events: DashboardEvent[],
+  now = new Date(),
+): EventStatistics {
+  const nowMs = now.getTime()
+  const week = 7 * 86_400_000
+  const month = 30 * 86_400_000
+  let all = 0
+  let last7 = 0
+  let last30 = 0
+  let forced = 0
+  let compensation = 0
+  let banked = 0
+  for (const event of events) {
+    if (event.status !== 'confirmed') continue
+    all += 1
+    const age = nowMs - new Date(event.occurredAt).getTime()
+    if (age <= week) last7 += 1
+    if (age <= month) last30 += 1
+    if (event.type === 'forced') forced += 1
+    else if (event.type === 'compensation') compensation += 1
+    else if (event.type === 'banked') banked += 1
   }
+  return { all, last7, last30, forced, compensation, banked }
 }
 
 export function calendarDays(events: DashboardEvent[], now: Date) {
   const counts = new Map<string, number>()
-  for (const event of events.filter(({ status }) => status === 'confirmed')) {
+  for (const event of events) {
+    if (event.status !== 'confirmed') continue
     const key = chinaDateKey(new Date(event.occurredAt))
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
@@ -31,6 +53,16 @@ export function calendarDays(events: DashboardEvent[], now: Date) {
     const key = utcDateKey(date)
     return { date: key, day: date.getUTCDate(), count: counts.get(key) ?? 0 }
   })
+}
+
+/** Filter + newest-first sort for the history feed in one place (pure). */
+export function selectVisiblePosts(
+  posts: DashboardModel['posts'],
+  includeIrrelevant: boolean,
+): DashboardModel['posts'] {
+  return posts
+    .filter((post) => includeIrrelevant || post.relevance !== 'irrelevant')
+    .sort((a, b) => b.postedAt.localeCompare(a.postedAt))
 }
 
 function chinaDateKey(date: Date) {

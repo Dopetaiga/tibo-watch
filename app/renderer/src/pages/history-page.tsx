@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import type {
   DashboardDetailKind,
   DashboardModel,
 } from '../../../domain/dashboard'
+import { selectVisiblePosts } from '../dashboard-model'
 import { Empty, PageHeader, PostRow } from '../components/ui'
 import {
   chainStageLabel,
@@ -12,14 +13,49 @@ import {
   resetKindLabel,
 } from '../lib/labels'
 
+const ResetChainCard = memo(function ResetChainCard({
+  chain,
+}: {
+  chain: DashboardModel['resetChains'][number]
+}) {
+  return (
+    <section className="reset-chain">
+      <header>
+        <div>
+          <strong>{resetKindLabel(chain.kind)}</strong>
+          <small>
+            {formatTime(chain.startedAt)}
+            {chain.completedAt
+              ? ` — ${formatTime(chain.completedAt)}`
+              : ' — 跟踪中'}
+          </small>
+        </div>
+        <span className={chain.status}>
+          {chain.status === 'completed' ? '已闭环' : '跟踪中'}
+        </span>
+      </header>
+      <ol>
+        {chain.items.map((item) => (
+          <li key={item.eventId}>
+            <time>{formatTime(item.postedAt)}</time>
+            <div>
+              <strong>{chainStageLabel(item.status, chain.kind)}</strong>
+              <p>{item.text}</p>
+              <a href={item.sourceUrl}>查看原帖</a>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+})
+
 export function HistoryPage({ model }: { model: DashboardModel }) {
   const [showIrrelevant, setShowIrrelevant] = useState(false)
   const [mode, setMode] = useState<'messages' | 'chains' | 'audit'>('messages')
   const [detailTab, setDetailTab] = useState<DashboardDetailKind>('post')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const visible = [...model.posts]
-    .filter((post) => showIrrelevant || post.relevance !== 'irrelevant')
-    .sort((a, b) => b.postedAt.localeCompare(a.postedAt))
+  const visible = selectVisiblePosts(model.posts, showIrrelevant)
   const details = model.details?.[detailTab] ?? []
   const selected = details.find((item) => item.id === selectedId) ?? details[0]
   return (
@@ -73,36 +109,7 @@ export function HistoryPage({ model }: { model: DashboardModel }) {
         <article className="surface chain-list">
           {model.resetChains.length ? (
             model.resetChains.map((chain) => (
-              <section className="reset-chain" key={chain.id}>
-                <header>
-                  <div>
-                    <strong>{resetKindLabel(chain.kind)}</strong>
-                    <small>
-                      {formatTime(chain.startedAt)}
-                      {chain.completedAt
-                        ? ` — ${formatTime(chain.completedAt)}`
-                        : ' — 跟踪中'}
-                    </small>
-                  </div>
-                  <span className={chain.status}>
-                    {chain.status === 'completed' ? '已闭环' : '跟踪中'}
-                  </span>
-                </header>
-                <ol>
-                  {chain.items.map((item) => (
-                    <li key={item.eventId}>
-                      <time>{formatTime(item.postedAt)}</time>
-                      <div>
-                        <strong>
-                          {chainStageLabel(item.status, chain.kind)}
-                        </strong>
-                        <p>{item.text}</p>
-                        <a href={item.sourceUrl}>查看原帖</a>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </section>
+              <ResetChainCard key={chain.id} chain={chain} />
             ))
           ) : (
             <Empty>暂无可以串联的重置事件。</Empty>
