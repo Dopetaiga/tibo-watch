@@ -20,6 +20,8 @@ const portableRoot = process.env.PORTABLE_EXECUTABLE_DIR
 if (portableRoot)
   app.setPath('userData', path.join(portableRoot, 'Tibo Watch Data'))
 
+const hasSingleInstanceLock = app.requestSingleInstanceLock()
+
 function createWindow(): void {
   const { width: workWidth, height: workHeight } =
     screen.getPrimaryDisplay().workAreaSize
@@ -55,18 +57,41 @@ function createWindow(): void {
 }
 
 void app.whenReady().then(async () => {
-  const dataRoot = path.join(app.getPath('userData'), 'data')
-  await ensureV2MigrationBackup(dataRoot)
-  runtime = new RuntimeController(dataRoot, async (title, body) => {
-    if (Notification.isSupported()) new Notification({ title, body }).show()
-  })
-  registerIpc(runtime)
-  void runtime.restore()
-  createWindow()
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+  if (!hasSingleInstanceLock) return
+  try {
+    const dataRoot = path.join(app.getPath('userData'), 'data')
+    await ensureV2MigrationBackup(dataRoot)
+    runtime = new RuntimeController(dataRoot, async (title, body) => {
+      if (!Notification.isSupported())
+        throw new Error('当前 Windows 系统不支持应用通知')
+      new Notification({ title, body }).show()
+    })
+    registerIpc(runtime)
+    void runtime.restore()
+    createWindow()
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
+  } catch (error) {
+    dialog.showErrorBox(
+      'Tibo Watch 启动失败',
+      startupErrorMessage(error),
+    )
+    app.exit(1)
+  }
 })
+
+app.on('second-instance', () => {
+  const [existing] = BrowserWindow.getAllWindows()
+  if (!existing) return
+  if (existing.isMinimized()) existing.restore()
+  existing.focus()
+})
+
+function startupErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  return message.replace(/[\r\n]+/g, ' ').slice(0, 500)
+}
 
 app.on('window-all-closed', () => {
   runtime?.stop()

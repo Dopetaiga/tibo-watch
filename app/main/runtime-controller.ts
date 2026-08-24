@@ -64,6 +64,7 @@ import {
   type BudgetGateState,
   type CodexAutomationSettings,
   type CodexBudgetPolicy,
+  type CodexThreadAutomationSettings,
 } from '../domain/codex-budget.js'
 
 const credentialService = 'deepseek'
@@ -99,6 +100,10 @@ export class RuntimeController {
   #cleanupTimer: NodeJS.Timeout | null = null
   #codexRateLimitTimer: NodeJS.Timeout | null = null
   readonly #predictionTimers = new Map<string, NodeJS.Timeout>()
+  readonly #notificationDispatcher: NotificationDispatcher
+  readonly #codexResumeInflight = new Map<string, Promise<void>>()
+  #resumeMutex: Promise<unknown> = Promise.resolve()
+  #processingWarning: string | null = null
 
   constructor(
     dataRoot: string,
@@ -154,12 +159,23 @@ export class RuntimeController {
           return await this.#analyses.get(key)
         } catch (error) {
           if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null
-          throw error
+          // A corrupted cache entry must not break monitoring; isolate it and
+          // treat it as a cache miss so the analysis can be redone.
+          try {
+            await this.#analyses.quarantine(key)
+          } catch {
+            // Quarantine is best-effort.
+          }
+          return null
         }
       },
       put: async (_key, value) => void (await this.#analyses.put(value)),
     }
     this.#pipeline = this.#createPipeline()
+    this.#notificationDispatcher = new NotificationDispatcher({
+      channels: (message) =>
+        this.#resolveNotificationChannels(message.eventType),
+    })
     this.#scheduler = this.#createScheduler()
   }
 
@@ -654,6 +670,13 @@ export class RuntimeController {
         authorizedThreadIds: [...new Set(value.authorizedThreadIds)],
       }),
     )
+    this.#clearPredictionTimers()
+    await this.#restorePredictionAutomations()
+  }
+
+  #clearPredictionTimers(): void {
+    for (const timer of this.#predictionTimers.values()) clearTimeout(timer)
+    this.#predictionTimers.clear()
   }
 
   async resumeCodexThread(
@@ -670,6 +693,15 @@ export class RuntimeController {
     }
   }
 
+  #withResumeLock<T>(operation: () => Promise<T>): Promise<T> {
+    const result = this.#resumeMutex.then(operation, operation)
+    this.#resumeMutex = result.then(
+      () => undefined,
+      () => undefined,
+    )
+    return result
+  }
+
   async #resumeAuthorizedCodexThread(
     threadId: string,
     instruction: string | undefined,
@@ -678,32 +710,36 @@ export class RuntimeController {
     if (!settings.enabled) throw new Error('Codex 自动执行总开关尚未启用')
     if (!settings.authorizedThreadIds.includes(threadId))
       throw new Error('该 Codex 任务未加入自动计划')
-    const client = await this.#codexClient()
-    try {
-      const account = await client.account()
-      if (account.authenticated) {
-        const rate = await client.rateLimits()
-        await this.#recordCodexRateLimit(rate)
-        this.#budgetGate = nextBudgetGate(
-          settings,
-          this.#budgetGate,
-          rate.usedPercent,
-        )
-        if (!mayStartNewResume(this.#budgetGate))
-          throw new Error('当前额度达到用户设置的上限，已阻止新的恢复任务')
-        if (!mayStartAutomation(rate.usedPercent, settings))
-          throw new Error(
-            '当前额度不足以满足单轮目标消耗和保留额度，已阻止启动',
+    // Serialize quota read → gate → start so concurrent triggers cannot both
+    // pass the budget gate against the same pre-spend snapshot.
+    return this.#withResumeLock(async () => {
+      const client = await this.#codexClient()
+      try {
+        const account = await client.account()
+        if (account.authenticated) {
+          const rate = await client.rateLimits()
+          await this.#recordCodexRateLimit(rate)
+          this.#budgetGate = nextBudgetGate(
+            settings,
+            this.#budgetGate,
+            rate.usedPercent,
           )
-      } else if (settings.action === 'accelerate') {
-        throw new Error('无法读取账户额度时，不执行自动加速消耗')
+          if (!mayStartNewResume(this.#budgetGate))
+            throw new Error('当前额度达到用户设置的上限，已阻止新的恢复任务')
+          if (!mayStartAutomation(rate.usedPercent, settings))
+            throw new Error(
+              '当前额度不足以满足单轮目标消耗和保留额度，已阻止启动',
+            )
+        } else if (settings.action === 'accelerate') {
+          throw new Error('无法读取账户额度时，不执行自动加速消耗')
+        }
+        const result = await client.resumeThread(threadId, instruction)
+        await client.waitForTurnCompletion(threadId, result.turnId)
+        return result
+      } finally {
+        client.close()
       }
-      const result = await client.resumeThread(threadId, instruction)
-      await client.waitForTurnCompletion(threadId, result.turnId)
-      return result
-    } finally {
-      client.close()
-    }
+    })
   }
 
   async deepSeekHint(): Promise<string | null> {
@@ -1078,6 +1114,7 @@ export class RuntimeController {
     if (health === 'offline') return '数据源异常，仅历史记录可用'
     if (this.#backgroundActivity) return this.#backgroundActivity
     if (this.#startupWarning) return this.#startupWarning
+    if (this.#processingWarning) return this.#processingWarning
     if (this.#lastAiReviewSummary) return this.#lastAiReviewSummary
     if (!this.#aiConfigured) return 'AI 未配置，当前使用规则模式'
     if (health === 'degraded') return '数据源不稳定，监控已降级运行'
@@ -1090,8 +1127,7 @@ export class RuntimeController {
     this.#cleanupTimer = null
     if (this.#codexRateLimitTimer) clearInterval(this.#codexRateLimitTimer)
     this.#codexRateLimitTimer = null
-    for (const timer of this.#predictionTimers.values()) clearTimeout(timer)
-    this.#predictionTimers.clear()
+    this.#clearPredictionTimers()
   }
 
   async #processPosts(sourcePosts: SourcePost[]): Promise<void> {
@@ -1112,8 +1148,25 @@ export class RuntimeController {
       }),
     )
     await Promise.all(posts.map((post) => this.#posts.put(post)))
-    for (const post of posts)
-      await this.#pipeline.process(post, new AbortController().signal)
+    let firstError: string | null = null
+    for (const post of posts) {
+      const controller = new AbortController()
+      const timeout = setTimeout(
+        () => controller.abort(new Error('AI 分析超过 60 秒')),
+        60_000,
+      )
+      try {
+        await this.#pipeline.process(post, controller.signal)
+        this.#processingWarning = null
+      } catch (error) {
+        firstError ??= shortError(error)
+      } finally {
+        clearTimeout(timeout)
+      }
+    }
+    if (firstError) {
+      this.#processingWarning = `最新消息处理中断：${firstError}`
+    }
   }
 
   async #initializeMonitorFromRecentHistory(): Promise<{
@@ -1300,10 +1353,10 @@ export class RuntimeController {
     return deletedPosts + deletedAnalyses
   }
 
-  async #dispatch(message: NotificationMessage): Promise<Notification[]> {
-    const enabled = new Set(
-      (await this.notificationPolicy())[message.eventType],
-    )
+  async #resolveNotificationChannels(
+    eventType: AutomationEventType,
+  ): Promise<NotificationChannel[]> {
+    const enabled = new Set((await this.notificationPolicy())[eventType])
     const channels: NotificationChannel[] = []
     if (enabled.has('windows'))
       channels.push(
@@ -1316,7 +1369,11 @@ export class RuntimeController {
       const configured = await this.#webhookChannel(kind)
       if (configured) channels.push(configured)
     }
-    return new NotificationDispatcher({ channels }).dispatch(message)
+    return channels
+  }
+
+  async #dispatch(message: NotificationMessage): Promise<Notification[]> {
+    return this.#notificationDispatcher.dispatch(message)
   }
 
   async #autoResumeForEvent(
@@ -1348,10 +1405,18 @@ export class RuntimeController {
       const runAt =
         Date.parse(event.expectedStart) - plan.beforePredictionHours * 3_600_000
       const delay = Math.max(0, runAt - Date.now())
-      if (delay > maximumTimerDelay) continue
       const timerId = `${event.eventId}--${threadId}`
       const existing = this.#predictionTimers.get(timerId)
       if (existing) clearTimeout(existing)
+      if (delay > maximumTimerDelay) {
+        // setTimeout cannot wait this long; re-arm later against fresh settings.
+        const rearm = setTimeout(() => {
+          this.#predictionTimers.delete(timerId)
+          void this.#restorePredictionAutomations().catch(() => {})
+        }, maximumTimerDelay)
+        this.#predictionTimers.set(timerId, rearm)
+        continue
+      }
       const timer = setTimeout(() => {
         this.#predictionTimers.delete(timerId)
         void this.#runCodexAutomationForThread(
@@ -1400,6 +1465,33 @@ export class RuntimeController {
     if (phase === 'before-prediction' && !plan.beforePredictionEnabled) return
     const effectiveSettings = { ...settings, ...plan }
     const resumeId = `${automationCycleId(event, phase)}--${phase}--${threadId}`
+    const inflight = this.#codexResumeInflight.get(resumeId)
+    if (inflight) {
+      await inflight.catch(() => {})
+      return
+    }
+    const run = this.#performAuthorizedResume(
+      event,
+      triggerMode,
+      effectiveSettings,
+      plan,
+      threadId,
+      resumeId,
+    ).finally(() => {
+      this.#codexResumeInflight.delete(resumeId)
+    })
+    this.#codexResumeInflight.set(resumeId, run)
+    await run
+  }
+
+  async #performAuthorizedResume(
+    event: ResetEvent,
+    triggerMode: 'rule-only' | 'rule+ai',
+    effectiveSettings: CodexAutomationSettings,
+    plan: CodexThreadAutomationSettings,
+    threadId: string,
+    resumeId: string,
+  ): Promise<void> {
     try {
       await this.#codexResumes.get(resumeId)
       return
@@ -1407,6 +1499,22 @@ export class RuntimeController {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
     }
     const startedAt = new Date().toISOString()
+    // Persist the intent before starting so concurrent triggers and restarts
+    // observe the run instead of launching it twice.
+    await this.#codexResumes.put(
+      resumeAudit({
+        resumeId,
+        eventId: event.eventId,
+        threadId,
+        triggerMode,
+        status: 'started',
+        startedAt,
+        finishedAt: null,
+        turnId: null,
+        usedPercent: null,
+        errorCode: null,
+      }),
+    )
     await this.#dispatchResumeNotification(
       event,
       threadId,
