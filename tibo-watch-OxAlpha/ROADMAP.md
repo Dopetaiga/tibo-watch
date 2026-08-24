@@ -53,16 +53,16 @@
 
 **风险**：App.tsx 拆分回归面大 → 按 feature 页逐个迁移，每页一提交；contract 测试护航数据形状。
 
-## P3 · Codex 自动化 2.0（3–4 天）
+## P3 · Codex 自动化 2.0（3–4 天）✅ 核心已完成
 
 **任务**（对应 CODEX-AUTOMATION-V2.md 全文）
-- [ ] Q1–Q3 探测脚本执行，结论回填文档
-- [ ] `CodexConnectionManager` 常驻连接替换冷启动
-- [ ] 通知订阅 + 轮询兜底；`turnTimeoutMs` 设置项
-- [ ] 审批检测 → `codex_resume_waiting_approval` 通知打通
-- [ ] `traceAutomation` dry-run + Codex 面板"预演"按钮
-- [ ] 审计字段扩展（phase/turnSummary/durationMs）+ 成功率聚合
-- [ ] completed 通知附带 turnSummary
+- [x] Q1–Q3 探测完成并回填（推送✅/approvalPolicy✅/activeFlags 结构）；附带发现 `account/usage/read` 与 `rateLimitResetCredit/consume`
+- [x] `CodexConnectionManager` 常驻连接替换冷启动（租约 + ping 健康检查 + 死亡单次重建，idle 90s 关闭）
+- [x] 通知订阅 + 轮询兜底；`turnTimeoutMinutes` 设置项（5–120 分钟，超时前最终复核防误杀）
+- [x] 审批检测 → `codex_resume_waiting_approval` 通知打通（activeFlags 含 approv 即触发一次）
+- [x] `traceAutomation` dry-run + Codex 抽屉「运行预演」按钮（纯函数推演，不下发指令）
+- [x] 审计字段扩展（phase/turnSummary/durationMs）；completed 通知附 turn 摘要
+- [ ] 成功率聚合卡片（数据已具备，待 UI 迭代）
 
 **涉及文件**：`app-server.ts`、新增 `connection.ts`、`codex-budget.ts`、`runtime-controller.ts`（Coordinator 抽取）、codex 面板前端
 **验收**：
