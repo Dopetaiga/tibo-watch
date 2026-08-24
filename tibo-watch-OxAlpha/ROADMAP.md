@@ -27,20 +27,26 @@
 
 **验收结果**：127→129 测试全绿；写放大消除有集成测试锁定。
 
-## P2 · IPC 分域通道 + 前端重构（3–4 天）◐ 进行中
+## P2 · IPC 分域通道 + 前端重构（3–4 天）✅ 已完成
 
 **已完成（第一切片，达成性能主目标）**
 - [x] `JsonRecordStore` 进程内权威缓存：list()/get() 走内存，写路径同步维护；rebuildIndex 强制穿盘以检测外部漂移
 - [x] 渲染层 payload 门控：轮询返回未变化时跳过 setModel，空闲态零 reconciliation
 - [x] 性能验收：snapshot 中位 81ms→1ms，达成 monitor 域 <20ms 目标
 
-**偏离说明**：五通道分域 IPC 暂缓——内存缓存使全量快照组装成本降至 ~1ms，分域收益从"性能必需"降级为"带宽优化"，留待后续迭代按需实施（IPC 275KB/2s 在本地管道无瓶颈）。
+**已完成（第二切片，skill 规则治理）**
+- [x] App.tsx 解构：薄壳 + pages/{monitor,history,codex,settings} + components/ui + lib/labels + controls
+- [x] React.lazy 分包：主 chunk 234KB→198KB，页面按需加载 5–13KB
+- [x] memo 化 PostRow/ResetChainCard；useDeferredValue 热力图与统计
+- [x] eventStatistics 单遍 O(n) 改写 + selectVisiblePosts 纯函数（js-combine-iterations）
+- [x] 长列表 content-visibility + contain-intrinsic-size
+- [x] dashboard-model 纯函数单测 6 例
 
-**待办**
-- [ ] `main.tsx` 改造为 `useDashboardDomain` hook 门控轮询（若后续实施分域）
-- [ ] App.tsx 解构为 features/ 四页 + React.lazy 分包
-- [ ] 行组件 memo 化、content-visibility 长列表、useDeferredValue 热力图
-- [ ] dashboard-model.ts 纯函数索引层（js-* 规则）+ 单测
+**附带修复（预置缺陷）**
+- 设置页 tab 守卫错乱修复（cd70fbd 起：两个 developer pane、notifications 缺失、基础自检默认不可见）
+- 打包 e2e 断言更新并首次跑通（1.2s）——该测试在 main 上因上述两个问题从未通过
+
+**偏离说明**：五通道分域 IPC 暂缓——内存缓存使全量快照组装成本降至 ~1ms，分域收益从"性能必需"降级为"带宽优化"，留待后续迭代按需实施。
 
 **涉及文件**：`renderer/src/**`（重组）、新增 `app/main/dashboard-service.ts`、preload 扩展
 **验收**：FRONTEND-V2.md §8 四条全部满足；electron-security 测试继续绿（CSP/preload 断言不受影响）
