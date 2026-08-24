@@ -2,8 +2,7 @@ import type { RequestLogEntry } from '../adapters/sources/request-log.js'
 import type { SchedulerState } from '../adapters/sources/scheduler.js'
 import type { JsonRecordStore } from '../adapters/storage/file-store.js'
 import { resetOverview, type DashboardModel } from '../domain/dashboard.js'
-import { computeSavings } from '../domain/savings.js'
-import type { CodexUsageSnapshot } from '../adapters/codex/app-server.js'
+import { computeResetWindowSavings } from '../domain/savings.js'
 import {
   buildResetChains,
   deduplicateEventsByPost,
@@ -45,7 +44,6 @@ export interface DashboardServiceOptions {
   readState(): DashboardServiceLiveState
   schedulerState(): SchedulerState
   requestLogs: RequestLogEntry[]
-  codexUsage(): CodexUsageSnapshot | null
 }
 
 /**
@@ -137,9 +135,7 @@ export class DashboardService {
     return {
       monitorMode: state.aiConfigured ? 'ai-enhanced' : 'rule-only',
       serviceStatus: !state.startupComplete ? 'starting' : 'running',
-      savings: computeSavings(
-        this.#options.codexUsage()?.dailyUsageBuckets ?? [],
-      ),
+      savings: computeResetWindowSavings(events, rateLimits),
       codexRuns: (() => {
         const cutoff = new Date(Date.now() - 28 * 86_400_000).toISOString()
         const counts = { completed28d: 0, failed28d: 0, blocked28d: 0 }

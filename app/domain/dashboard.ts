@@ -3,8 +3,6 @@ export type DashboardHealth =
 export type DashboardDetailKind =
   'post' | 'analysis' | 'event' | 'notification' | 'resume'
 
-import type { SavingsSummary } from './savings.js'
-
 export interface DashboardPost {
   id: string
   sourceUrl: string
@@ -60,7 +58,13 @@ export interface DashboardModel {
   dataStatus: 'updating' | 'current' | 'stale' | 'error' | 'disabled'
   health: DashboardHealth
   healthMessage: string
-  savings: SavingsSummary | null
+  savings: {
+    /** Reset windows analyzed in the lookback period. */
+    windows: number
+    /** Quota consumed between reset signal and replenishment (percent pts). */
+    savedQuotaPercent: number
+    equivalentFullWindows: number
+  } | null
   codexRuns: {
     completed28d: number
     failed28d: number

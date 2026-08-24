@@ -1,74 +1,117 @@
-export interface UsageBucket {
-  startDate: string
-  tokens: number
+import type { CodexRateLimitObservation, ResetEvent } from './models.js'
+
+export interface ResetWindowSavings {
+  /** Analyzed reset windows in the lookback period. */
+  windows: number
+  /**
+   * Total quota (in percent-points of a window) consumed between the reset
+   * signal and the observed replenishment — quota that would otherwise have
+   * expired unused.
+   */
+  savedQuotaPercent: number
+  /** savedQuotaPercent expressed in whole-window equivalents. */
+  equivalentFullWindows: number
 }
 
-export interface SavingsConfig {
-  /** User's subscription price per month in USD; null hides money metrics. */
-  planMonthlyPriceUsd: number | null
-  /** Shadow API price used to translate tokens into dollars. */
-  referenceUsdPerMTokens: number
+export interface ResetSavingsOptions {
+  lookbackDays?: number
+  /** Replenishment must be observed within this horizon of the anchor. */
+  maxPropagationHours?: number
 }
 
-export interface SavingsSummary {
-  tokens28d: number
-  avgDailyTokens: number
-  peakDailyTokens: number
-  apiEquivalentUsd: number
-  netVsPlanUsd: number | null
-  daysObserved: number
+interface WindowAnchor {
+  at: number
 }
-
-export const defaultSavingsConfig: SavingsConfig = {
-  planMonthlyPriceUsd: 20,
-  referenceUsdPerMTokens: 2,
-}
-
-const windowMs = 28 * 86_400_000
 
 /**
- * Token-based savings estimate for the last 28 days. The API-equivalent cost
- * is what the same token volume would cost at the reference per-million
- * price; net-vs-plan subtracts the prorated subscription fee, i.e. how much
- * of the usage value exceeds what the plan already paid for.
+ * Quota burned between a reset signal (confirmed announcement or a
+ * materialised prediction) and the observed replenishment counts as saved:
+ * without the reset it would have expired unused.
+ *
+ * Detection reuses the same replenishment heuristic as reset-credit
+ * inference: prior sample >= 40% followed by <= 20% within the propagation
+ * horizon. Observed consumption inside the window is the sum of positive
+ * used-percent deltas between consecutive samples.
  */
-export function computeSavings(
-  buckets: UsageBucket[],
-  config: SavingsConfig = defaultSavingsConfig,
-  now = new Date(),
-): SavingsSummary {
-  const cutoff = now.getTime() - windowMs
-  const recent = buckets.filter((bucket) => {
-    const startAt = Date.parse(`${bucket.startDate}T00:00:00.000Z`)
-    return (
-      Number.isFinite(startAt) &&
-      startAt >= cutoff &&
-      startAt <= now.getTime() &&
-      Number.isFinite(bucket.tokens) &&
-      bucket.tokens >= 0
+export function computeResetWindowSavings(
+  events: ResetEvent[],
+  observations: CodexRateLimitObservation[],
+  options: ResetSavingsOptions = {},
+  now = Date.now(),
+): ResetWindowSavings {
+  const lookbackDays = options.lookbackDays ?? 56
+  const maxPropagationMs = (options.maxPropagationHours ?? 24) * 3_600_000
+  const cutoff = now - lookbackDays * 86_400_000
+
+  const sortedObservations = [...observations]
+    .filter((item) => !Number.isNaN(Date.parse(item.observedAt)))
+    .sort((a, b) => a.observedAt.localeCompare(b.observedAt))
+
+  const anchors: WindowAnchor[] = []
+  const seenAnchorDays = new Set<string>()
+  for (const event of events) {
+    const raw =
+      event.status === 'confirmed'
+        ? (event.confirmedAt ?? '')
+        : event.status === 'expected'
+          ? (event.expectedStart ?? '')
+          : ''
+    if (!raw || Number.isNaN(Date.parse(raw))) continue
+    const at = Date.parse(raw)
+    if (at < cutoff || at > now) continue
+    if (event.resetKind === 'banked') continue
+    const dayKey = `${event.status}:${new Date(at).toISOString().slice(0, 10)}`
+    if (seenAnchorDays.has(dayKey)) continue
+    seenAnchorDays.add(dayKey)
+    anchors.push({ at })
+  }
+  anchors.sort((a, b) => a.at - b.at)
+
+  let windows = 0
+  let savedQuotaPercent = 0
+  let searchFrom = 0 // observations index cursor; anchors are chronological
+
+  for (const anchor of anchors) {
+    let index = searchFrom
+    while (
+      index < sortedObservations.length &&
+      Date.parse(sortedObservations[index].observedAt) < anchor.at
     )
-  })
-  const tokens28d = recent.reduce((sum, bucket) => sum + bucket.tokens, 0)
-  const peakDailyTokens = recent.reduce(
-    (peak, bucket) => Math.max(peak, bucket.tokens),
-    0,
-  )
-  const apiEquivalentUsd =
-    Math.round((tokens28d / 1_000_000) * config.referenceUsdPerMTokens * 100) /
-    100
-  const netVsPlanUsd =
-    config.planMonthlyPriceUsd === null
-      ? null
-      : Math.round(
-          (apiEquivalentUsd - (config.planMonthlyPriceUsd * 28) / 30) * 100,
-        ) / 100
+      index += 1
+    searchFrom = index
+    if (index >= sortedObservations.length) break
+
+    let prior =
+      sortedObservations[index].usedPercent !== null
+        ? (sortedObservations[index].usedPercent as number)
+        : null
+    let consumption = 0
+    let replenishedAt = -1
+    let cursor = index + 1
+    for (; cursor < sortedObservations.length; cursor += 1) {
+      const observation = sortedObservations[cursor]
+      const observedAt = Date.parse(observation.observedAt)
+      if (observedAt > anchor.at + maxPropagationMs) break
+      const current = observation.usedPercent
+      if (current === null) continue
+      if (prior !== null) {
+        if (prior >= 40 && current <= 20) {
+          replenishedAt = cursor
+          break
+        }
+        if (current > prior) consumption += current - prior
+      }
+      prior = current
+    }
+    if (replenishedAt === -1) continue
+    windows += 1
+    savedQuotaPercent += consumption
+    searchFrom = replenishedAt
+  }
+
   return {
-    tokens28d,
-    avgDailyTokens:
-      recent.length > 0 ? Math.round(tokens28d / recent.length) : 0,
-    peakDailyTokens,
-    apiEquivalentUsd,
-    netVsPlanUsd,
-    daysObserved: recent.length,
+    windows,
+    savedQuotaPercent: Math.round(savedQuotaPercent * 10) / 10,
+    equivalentFullWindows: Math.round(savedQuotaPercent) / 100,
   }
 }

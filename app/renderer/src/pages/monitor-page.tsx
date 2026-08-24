@@ -190,9 +190,30 @@ export function MonitorPage({
           </article>
           <article className="surface">
             <SectionTitle label="SAVINGS" title="省钱统计" />
-            <Empty compact>
-              规划中：将基于 Token 用量与重置事件，量化订阅价值与节省金额。
-            </Empty>
+            {model.savings && model.savings.windows > 0 ? (
+              <>
+                <div className="count-row">
+                  <Count value={model.savings.windows} label="重置窗口" />
+                  <Count
+                    value={`${model.savings.savedQuotaPercent}%`}
+                    label="免作废消耗"
+                  />
+                  <Count
+                    value={`${model.savings.equivalentFullWindows.toFixed(2)} 个`}
+                    label="等效完整窗口"
+                  />
+                </div>
+                <div className="credit-meta">
+                  <span>
+                    口径：预测/确认重置后至额度刷新前被消耗的额度（否则作废）
+                  </span>
+                </div>
+              </>
+            ) : (
+              <Empty compact>
+                暂无完整的重置窗口样本；确认一次重置并观察到额度刷新后开始累计。
+              </Empty>
+            )}
           </article>
           <article className="surface">
             <SectionTitle label="28 DAYS" title="活动热力图" />

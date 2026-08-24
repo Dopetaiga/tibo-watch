@@ -80,7 +80,6 @@ import {
   CodexAppServerClient,
   resolveCodexExecutable,
   type CodexThreadSummary,
-  type CodexUsageSnapshot,
 } from '../adapters/codex/app-server.js'
 import { CodexConnectionManager } from '../adapters/codex/connection.js'
 import {
@@ -127,7 +126,6 @@ export class RuntimeController {
   #codexRateLimitTimer: NodeJS.Timeout | null = null
   readonly #predictionTimers = new Map<string, NodeJS.Timeout>()
   #processingWarning: string | null = null
-  #latestUsage: CodexUsageSnapshot | null = null
   readonly #dashboardService: DashboardService
   readonly #notificationHub: NotificationHub
   readonly #codexConnections = new CodexConnectionManager({
@@ -232,7 +230,6 @@ export class RuntimeController {
         }),
         schedulerState: () => this.#scheduler.snapshot(),
         requestLogs: this.#requestLogs,
-        codexUsage: () => this.#latestUsage,
       },
     )
     this.#scheduler = this.#createScheduler()
@@ -621,11 +618,6 @@ export class RuntimeController {
       if (!account.authenticated) return
       authenticated = true
       await this.#recordCodexRateLimit(await lease.client.rateLimits())
-      try {
-        this.#latestUsage = await lease.client.usage()
-      } catch {
-        // Usage is optional; savings metrics degrade to unavailable.
-      }
     } catch {
       // Codex is optional; monitoring continues with the last local snapshot.
     } finally {

@@ -1,67 +1,93 @@
 import { describe, expect, it } from 'vitest'
-import {
-  computeSavings,
-  defaultSavingsConfig,
-  type UsageBucket,
-} from '../../app/domain/savings'
+import type { ResetEvent } from '../../app/domain/models'
+import { computeResetWindowSavings } from '../../app/domain/savings'
 
-const now = new Date('2026-08-24T12:00:00.000Z')
+const now = Date.parse('2026-08-24T12:00:00.000Z')
 
-function bucket(daysAgo: number, tokens: number): UsageBucket {
+function observation(iso: string, usedPercent: number) {
   return {
-    startDate: new Date(now.getTime() - daysAgo * 86_400_000)
-      .toISOString()
-      .slice(0, 10),
-    tokens,
+    schemaVersion: 1 as const,
+    createdAt: iso,
+    source: 'test',
+    contentHash: 'a'.repeat(64),
+    observationId: iso,
+    observedAt: iso,
+    usedPercent,
+    resetsAt: null,
+    windowDurationMins: null,
+    availableResetCredits: null,
+    resetCredits: null,
   }
 }
 
-describe('computeSavings', () => {
-  it('aggregates the trailing 28 days and converts to API-equivalent dollars', () => {
-    const summary = computeSavings(
-      [bucket(0, 2_000_000), bucket(27, 1_000_000), bucket(40, 9_999_999)],
-      defaultSavingsConfig,
-      now,
-    )
-    expect(summary.tokens28d).toBe(3_000_000)
-    expect(summary.apiEquivalentUsd).toBe(6)
-    expect(summary.peakDailyTokens).toBe(2_000_000)
-    expect(summary.daysObserved).toBe(2)
-    // $6 usage vs $20 plan prorated over 28/30 days → negative net.
-    expect(summary.netVsPlanUsd).toBeLessThan(0)
+function confirmed(confirmedAt: string): ResetEvent {
+  return {
+    schemaVersion: 1,
+    createdAt: confirmedAt,
+    source: 'test',
+    contentHash: 'b'.repeat(64),
+    eventId: confirmedAt,
+    postId: confirmedAt,
+    analysisVersion: 'v',
+    status: 'confirmed',
+    eventType: 'completed',
+    resetKind: 'forced',
+    scope: '',
+    expectedStart: null,
+    expectedEnd: null,
+    confirmedAt,
+    titleZh: '',
+  }
+}
+
+describe('computeResetWindowSavings', () => {
+  it('sums observed burn between the reset signal and replenishment', () => {
+    // Anchor 02:00. Pre-replenish burn: 60->70 (+10), 70->85 (+15). Then the
+    // reset lands (85 -> 5) which is NOT consumption.
+    const events = [confirmed('2026-08-23T02:00:00.000Z')]
+    const observations = [
+      observation('2026-08-23T01:00:00.000Z', 55),
+      observation('2026-08-23T02:30:00.000Z', 60),
+      observation('2026-08-23T03:30:00.000Z', 70),
+      observation('2026-08-23T04:30:00.000Z', 85),
+      observation('2026-08-23T05:00:00.000Z', 5),
+    ]
+    const result = computeResetWindowSavings(events, observations, {}, now)
+    expect(result.windows).toBe(1)
+    expect(result.savedQuotaPercent).toBe(25)
+    expect(result.equivalentFullWindows).toBe(0.25)
   })
 
-  it('reports positive savings when API equivalence exceeds prorated plan', () => {
-    const summary = computeSavings(
-      [bucket(3, 50_000_000)],
-      { ...defaultSavingsConfig, planMonthlyPriceUsd: 20 },
+  it('skips windows without an observed replenishment and banked resets', () => {
+    const banked = {
+      ...confirmed('2026-08-22T02:00:00.000Z'),
+      resetKind: 'banked' as const,
+      eventId: 'banked',
+      contentHash: 'c'.repeat(64),
+    }
+    const observations = [
+      observation('2026-08-22T02:10:00.000Z', 50),
+      observation('2026-08-24T02:10:00.000Z', 52),
+    ]
+    const result = computeResetWindowSavings(
+      [banked, confirmed('2026-08-24T02:00:00.000Z')],
+      observations,
+      {},
       now,
     )
-    expect(summary.apiEquivalentUsd).toBe(100)
-    expect(summary.netVsPlanUsd).toBeCloseTo(100 - (20 * 28) / 30, 2)
+    // The only non-banked anchor has no replenishment inside its horizon.
+    expect(result.windows).toBe(0)
+    expect(result.savedQuotaPercent).toBe(0)
   })
 
-  it('hides money metrics when no plan price is configured', () => {
-    const summary = computeSavings(
-      [bucket(0, 1_500_000)],
-      { ...defaultSavingsConfig, planMonthlyPriceUsd: null },
-      now,
-    )
-    expect(summary.netVsPlanUsd).toBeNull()
-    expect(summary.apiEquivalentUsd).toBe(3)
-  })
-
-  it('tolerates empty or malformed buckets', () => {
-    const summary = computeSavings(
-      [
-        { startDate: 'not-a-date', tokens: 5 },
-        { startDate: '2026-08-24', tokens: Number.NaN },
-      ],
-      defaultSavingsConfig,
-      now,
-    )
-    expect(summary.tokens28d).toBe(0)
-    expect(summary.avgDailyTokens).toBe(0)
-    expect(summary.peakDailyTokens).toBe(0)
+  it('ignores anchors outside the lookback window', () => {
+    const events = [confirmed('2026-01-01T02:00:00.000Z')]
+    const observations = [
+      observation('2026-01-01T03:00:00.000Z', 80),
+      observation('2026-01-01T04:00:00.000Z', 5),
+    ]
+    expect(
+      computeResetWindowSavings(events, observations, {}, now).windows,
+    ).toBe(0)
   })
 })
