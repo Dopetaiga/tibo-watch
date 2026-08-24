@@ -184,13 +184,10 @@ describe('analysis pipeline', () => {
     const sleeps: number[] = []
     const pipeline = new AnalysisPipeline(provider, fixtureCache(), 2, 250)
     const originalSetTimeout = globalThis.setTimeout
-    vi.stubGlobal(
-      'setTimeout',
-      ((handler: TimerHandler, timeout?: number) => {
-        sleeps.push(timeout ?? 0)
-        return originalSetTimeout(handler, 0)
-      }) as typeof setTimeout,
-    )
+    vi.stubGlobal('setTimeout', ((handler: TimerHandler, timeout?: number) => {
+      sleeps.push(timeout ?? 0)
+      return originalSetTimeout(handler, 0)
+    }) as typeof setTimeout)
     try {
       const result = await pipeline.run(
         { request, ruleResult: candidate },

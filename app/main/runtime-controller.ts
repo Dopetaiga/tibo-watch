@@ -73,6 +73,7 @@ import type { RequestLogEntry } from '../adapters/sources/request-log.js'
 import { PollScheduler } from '../adapters/sources/scheduler.js'
 import type { SourcePost } from '../adapters/sources/types.js'
 import { JsonRecordStore, contentHash } from '../adapters/storage/file-store.js'
+import { learnedPropagationDelayHours } from '../domain/learned-timing.js'
 import { evaluateRulesV1 } from '../rules/rules-v1.js'
 import { runBasicSelfTest, type SelfTestResult } from '../domain/self-test.js'
 import {
@@ -350,7 +351,7 @@ export class RuntimeController {
     // immediately so the dashboard does not wait for backfill or AI review.
     void this.#refreshCodexRateLimit()
     this.#codexRateLimitTimer = setInterval(
-      () => void this.#refreshCodexRateLimit(),
+      () => void this.#tickCodexSampling(),
       5 * 60_000,
     )
     // Heal stale JSONL indexes once per launch; cheap compared to the I/O that
@@ -675,7 +676,14 @@ export class RuntimeController {
 
   async codexResumeSettings(): Promise<CodexAutomationSettings> {
     const serialized = await this.#credentials.get('codex-resume', 'settings')
-    if (!serialized) return codexAutomationDefaults()
+    if (!serialized) {
+      const defaults = codexAutomationDefaults()
+      // First-run users get a propagation-informed default when history
+      // supports it; explicit user settings are always respected.
+      const learned = await this.#learnedPropagationHours()
+      if (learned !== null) defaults.beforePredictionHours = learned
+      return defaults
+    }
     const saved = JSON.parse(serialized) as Partial<CodexAutomationSettings>
     const merged = mergeAutomationSettings(saved)
     try {
@@ -1332,7 +1340,50 @@ export class RuntimeController {
       return
     }
     if (event.status !== 'confirmed') return
+    this.#armDenseQuotaSampling()
     await this.#runCodexAutomation(event, triggerMode, settings, 'after-reset')
+  }
+
+  #codexSampleFastUntil = 0
+  #codexSamplingFast = false
+
+  /**
+   * Around a confirmed reset the replenishment curve is most informative:
+   * sample every minute for ±2h instead of the normal 5-minute cadence.
+   */
+  #armDenseQuotaSampling(): void {
+    this.#codexSampleFastUntil = Date.now() + 2 * 3_600_000
+    if (this.#codexSamplingFast) return
+    this.#codexSamplingFast = true
+    if (this.#codexRateLimitTimer) clearInterval(this.#codexRateLimitTimer)
+    this.#codexRateLimitTimer = setInterval(() => {
+      void this.#tickCodexSampling()
+      if (Date.now() > this.#codexSampleFastUntil && this.#codexSamplingFast) {
+        this.#codexSamplingFast = false
+        if (this.#codexRateLimitTimer) clearInterval(this.#codexRateLimitTimer)
+        this.#codexRateLimitTimer = setInterval(
+          () => void this.#tickCodexSampling(),
+          5 * 60_000,
+        )
+      }
+    }, 60_000)
+    void this.#refreshCodexRateLimit()
+  }
+
+  async #learnedPropagationHours(): Promise<number | null> {
+    try {
+      const [events, observations] = await Promise.all([
+        this.#events.list(),
+        this.#codexRateLimits.list(),
+      ])
+      return learnedPropagationDelayHours(events, observations)
+    } catch {
+      return null
+    }
+  }
+
+  #tickCodexSampling(): void {
+    void this.#refreshCodexRateLimit()
   }
 
   #schedulePredictionAutomation(

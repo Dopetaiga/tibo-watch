@@ -114,10 +114,7 @@ describe('FxTwitter source adapter', () => {
       ),
     )
     const adapter = new FxTwitterAdapter({ fetch: fetchMock })
-    const result = await adapter.fetchLatest(
-      {},
-      new AbortController().signal,
-    )
+    const result = await adapter.fetchLatest({}, new AbortController().signal)
     expect(result.posts.map(({ id }) => id)).toEqual(['1'])
   })
 

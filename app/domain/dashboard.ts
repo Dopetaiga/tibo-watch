@@ -61,6 +61,11 @@ export interface DashboardModel {
   health: DashboardHealth
   healthMessage: string
   savings: SavingsSummary | null
+  codexRuns: {
+    completed28d: number
+    failed28d: number
+    blocked28d: number
+  }
   lastCheckedAt: string | null
   consecutiveFailures: number
   pollingIntervalMinutes: number

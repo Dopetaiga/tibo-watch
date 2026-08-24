@@ -53,8 +53,7 @@ describe.skipIf(!perfEnabled)('snapshot performance baseline', () => {
       })
 
       const seedStarted = process.hrtime.bigint()
-      for (let index = 0; index < 500; index += 1)
-        await posts.put(post(index))
+      for (let index = 0; index < 500; index += 1) await posts.put(post(index))
       const seedMs = Number(process.hrtime.bigint() - seedStarted) / 1_000_000
 
       const controller = new RuntimeController(

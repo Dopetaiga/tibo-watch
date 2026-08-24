@@ -53,6 +53,7 @@ describe('dashboard:get contract', () => {
         'requestLogs',
         'resetChains',
         'savings',
+        'codexRuns',
         'resetCredits',
         'serviceStatus',
         'signalPrediction',
@@ -74,10 +75,13 @@ describe('dashboard:get contract', () => {
     expect(Array.isArray(model.resetChains)).toBe(true)
     expect(Array.isArray(model.latestEvidence)).toBe(true)
     expect(Array.isArray(model.requestLogs)).toBe(true)
-    expect(model.prediction24h === null || typeof model.prediction24h === 'string')
-      .toBe(true)
-    expect(model.signalPrediction === null || typeof model.signalPrediction === 'object')
-      .toBe(true)
+    expect(
+      model.prediction24h === null || typeof model.prediction24h === 'string',
+    ).toBe(true)
+    expect(
+      model.signalPrediction === null ||
+        typeof model.signalPrediction === 'object',
+    ).toBe(true)
   })
 
   it('locks the details audit sections used by the inspector views', async () => {

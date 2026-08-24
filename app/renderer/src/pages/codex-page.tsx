@@ -266,7 +266,7 @@ export function CodexPage({
       <PageHeader
         eyebrow="Codex"
         title="Codex"
-        description="选择一个任务立即继续，或把它安排到下一次重置窗口。"
+        description={`选择一个任务立即继续，或把它安排到下一次重置窗口。近 28 天自动恢复：${model.codexRuns.completed28d} 成功 / ${model.codexRuns.failed28d} 失败 / ${model.codexRuns.blocked28d} 被门禁阻止。`}
       />
       <div className="codex-workspace">
         <section className="surface codex-connection">

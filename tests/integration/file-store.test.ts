@@ -126,9 +126,8 @@ describe('JSON record store', () => {
     // rewriting the whole index.
     await store.put(post('1', 'd'))
     expect((await store.get('1')).contentHash).toBe('d'.repeat(64))
-    const linesAfterUpdate = (
-      await readFile(indexPath, 'utf8')
-    ).trim()
+    const linesAfterUpdate = (await readFile(indexPath, 'utf8'))
+      .trim()
       .split('\n')
       .filter(Boolean)
     expect(linesAfterUpdate).toHaveLength(4)
@@ -136,9 +135,9 @@ describe('JSON record store', () => {
     // Drift (a record file deleted out of band) is detected and compacted.
     await unlink(path.join(rootDirectory, 'posts', '2.json'))
     expect(await store.ensureIndexIntact()).toBe(true)
-    expect(
-      (await readFile(indexPath, 'utf8')).trim().split('\n'),
-    ).toHaveLength(2)
+    expect((await readFile(indexPath, 'utf8')).trim().split('\n')).toHaveLength(
+      2,
+    )
     expect(await store.ensureIndexIntact()).toBe(false)
   })
 
@@ -151,7 +150,10 @@ describe('JSON record store', () => {
     })
     expect(await store.ensureIndexIntact()).toBe(true)
     expect(
-      await readFile(path.join(rootDirectory, 'indexes', 'posts.jsonl'), 'utf8'),
+      await readFile(
+        path.join(rootDirectory, 'indexes', 'posts.jsonl'),
+        'utf8',
+      ),
     ).toContain('only')
   })
 })

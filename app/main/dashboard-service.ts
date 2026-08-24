@@ -140,6 +140,17 @@ export class DashboardService {
       savings: computeSavings(
         this.#options.codexUsage()?.dailyUsageBuckets ?? [],
       ),
+      codexRuns: (() => {
+        const cutoff = new Date(Date.now() - 28 * 86_400_000).toISOString()
+        const counts = { completed28d: 0, failed28d: 0, blocked28d: 0 }
+        for (const resume of resumes) {
+          if ((resume.finishedAt ?? resume.startedAt) < cutoff) continue
+          if (resume.status === 'completed') counts.completed28d += 1
+          else if (resume.status === 'failed') counts.failed28d += 1
+          else if (resume.status === 'blocked') counts.blocked28d += 1
+        }
+        return counts
+      })(),
       dataStatus: !state.enabled
         ? 'disabled'
         : state.backgroundActivity
