@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -112,5 +112,46 @@ describe('JSON record store', () => {
       1,
     )
     expect((await store.list()).map(({ postId }) => postId)).toEqual(['keep'])
+  })
+
+  it('appends index entries incrementally and self-heals drift', async () => {
+    const { rootDirectory, store } = await createStore()
+    const indexPath = path.join(rootDirectory, 'indexes', 'posts.jsonl')
+    await store.put(post('1'))
+    await store.put(post('2', 'b'))
+    await store.put(post('3', 'c'))
+    expect(await readFile(indexPath, 'utf8')).toContain('"id":"1"')
+
+    // A content-hash update appends a second line for the same id instead of
+    // rewriting the whole index.
+    await store.put(post('1', 'd'))
+    expect((await store.get('1')).contentHash).toBe('d'.repeat(64))
+    const linesAfterUpdate = (
+      await readFile(indexPath, 'utf8')
+    ).trim()
+      .split('\n')
+      .filter(Boolean)
+    expect(linesAfterUpdate).toHaveLength(4)
+
+    // Drift (a record file deleted out of band) is detected and compacted.
+    await unlink(path.join(rootDirectory, 'posts', '2.json'))
+    expect(await store.ensureIndexIntact()).toBe(true)
+    expect(
+      (await readFile(indexPath, 'utf8')).trim().split('\n'),
+    ).toHaveLength(2)
+    expect(await store.ensureIndexIntact()).toBe(false)
+  })
+
+  it('recreates a missing index during self-heal', async () => {
+    const { rootDirectory, store } = await createStore()
+    await store.put(post('only'))
+    await rm(path.join(rootDirectory, 'indexes'), {
+      recursive: true,
+      force: true,
+    })
+    expect(await store.ensureIndexIntact()).toBe(true)
+    expect(
+      await readFile(path.join(rootDirectory, 'indexes', 'posts.jsonl'), 'utf8'),
+    ).toContain('only')
   })
 })

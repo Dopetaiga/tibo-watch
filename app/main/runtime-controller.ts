@@ -298,6 +298,21 @@ export class RuntimeController {
       () => void this.#refreshCodexRateLimit(),
       5 * 60_000,
     )
+    // Heal stale JSONL indexes once per launch; cheap compared to the I/O that
+    // follows, and keeps backup/export artifacts trustworthy.
+    await Promise.all(
+      [
+        this.#posts,
+        this.#analyses,
+        this.#events,
+        this.#notifications,
+        this.#runtime,
+        this.#codexResumes,
+        this.#codexRateLimits,
+      ].map((recordStore) =>
+        recordStore.ensureIndexIntact().catch(() => {}),
+      ),
+    )
     if (this.#enabled) {
       try {
         await this.#runInitialHistoryBackfill(sourceEndpoint)

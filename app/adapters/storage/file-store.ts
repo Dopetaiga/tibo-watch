@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
 import {
+  appendFile,
   mkdir,
   open,
   readFile,
@@ -90,7 +91,10 @@ export class JsonRecordStore<T extends FactRecord> {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
       }
       await atomicWrite(filePath, `${JSON.stringify(record, null, 2)}\n`)
-      await this.rebuildIndex()
+      // O(1) index append instead of a full O(n) rebuild on every write.
+      // Duplicate ids are legal after content-hash updates; readers take the
+      // last occurrence and ensureIndexIntact() compacts when counts drift.
+      await this.#appendIndexEntry(id, record.createdAt, record.contentHash)
       return { created: true, record }
     })
   }
@@ -135,6 +139,66 @@ export class JsonRecordStore<T extends FactRecord> {
       lines.length ? `${lines.join('\n')}\n` : '',
     )
     return records.length
+  }
+
+  /**
+   * Heals a missing, corrupted, or stale index once per store lifetime.
+   * Returns true when a compaction was performed. Duplicate lines from
+   * appends are only considered drift when the unique id set no longer
+   * matches the record files on disk.
+   */
+  async ensureIndexIntact(): Promise<boolean> {
+    let names: string[]
+    try {
+      names = (await readdir(this.#recordsDirectory)).filter((name) =>
+        name.endsWith('.json'),
+      )
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        await this.rebuildIndex()
+        return true
+      }
+      throw error
+    }
+    const indexedIds = new Set<string>()
+    try {
+      const content = await readFile(this.#indexPath, 'utf8')
+      for (const line of content.split('\n')) {
+        if (!line.trim()) continue
+        try {
+          const entry = JSON.parse(line) as { id?: unknown }
+          if (typeof entry.id === 'string') indexedIds.add(entry.id)
+        } catch {
+          indexedIds.add(`__corrupt_${indexedIds.size}`)
+        }
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+    }
+    const fileIds = new Set(names.map((name) => name.slice(0, -5)))
+    if (indexedIds.size !== fileIds.size) {
+      await this.rebuildIndex()
+      return true
+    }
+    for (const id of fileIds)
+      if (!indexedIds.has(id)) {
+        await this.rebuildIndex()
+        return true
+      }
+    return false
+  }
+
+  async #appendIndexEntry(
+    id: string,
+    createdAt: string,
+    contentHash: string,
+  ): Promise<void> {
+    await mkdir(path.dirname(this.#indexPath), { recursive: true })
+    await appendFile(
+      this.#indexPath,
+      `${JSON.stringify({ id, createdAt, contentHash })}\n`,
+      'utf8',
+    )
   }
 
   async backup(destination: string): Promise<number> {
