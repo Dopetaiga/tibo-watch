@@ -61,8 +61,8 @@ describe('Codex App Server client', () => {
       resetCredits: [
         {
           id: 'credit-1',
-          grantedAt: 100,
-          expiresAt: 200,
+          grantedAt: 100_000,
+          expiresAt: 200_000,
           status: 'available',
         },
       ],

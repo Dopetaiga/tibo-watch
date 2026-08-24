@@ -123,11 +123,83 @@ describe('analysis pipeline', () => {
     provider.analyze = vi.fn(async () => {
       throw new Error('schema invalid')
     })
-    const result = await new AnalysisPipeline(provider, fixtureCache(), 2).run(
-      { request, ruleResult: candidate },
-      new AbortController().signal,
-    )
+    const result = await new AnalysisPipeline(
+      provider,
+      fixtureCache(),
+      2,
+      0,
+    ).run({ request, ruleResult: candidate }, new AbortController().signal)
     expect(result).toMatchObject({ status: 'failed', analysis: null })
     expect(result.status === 'failed' && result.errors).toHaveLength(2)
+  })
+
+  it('does not retry deterministic auth or aborted failures', async () => {
+    const unauthorized = fixtureProvider()
+    unauthorized.analyze = vi.fn(async () => {
+      throw new Error('AI Provider 返回 HTTP 401')
+    })
+    const unauthorizedResult = await new AnalysisPipeline(
+      unauthorized,
+      fixtureCache(),
+      2,
+      0,
+    ).run({ request, ruleResult: candidate }, new AbortController().signal)
+    expect(
+      unauthorizedResult.status === 'failed' && unauthorizedResult.errors,
+    ).toHaveLength(1)
+    expect(unauthorized.analyze).toHaveBeenCalledTimes(1)
+
+    const abortedProvider = fixtureProvider()
+    const controller = new AbortController()
+    controller.abort()
+    abortedProvider.analyze = vi.fn(async () => {
+      throw new Error('aborted mid-flight')
+    })
+    await new AnalysisPipeline(abortedProvider, fixtureCache(), 2, 0).run(
+      { request, ruleResult: candidate },
+      controller.signal,
+    )
+    expect(abortedProvider.analyze).toHaveBeenCalledTimes(1)
+  })
+
+  it('retries transient failures after an exponential backoff', async () => {
+    const provider = fixtureProvider()
+    let calls = 0
+    provider.analyze = vi.fn(async (attemptRequest) => {
+      calls += 1
+      if (calls === 1) throw new Error('AI Provider 返回 HTTP 503')
+      return {
+        relevance: 'irrelevant',
+        eventType: 'non_event',
+        scope: '',
+        expectedWindow: { start: null, end: null, original: null },
+        confidence: 'low',
+        translationZh: '',
+        summaryZh: '',
+        evidence: [],
+        uncertainties: [],
+        sourceUrl: attemptRequest.postUrl,
+      } satisfies StructuredAnalysis
+    })
+    const sleeps: number[] = []
+    const pipeline = new AnalysisPipeline(provider, fixtureCache(), 2, 250)
+    const originalSetTimeout = globalThis.setTimeout
+    vi.stubGlobal(
+      'setTimeout',
+      ((handler: TimerHandler, timeout?: number) => {
+        sleeps.push(timeout ?? 0)
+        return originalSetTimeout(handler, 0)
+      }) as typeof setTimeout,
+    )
+    try {
+      const result = await pipeline.run(
+        { request, ruleResult: candidate },
+        new AbortController().signal,
+      )
+      expect(result.status).toBe('analyzed')
+      expect(sleeps).toEqual([250])
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })

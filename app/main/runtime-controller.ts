@@ -31,7 +31,7 @@ export {
   selectInitialReviewPosts,
   selectLatestExpectedEvent,
 } from '../domain/event-selection.js'
-import { MonitoringPipeline } from '../domain/monitoring-pipeline.js'
+import { MonitoringPipeline, type MonitoringResult } from '../domain/monitoring-pipeline.js'
 import {
   NotificationHub,
   defaultNotificationPolicy,
@@ -656,57 +656,19 @@ export class RuntimeController {
 
   async codexResumeSettings(): Promise<CodexAutomationSettings> {
     const serialized = await this.#credentials.get('codex-resume', 'settings')
-    if (!serialized)
-      return {
-        enabled: false,
-        authorizedThreadIds: [],
-        lowerUsedPercent: 40,
-        upperUsedPercent: 80,
-        afterResetEnabled: true,
-        beforePredictionEnabled: false,
-        beforePredictionHours: 2,
-        maximumRunsPerCycle: 1,
-        targetSpendPercent: 20,
-        minimumRemainingPercent: 20,
-        action: 'resume',
-        accelerationPrompt:
-          '额度即将重置。请继续当前目标，在不扩大权限范围的前提下提高推理强度并优先推进最有价值的未完成工作；不要为了消耗额度制造无意义工作。',
-        threadSettings: {},
-      }
+    if (!serialized) return codexAutomationDefaults()
     const saved = JSON.parse(serialized) as Partial<CodexAutomationSettings>
-    return {
-      enabled: saved.enabled ?? false,
-      authorizedThreadIds: saved.authorizedThreadIds ?? [],
-      lowerUsedPercent: saved.lowerUsedPercent ?? 40,
-      upperUsedPercent: saved.upperUsedPercent ?? 80,
-      afterResetEnabled: saved.afterResetEnabled ?? true,
-      beforePredictionEnabled: saved.beforePredictionEnabled ?? false,
-      beforePredictionHours: saved.beforePredictionHours ?? 2,
-      maximumRunsPerCycle: saved.maximumRunsPerCycle ?? 1,
-      targetSpendPercent: saved.targetSpendPercent ?? 20,
-      minimumRemainingPercent: saved.minimumRemainingPercent ?? 20,
-      action: saved.action ?? 'resume',
-      accelerationPrompt:
-        saved.accelerationPrompt ??
-        '额度即将重置。请继续当前目标，在不扩大权限范围的前提下提高推理强度并优先推进最有价值的未完成工作；不要为了消耗额度制造无意义工作。',
-      threadSettings:
-        saved.threadSettings ??
-        Object.fromEntries(
-          (saved.authorizedThreadIds ?? []).map((threadId) => [
-            threadId,
-            {
-              afterResetEnabled: saved.afterResetEnabled ?? true,
-              beforePredictionEnabled: saved.beforePredictionEnabled ?? false,
-              beforePredictionHours: saved.beforePredictionHours ?? 2,
-              targetSpendPercent: saved.targetSpendPercent ?? 20,
-              minimumRemainingPercent: saved.minimumRemainingPercent ?? 20,
-              action: saved.action ?? 'resume',
-              accelerationPrompt:
-                saved.accelerationPrompt ??
-                '额度即将重置。请继续当前目标，在不扩大权限范围的前提下提高推理强度并优先推进最有价值的未完成工作；不要为了消耗额度制造无意义工作。',
-            },
-          ]),
-        ),
+    const merged = mergeAutomationSettings(saved)
+    try {
+      validateBudgetPolicy(merged)
+      validateAutomationSettings(merged)
+      return merged
+    } catch (error) {
+      // Stored settings may come from an older version or manual tampering;
+      // fall back to the safe defaults instead of feeding garbage into the
+      // budget gate at automation time.
+      this.#startupWarning = `Codex 自动化设置无效，已恢复保守默认值：${shortError(error)}`
+      return codexAutomationDefaults()
     }
   }
 
@@ -1013,22 +975,73 @@ export class RuntimeController {
     await Promise.all(posts.map((post) => this.#posts.put(post)))
     let firstError: string | null = null
     for (const post of posts) {
-      const controller = new AbortController()
-      const timeout = setTimeout(
-        () => controller.abort(new Error('AI 分析超过 60 秒')),
-        60_000,
-      )
       try {
-        await this.#pipeline.process(post, controller.signal)
+        const result = await this.#processWithTimeout(post)
         this.#processingWarning = null
+        this.#trackAiFailureForRetry(post, result.analysisResult.status)
       } catch (error) {
         firstError ??= shortError(error)
-      } finally {
-        clearTimeout(timeout)
       }
     }
-    if (firstError) {
-      this.#processingWarning = `最新消息处理中断：${firstError}`
+    if (firstError) this.#processingWarning = `最新消息处理中断：${firstError}`
+    await this.#drainPendingAiReviews()
+  }
+
+  #pendingAiReviews = new Map<string, { post: Post; attempts: number }>()
+  static readonly maximumReviewAttempts = 3
+  static readonly reviewsPerCycle = 3
+
+  /**
+   * Posts whose AI analysis failed (including rule-grey posts that would
+   * otherwise vanish silently) are retried on later poll cycles instead of
+   * being lost until the next full history replay.
+   */
+  #trackAiFailureForRetry(
+    post: Post,
+    status:
+      | 'skipped_not_candidate'
+      | 'skipped_ai_disabled'
+      | 'manual_confirmation_required'
+      | 'cache_hit'
+      | 'analyzed'
+      | 'failed',
+  ): void {
+    if (status === 'failed') {
+      const attempts = (this.#pendingAiReviews.get(post.postId)?.attempts ?? 0) + 1
+      if (attempts <= RuntimeController.maximumReviewAttempts)
+        this.#pendingAiReviews.set(post.postId, { post, attempts })
+      else this.#pendingAiReviews.delete(post.postId)
+    } else if (status !== 'skipped_not_candidate') {
+      this.#pendingAiReviews.delete(post.postId)
+    }
+  }
+
+  async #drainPendingAiReviews(): Promise<void> {
+    if (!this.#aiConfigured || this.#pendingAiReviews.size === 0) return
+    const batch = [...this.#pendingAiReviews.values()].slice(
+      0,
+      RuntimeController.reviewsPerCycle,
+    )
+    for (const { post } of batch) {
+      try {
+        const result = await this.#processWithTimeout(post)
+        this.#trackAiFailureForRetry(post, result.analysisResult.status)
+      } catch {
+        // Keep the entry; it will be retried on a future cycle.
+      }
+    }
+  }
+
+  async #processWithTimeout(post: Post): Promise<MonitoringResult> {
+    const controller = new AbortController()
+    const timeout = setTimeout(
+      () => controller.abort(new Error('AI 分析超过 60 秒')),
+      60_000,
+    )
+    try {
+      return await this.#pipeline.process(post, controller.signal)
+    } finally {
+      clearTimeout(timeout)
     }
   }
 
@@ -1492,6 +1505,57 @@ async function directorySize(directory: string): Promise<number> {
   return total
 }
 
+const accelerationPromptDefault =
+  '额度即将重置。请继续当前目标，在不扩大权限范围的前提下提高推理强度并优先推进最有价值的未完成工作；不要为了消耗额度制造无意义工作。'
+
+function codexAutomationDefaults(): CodexAutomationSettings {
+  return {
+    enabled: false,
+    authorizedThreadIds: [],
+    lowerUsedPercent: 40,
+    upperUsedPercent: 80,
+    afterResetEnabled: true,
+    beforePredictionEnabled: false,
+    beforePredictionHours: 2,
+    maximumRunsPerCycle: 1,
+    targetSpendPercent: 20,
+    minimumRemainingPercent: 20,
+    action: 'resume',
+    accelerationPrompt: accelerationPromptDefault,
+    threadSettings: {},
+  }
+}
+
+function threadAutomationDefaults(
+  settings: CodexAutomationSettings,
+): CodexThreadAutomationSettings {
+  return {
+    afterResetEnabled: settings.afterResetEnabled,
+    beforePredictionEnabled: settings.beforePredictionEnabled,
+    beforePredictionHours: settings.beforePredictionHours,
+    targetSpendPercent: settings.targetSpendPercent,
+    minimumRemainingPercent: settings.minimumRemainingPercent,
+    action: settings.action,
+    accelerationPrompt: settings.accelerationPrompt,
+  }
+}
+
+function mergeAutomationSettings(
+  saved: Partial<CodexAutomationSettings>,
+): CodexAutomationSettings {
+  const merged: CodexAutomationSettings = {
+    ...codexAutomationDefaults(),
+    ...saved,
+    threadSettings: {},
+  }
+  const defaults = threadAutomationDefaults(merged)
+  for (const [threadId, thread] of Object.entries(saved.threadSettings ?? {}))
+    merged.threadSettings[threadId] = { ...defaults, ...thread }
+  for (const threadId of merged.authorizedThreadIds)
+    if (!merged.threadSettings[threadId])
+      merged.threadSettings[threadId] = { ...defaults }
+  return merged
+}
 
 function shortError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error)

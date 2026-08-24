@@ -44,7 +44,7 @@ describe('banked reset statistics', () => {
   })
 
   it('does not count a normal scheduled reset as card usage', () => {
-    const resetAt = Date.parse('2026-08-23T08:05:00.000Z') / 1_000
+    const resetAt = Date.parse('2026-08-23T08:05:00.000Z')
     const summary = summarizeResetCredits(
       [
         observation('2026-08-23T08:00:00.000Z', 92, 2, { resetsAt: resetAt }),
@@ -57,8 +57,8 @@ describe('banked reset statistics', () => {
   })
 
   it('uses official expiry and counts a vanished expired card', () => {
-    const grantedAt = Date.parse('2026-07-26T08:00:00.000Z') / 1_000
-    const expiresAt = Date.parse('2026-08-23T08:00:00.000Z') / 1_000
+    const grantedAt = Date.parse('2026-07-26T08:00:00.000Z')
+    const expiresAt = Date.parse('2026-08-23T08:00:00.000Z')
     const credit = {
       id: 'credit-1',
       grantedAt,

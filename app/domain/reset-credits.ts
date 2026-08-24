@@ -98,7 +98,8 @@ function creditExpiryMs(credit: {
   grantedAt: number
   expiresAt: number | null
 }): number {
-  return (credit.expiresAt ?? credit.grantedAt + 28 * 86_400) * 1_000
+  // Epoch fields are milliseconds (normalized at the app-server adapter).
+  return credit.expiresAt ?? credit.grantedAt + 28 * dayMs
 }
 
 function isNormalReset(
@@ -108,7 +109,7 @@ function isNormalReset(
 ): boolean {
   if (
     previous.resetsAt !== null &&
-    Math.abs(previous.resetsAt * 1_000 - observedAt) <= normalResetToleranceMs
+    Math.abs(previous.resetsAt - observedAt) <= normalResetToleranceMs
   )
     return true
   return windows.some(({ start, end }) => {

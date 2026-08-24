@@ -106,7 +106,7 @@ export class CodexAppServerClient {
     const primary = result.rateLimits?.primary
     return {
       usedPercent: primary?.usedPercent ?? null,
-      resetsAt: primary?.resetsAt ?? null,
+      resetsAt: toMilliseconds(primary?.resetsAt),
       windowDurationMins: primary?.windowDurationMins ?? null,
       availableResetCredits:
         result.rateLimitResetCredits?.availableCount ?? null,
@@ -119,9 +119,8 @@ export class CodexAppServerClient {
           )
           .map((credit) => ({
             id: credit.id as string,
-            grantedAt: credit.grantedAt as number,
-            expiresAt:
-              typeof credit.expiresAt === 'number' ? credit.expiresAt : null,
+            grantedAt: toMilliseconds(credit.grantedAt) as number,
+            expiresAt: toMilliseconds(credit.expiresAt),
             status: ['available', 'redeeming', 'redeemed'].includes(
               credit.status ?? '',
             )
@@ -204,6 +203,16 @@ export class CodexAppServerClient {
 
 function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
+/**
+ * Codex has shipped epoch values in both seconds and milliseconds across
+ * versions. Normalize once at the adapter boundary so the rest of the app
+ * can assume milliseconds: values below 1e11 cannot be a plausible ms epoch.
+ */
+function toMilliseconds(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  return value < 10_000_000_000 ? value * 1_000 : value
 }
 
 class StdioJsonRpcTransport implements JsonRpcTransport {
