@@ -2,6 +2,8 @@ import type { RequestLogEntry } from '../adapters/sources/request-log.js'
 import type { SchedulerState } from '../adapters/sources/scheduler.js'
 import type { JsonRecordStore } from '../adapters/storage/file-store.js'
 import { resetOverview, type DashboardModel } from '../domain/dashboard.js'
+import { computeSavings } from '../domain/savings.js'
+import type { CodexUsageSnapshot } from '../adapters/codex/app-server.js'
 import {
   buildResetChains,
   deduplicateEventsByPost,
@@ -43,6 +45,7 @@ export interface DashboardServiceOptions {
   readState(): DashboardServiceLiveState
   schedulerState(): SchedulerState
   requestLogs: RequestLogEntry[]
+  codexUsage(): CodexUsageSnapshot | null
 }
 
 /**
@@ -53,7 +56,10 @@ export class DashboardService {
   readonly #stores: DashboardServiceStores
   readonly #options: DashboardServiceOptions
 
-  constructor(stores: DashboardServiceStores, options: DashboardServiceOptions) {
+  constructor(
+    stores: DashboardServiceStores,
+    options: DashboardServiceOptions,
+  ) {
     this.#stores = stores
     this.#options = options
   }
@@ -131,6 +137,9 @@ export class DashboardService {
     return {
       monitorMode: state.aiConfigured ? 'ai-enhanced' : 'rule-only',
       serviceStatus: !state.startupComplete ? 'starting' : 'running',
+      savings: computeSavings(
+        this.#options.codexUsage()?.dailyUsageBuckets ?? [],
+      ),
       dataStatus: !state.enabled
         ? 'disabled'
         : state.backgroundActivity
@@ -272,12 +281,7 @@ export class DashboardService {
 function detail(
   id: string,
   title: string,
-  payload:
-    | Post
-    | Analysis
-    | ResetEvent
-    | Notification
-    | CodexResumeAudit,
+  payload: Post | Analysis | ResetEvent | Notification | CodexResumeAudit,
   version = `schema-${payload.schemaVersion}`,
   sourceUrl?: string,
   timestamp = payload.createdAt,

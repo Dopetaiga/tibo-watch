@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { spawn } from 'node:child_process'
 // Ox Alpha P3 probe (Q1-Q3 in tibo-watch-OxAlpha/CODEX-AUTOMATION-V2.md).
 //
 // Q1: does the app-server push turn/thread notifications on stdout?
@@ -6,12 +7,10 @@
 // Q3: does turn/start accept approvalPolicy / sandbox overrides?
 //
 // The probe spawns `codex app-server --listen stdio://`, performs a harmless
-// handshake plus read-only calls, then starts a scratch turn on the most
-// recently updated LOCAL thread and watches every stdout frame for 20s.
-// It never sends approvals, never writes outside Codex's own state, and
-// prints a machine-readable verdict at the end.
+// handshake plus read-only calls, then optionally starts a scratch turn and
+// watches every stdout frame. It never sends approvals and prints a
+// machine-readable verdict at the end.
 
-import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -54,7 +53,7 @@ const notifications = []
 function request(method, params) {
   const id = nextId++
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
+    const timer = globalThis.setTimeout(() => {
       pending.delete(id)
       reject(new Error(`timeout waiting ${method}`))
     }, 10_000)
@@ -76,7 +75,7 @@ createInterface({ input: child.stdout }).on('line', (line) => {
   if (typeof frame.id === 'number') {
     const entry = pending.get(frame.id)
     if (!entry) return
-    clearTimeout(entry.timer)
+    globalThis.clearTimeout(entry.timer)
     pending.delete(frame.id)
     if (frame.error) entry.reject(new Error(frame.error.message ?? 'rpc error'))
     else entry.resolve(frame.result)

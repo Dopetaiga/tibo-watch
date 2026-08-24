@@ -189,6 +189,51 @@ export function MonitorPage({
             </div>
           </article>
           <article className="surface">
+            <SectionTitle label="SAVINGS" title="省钱统计" />
+            {model.savings && model.savings.tokens28d > 0 ? (
+              <>
+                <div className="count-row">
+                  <Count
+                    value={`${(model.savings.tokens28d / 1_000_000).toFixed(1)}M`}
+                    label="近 28 天 Token"
+                  />
+                  <Count
+                    value={`$${model.savings.apiEquivalentUsd.toFixed(2)}`}
+                    label="API 等价成本"
+                  />
+                  <Count
+                    value={
+                      model.savings.netVsPlanUsd === null
+                        ? '—'
+                        : model.savings.netVsPlanUsd >= 0
+                          ? `$${model.savings.netVsPlanUsd.toFixed(2)}`
+                          : `-$${Math.abs(model.savings.netVsPlanUsd).toFixed(2)}`
+                    }
+                    label={
+                      model.savings.netVsPlanUsd !== null &&
+                      model.savings.netVsPlanUsd >= 0
+                        ? '较按量付费节省'
+                        : '低于套餐摊销'
+                    }
+                  />
+                </div>
+                <div className="credit-meta">
+                  <span>
+                    峰值日：
+                    {(model.savings.peakDailyTokens / 1_000_000).toFixed(1)}M ·
+                    日均：
+                    {(model.savings.avgDailyTokens / 1_000_000).toFixed(1)}M
+                  </span>
+                  <span>按 $2 / 百万 Token 折算，对比套餐月费摊销</span>
+                </div>
+              </>
+            ) : (
+              <Empty compact>
+                连接 Codex 后将基于真实 Token 用量估算订阅价值。
+              </Empty>
+            )}
+          </article>
+          <article className="surface">
             <SectionTitle label="28 DAYS" title="活动热力图" />
             <div className="calendar" aria-label="最近 28 天确认事件热力图">
               {calendar.map((day) => (

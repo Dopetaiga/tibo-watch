@@ -31,7 +31,10 @@ export {
   selectInitialReviewPosts,
   selectLatestExpectedEvent,
 } from '../domain/event-selection.js'
-import { MonitoringPipeline, type MonitoringResult } from '../domain/monitoring-pipeline.js'
+import {
+  MonitoringPipeline,
+  type MonitoringResult,
+} from '../domain/monitoring-pipeline.js'
 import {
   NotificationHub,
   defaultNotificationPolicy,
@@ -75,6 +78,7 @@ import {
   CodexAppServerClient,
   resolveCodexExecutable,
   type CodexThreadSummary,
+  type CodexUsageSnapshot,
 } from '../adapters/codex/app-server.js'
 import {
   mayStartNewResume,
@@ -118,6 +122,7 @@ export class RuntimeController {
   #codexRateLimitTimer: NodeJS.Timeout | null = null
   readonly #predictionTimers = new Map<string, NodeJS.Timeout>()
   #processingWarning: string | null = null
+  #latestUsage: CodexUsageSnapshot | null = null
   readonly #dashboardService: DashboardService
   readonly #notificationHub: NotificationHub
   readonly #codexResumeInflight = new Map<string, Promise<void>>()
@@ -218,6 +223,7 @@ export class RuntimeController {
         }),
         schedulerState: () => this.#scheduler.snapshot(),
         requestLogs: this.#requestLogs,
+        codexUsage: () => this.#latestUsage,
       },
     )
     this.#scheduler = this.#createScheduler()
@@ -350,9 +356,7 @@ export class RuntimeController {
         this.#runtime,
         this.#codexResumes,
         this.#codexRateLimits,
-      ].map((recordStore) =>
-        recordStore.ensureIndexIntact().catch(() => {}),
-      ),
+      ].map((recordStore) => recordStore.ensureIndexIntact().catch(() => {})),
     )
     if (this.#enabled) {
       try {
@@ -419,8 +423,7 @@ export class RuntimeController {
     if (enabled) {
       await this.#seedSchedulerFromStoredPosts()
       this.#scheduler.start()
-    }
-    else this.#scheduler.stop()
+    } else this.#scheduler.stop()
     await this.#saveRuntimeState()
   }
 
@@ -607,6 +610,11 @@ export class RuntimeController {
       const account = await client.account()
       if (!account.authenticated) return
       await this.#recordCodexRateLimit(await client.rateLimits())
+      try {
+        this.#latestUsage = await client.usage()
+      } catch {
+        // Usage is optional; savings metrics degrade to unavailable.
+      }
     } catch {
       // Codex is optional; monitoring continues with the last local snapshot.
     } finally {
@@ -956,22 +964,20 @@ export class RuntimeController {
   }
 
   async #processPosts(sourcePosts: SourcePost[]): Promise<void> {
-    const posts = sourcePosts.map(
-      (source): Post => ({
-        schemaVersion: 1,
-        createdAt: new Date().toISOString(),
-        source: 'fxtwitter',
-        contentHash: createHash('sha256').update(source.text).digest('hex'),
-        postId: source.id,
-        url: source.url,
-        author: source.author,
-        text: source.text,
-        postedAt: source.createdAt,
-        kind: source.kind,
-        parentPostId: source.parentPostId,
-        quotedPostId: source.quotedPostId,
-      }),
-    )
+    const posts = sourcePosts.map((source): Post => ({
+      schemaVersion: 1,
+      createdAt: new Date().toISOString(),
+      source: 'fxtwitter',
+      contentHash: createHash('sha256').update(source.text).digest('hex'),
+      postId: source.id,
+      url: source.url,
+      author: source.author,
+      text: source.text,
+      postedAt: source.createdAt,
+      kind: source.kind,
+      parentPostId: source.parentPostId,
+      quotedPostId: source.quotedPostId,
+    }))
     await Promise.all(posts.map((post) => this.#posts.put(post)))
     let firstError: string | null = null
     for (const post of posts) {
@@ -1007,7 +1013,8 @@ export class RuntimeController {
       | 'failed',
   ): void {
     if (status === 'failed') {
-      const attempts = (this.#pendingAiReviews.get(post.postId)?.attempts ?? 0) + 1
+      const attempts =
+        (this.#pendingAiReviews.get(post.postId)?.attempts ?? 0) + 1
       if (attempts <= RuntimeController.maximumReviewAttempts)
         this.#pendingAiReviews.set(post.postId, { post, attempts })
       else this.#pendingAiReviews.delete(post.postId)
@@ -1562,8 +1569,6 @@ function shortError(error: unknown): string {
   return message.replace(/[\r\n]+/g, ' ').slice(0, 160)
 }
 
-
-
 function resumeAudit(
   facts: Omit<
     CodexResumeAudit,
@@ -1595,7 +1600,6 @@ function automationCycleId(
   }).format(new Date(timestamp))
   return `${event.resetKind}--${day}`
 }
-
 
 export function validateWebhook(
   channel: 'feishu' | 'http',

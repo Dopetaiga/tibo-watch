@@ -30,6 +30,7 @@ const emptyModel: DashboardModel = {
   consecutiveFailures: 0,
   pollingIntervalMinutes: 5,
   stale: true,
+  savings: null,
   lastObservedResetAt: null,
   lastInferredResetAt: null,
   baselinePreviousResetAt: null,

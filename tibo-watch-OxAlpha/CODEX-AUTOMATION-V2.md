@@ -9,15 +9,30 @@
 - 上线前能 dry-run 验证整条触发链
 - 每次运行留下"做了什么"的摘要与统计
 
-## 2. 开放问题（实现前需验证）
+## 2. 开放问题（✅ 已于 2026-08-24 实测回答，codex-cli 0.147.0）
 
-| # | 问题 | 验证方式 |
-|---|------|----------|
-| Q1 | app-server 是否推送 turn 状态 notification？事件名与 payload 结构？ | 手动 spawn `codex app-server --listen stdio://`，发起 turn 后观察 stdout 非 id 帧 |
-| Q2 | 审批挂起时 `thread/read` 的 `status.activeFlags` 具体值（如 `requires_approval`） | 复现一个需审批的 turn 并抓取 |
-| Q3 | `turn/start` 是否接受 `approvalPolicy`/`sandbox` 覆盖参数 | 对照 codex CLI 文档/源码 |
+| # | 结论 | 证据 |
+|---|------|------|
+| Q1 | **支持推送**。服务器主动发送：`thread/started`、`thread/status/changed`、`turn/started`、`item/started`、`item/completed`、`mcpServer/startupStatus/updated`、`remoteControl/status/changed` | `scripts/probe-codex-events.mjs` 实测 18 帧通知，含完整 turn 生命周期 |
+| Q2 | `thread/read` 返回 `{type:'active',activeFlags:[]}`；activeFlags 存在但简单 turn 为空。审批 flag 名待真实审批场景确认；可改用订阅 `thread/status/changed` 载荷判断 | 同上 |
+| Q3 | **`turn/start` 接受 `approvalPolicy:'never'`**（未知参数会被服务端以 unknown variant 拒绝，本次未拒绝即接受） | thread/create 的报错泄露了完整方法表：无 thread/create，但有 `thread/start`(建新线程)/fork/archive、`turn/steer`、`turn/interrupt`、**`account/usage/read`**(每日 token 桶)、`account/rateLimitResetCredit/consume` |
 
-Q1/Q2 结论直接决定 §4 的主路径选择；实现前先产出探测脚本（放 `scripts/probe-codex-events.mjs`，不入运行时）。
+**额外发现（省钱统计数据源）**：`account/usage/read` 返回
+`{summary:{lifetimeTokens,peakDailyTokens,longestRunningTurnSec,streakDays...}, dailyUsageBuckets:[{startDate,tokens}]}` —— 支持基于真实 token 计量的省钱统计，而非百分比启发式。
+
+## 2.1 省钱统计设计（token 计量版）
+
+```
+domain/savings.ts
+computeSavings(dailyBuckets, config, now) => {
+  tokens28d, avgDailyTokens, peakDailyTokens,
+  apiEquivalentUsd   = tokens28d / 1e6 × referenceUsdPerMTokens (默认 $2)
+  netVsPlanUsd       = apiEquivalentUsd − plan月费 × 28/30 （配置了套餐价才有）
+}
+```
+- 配置默认值内置（Plus $20/月、参考价 $2/M tok），后续开放为设置项
+- 与重置事件关联归因（P4）：确认日次日的 token 量超出基线的部分计为"重置解锁"
+- 数据获取：5 分钟 Codex 定时器顺带拉取 usage，存内存供仪表盘
 
 ## 3. CodexConnectionManager（常驻连接）
 

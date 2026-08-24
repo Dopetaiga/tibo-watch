@@ -21,6 +21,11 @@ export interface CodexThreadSummary {
   status: { type: string; activeFlags?: string[] }
 }
 
+export interface CodexUsageSnapshot {
+  lifetimeTokens: number | null
+  dailyUsageBuckets: Array<{ startDate: string; tokens: number }>
+}
+
 export interface CodexRateLimitSnapshot {
   usedPercent: number | null
   resetsAt: number | null
@@ -136,6 +141,29 @@ export class CodexAppServerClient {
                 ? credit.description
                 : null,
           })) ?? null,
+    }
+  }
+
+  async usage(): Promise<CodexUsageSnapshot> {
+    const result = await this.transport.request<{
+      summary?: { lifetimeTokens?: number }
+      dailyUsageBuckets?: Array<{ startDate?: string; tokens?: number }>
+    }>('account/usage/read')
+    return {
+      lifetimeTokens:
+        typeof result.summary?.lifetimeTokens === 'number'
+          ? result.summary.lifetimeTokens
+          : null,
+      dailyUsageBuckets: (result.dailyUsageBuckets ?? [])
+        .filter(
+          (bucket) =>
+            typeof bucket.startDate === 'string' &&
+            typeof bucket.tokens === 'number',
+        )
+        .map((bucket) => ({
+          startDate: bucket.startDate as string,
+          tokens: bucket.tokens as number,
+        })),
     }
   }
 

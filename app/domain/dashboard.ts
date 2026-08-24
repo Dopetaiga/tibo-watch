@@ -3,6 +3,8 @@ export type DashboardHealth =
 export type DashboardDetailKind =
   'post' | 'analysis' | 'event' | 'notification' | 'resume'
 
+import type { SavingsSummary } from './savings.js'
+
 export interface DashboardPost {
   id: string
   sourceUrl: string
@@ -58,6 +60,7 @@ export interface DashboardModel {
   dataStatus: 'updating' | 'current' | 'stale' | 'error' | 'disabled'
   health: DashboardHealth
   healthMessage: string
+  savings: SavingsSummary | null
   lastCheckedAt: string | null
   consecutiveFailures: number
   pollingIntervalMinutes: number

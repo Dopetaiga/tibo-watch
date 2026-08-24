@@ -52,6 +52,7 @@ describe('dashboard:get contract', () => {
         'prediction48h',
         'requestLogs',
         'resetChains',
+        'savings',
         'resetCredits',
         'serviceStatus',
         'signalPrediction',
