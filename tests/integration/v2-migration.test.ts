@@ -40,4 +40,22 @@ describe('V1 to V2 migration guard', () => {
       JSON.parse(await readFile(path.join(data, '.v2-migration.json'), 'utf8')),
     ).toMatchObject({ schemaVersion: 2 })
   })
+
+  it('recovers from a corrupted marker instead of failing startup', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'tibo-watch-v2-'))
+    roots.push(root)
+    const data = path.join(root, 'data')
+    await (
+      await import('node:fs/promises')
+    ).mkdir(path.join(data, 'posts'), { recursive: true })
+    await writeFile(path.join(data, 'posts', 'one.json'), '{"id":"one"}\n')
+    await writeFile(path.join(data, '.v2-migration.json'), '{broken', 'utf8')
+
+    const result = await ensureV2MigrationBackup(data)
+    expect(result.migrated).toBe(true)
+    expect(result.backupDirectory).not.toBeNull()
+    expect(
+      JSON.parse(await readFile(path.join(data, '.v2-migration.json'), 'utf8')),
+    ).toMatchObject({ schemaVersion: 2 })
+  })
 })

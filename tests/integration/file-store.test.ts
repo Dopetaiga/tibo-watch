@@ -74,7 +74,7 @@ describe('JSON record store', () => {
     expect(await readFile(store.recordPath('valid'), 'utf8')).toContain(
       '"postId": "valid"',
     )
-    expect(
+    await expect(
       (await import('node:fs/promises')).readdir(quarantine),
     ).resolves.toHaveLength(1)
   })

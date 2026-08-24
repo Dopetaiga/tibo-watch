@@ -48,7 +48,13 @@ export class CodexAppServerClient {
     const executable = await resolveCodexExecutable(configuredExecutable)
     const transport = new StdioJsonRpcTransport(executable)
     const client = new CodexAppServerClient(transport)
-    await client.initialize()
+    try {
+      await client.initialize()
+    } catch (error) {
+      // Do not leak the spawned child when the handshake fails.
+      transport.close()
+      throw error
+    }
     return client
   }
 
@@ -234,6 +240,9 @@ class StdioJsonRpcTransport implements JsonRpcTransport {
     createInterface({ input: this.#child.stdout }).on('line', (line) =>
       this.#onLine(line),
     )
+    // A dead child can make stdin writes emit EPIPE asynchronously; surface
+    // failures through the exit handler instead of an unhandled stream error.
+    this.#child.stdin.on('error', () => {})
     this.#child.once('error', (error) => this.#failAll(error))
     this.#child.stderr.on('data', (chunk: Buffer | string) => {
       this.#stderr = `${this.#stderr}${chunk.toString()}`.slice(-4_000)
@@ -267,7 +276,19 @@ class StdioJsonRpcTransport implements JsonRpcTransport {
     this.#write({ method, ...(params ? { params } : {}) })
   }
   close(): void {
-    this.#child.kill()
+    const pid = this.#child.pid
+    // A cmd.exe wrapper would otherwise survive kill() and leave an orphaned
+    // Codex process behind.
+    if (process.platform === 'win32' && pid) {
+      try {
+        spawn('taskkill', ['/pid', String(pid), '/T', '/F'], {
+          windowsHide: true,
+          stdio: 'ignore',
+        })
+      } catch {
+        this.#child.kill()
+      }
+    } else this.#child.kill()
   }
   #write(value: unknown): void {
     this.#child.stdin.write(`${JSON.stringify(value)}\n`, 'utf8')

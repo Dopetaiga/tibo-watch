@@ -187,7 +187,7 @@ export class JsonRecordStore<T extends FactRecord> {
     return path.join(this.#recordsDirectory, `${id}.json`)
   }
 
-  private async quarantine(id: string): Promise<void> {
+  async quarantine(id: string): Promise<void> {
     await mkdir(this.#quarantineDirectory, { recursive: true })
     const source = this.recordPath(id)
     const target = path.join(

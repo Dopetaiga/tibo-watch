@@ -81,6 +81,8 @@ export class WindowsCredentialManager implements CredentialStore {
   }
 }
 
+const invokeTimeoutMs = 15_000
+
 function invoke(input: Record<string, string>): Promise<string> {
   const encoded = Buffer.from(powershellScript, 'utf16le').toString('base64')
   return new Promise((resolve, reject) => {
@@ -94,17 +96,29 @@ function invoke(input: Record<string, string>): Promise<string> {
     )
     let stdout = ''
     let stderr = ''
+    const timer = setTimeout(() => {
+      child.kill()
+      reject(new Error('Windows Credential Manager 操作超时'))
+    }, invokeTimeoutMs)
+    const fail = (error: Error): void => {
+      clearTimeout(timer)
+      reject(error)
+    }
     child.stdout.setEncoding('utf8').on('data', (chunk: string) => {
       stdout += chunk
     })
     child.stderr.setEncoding('utf8').on('data', (chunk: string) => {
       stderr += chunk
     })
-    child.once('error', reject)
+    // A crashed child can make stdin writes emit EPIPE asynchronously; the
+    // close handler reports the failure instead of an unhandled stream error.
+    child.stdin.on('error', () => {})
+    child.once('error', fail)
     child.once('close', (code) => {
+      clearTimeout(timer)
       if (code === 0) resolve(stdout.trim())
       else
-        reject(
+        fail(
           new Error(
             `Windows Credential Manager 操作失败（code=${code}）：${stderr.trim()}`,
           ),

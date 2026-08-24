@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 export interface V2MigrationResult {
@@ -17,7 +17,17 @@ export async function ensureV2MigrationBackup(
     if (value.schemaVersion === 2)
       return { migrated: false, backupDirectory: null }
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      // A corrupted or partially written marker must not block startup;
+      // treat it as "not migrated yet" and redo the backup safely.
+      if (error instanceof SyntaxError) {
+        try {
+          await unlink(marker)
+        } catch {
+          // Best effort; the marker is rewritten below anyway.
+        }
+      } else throw error
+    }
   }
 
   let hasExistingData = false
