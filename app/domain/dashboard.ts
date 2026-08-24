@@ -63,6 +63,8 @@ export interface DashboardModel {
   pollingIntervalMinutes: number
   stale: boolean
   lastObservedResetAt: string | null
+  lastInferredResetAt: string | null
+  baselinePreviousResetAt: string | null
   baselineNextResetAt: string | null
   signalPrediction: {
     start: string | null
@@ -101,23 +103,46 @@ export interface DashboardModel {
 export function resetOverview(
   events: DashboardEvent[],
   now = Date.now(),
-): Pick<DashboardModel, 'lastObservedResetAt' | 'baselineNextResetAt'> {
-  const latest = events
-    .filter(
-      ({ status, type }) =>
-        (status === 'confirmed' || status === 'expected') && type !== 'banked',
-    )
+): Pick<
+  DashboardModel,
+  | 'lastObservedResetAt'
+  | 'lastInferredResetAt'
+  | 'baselinePreviousResetAt'
+  | 'baselineNextResetAt'
+> {
+  const latest = (status: DashboardEvent['status']) =>
+    events
+    .filter(({ status: value, type }) => value === status && type !== 'banked')
     .map(({ occurredAt }) => occurredAt)
     .filter((value) => {
       const timestamp = Date.parse(value)
       return !Number.isNaN(timestamp) && timestamp <= now
     })
     .sort((a, b) => b.localeCompare(a))[0]
-  if (!latest) return { lastObservedResetAt: null, baselineNextResetAt: null }
+  const confirmed = latest('confirmed')
+  const elapsedForecast = latest('expected')
+  const inferred =
+    elapsedForecast &&
+    (!confirmed || Date.parse(elapsedForecast) > Date.parse(confirmed))
+      ? elapsedForecast
+      : undefined
+  const anchorValue = inferred ?? confirmed
+  if (!anchorValue)
+    return {
+      lastObservedResetAt: null,
+      lastInferredResetAt: null,
+      baselinePreviousResetAt: null,
+      baselineNextResetAt: null,
+    }
+  const anchor = Date.parse(anchorValue)
+  const cycleDuration = 7 * 86_400_000
+  const elapsed = Math.max(0, now - anchor)
+  const nextCycle = Math.floor(elapsed / cycleDuration) + 1
+  const next = anchor + nextCycle * cycleDuration
   return {
-    lastObservedResetAt: latest,
-    baselineNextResetAt: new Date(
-      Date.parse(latest) + 7 * 86_400_000,
-    ).toISOString(),
+    lastObservedResetAt: confirmed ?? null,
+    lastInferredResetAt: inferred ?? null,
+    baselinePreviousResetAt: new Date(next - cycleDuration).toISOString(),
+    baselineNextResetAt: new Date(next).toISOString(),
   }
 }

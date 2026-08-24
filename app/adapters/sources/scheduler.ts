@@ -62,6 +62,17 @@ export class PollScheduler {
     this.#activeUntil = this.#options.now() + this.#options.activeDurationMs
   }
 
+  seed(posts: Array<Pick<SourcePost, 'id' | 'createdAt'>>): void {
+    const ordered = [...posts]
+      .filter(({ id, createdAt }) => id && !Number.isNaN(Date.parse(createdAt)))
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+      .slice(0, this.#options.maximumSeenPostIds)
+    this.#seenPostIds = new Set(ordered.map(({ id }) => id))
+    this.#seenPostOrder = ordered.map(({ id }) => id).reverse()
+    const latest = ordered[0]
+    if (latest) this.#cursor.lastPostId = latest.id
+  }
+
   start(): void {
     if (this.#running) return
     this.#running = true

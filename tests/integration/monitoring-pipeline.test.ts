@@ -432,4 +432,136 @@ describe('complete monitoring pipeline', () => {
       'rule+ai',
     )
   })
+
+  it('keeps a vague AI intent as a candidate without a reset timestamp', async () => {
+    const automation = { onEvent: vi.fn(async () => undefined) }
+    const pipeline = new MonitoringPipeline({
+      analyze: {
+        run: vi.fn(async () => ({
+          status: 'analyzed' as const,
+          analysis: {
+            schemaVersion: 1 as const,
+            createdAt: '2026-08-12T06:21:00.000Z',
+            source: 'fixture',
+            contentHash: '4'.repeat(64),
+            postId: 'vague-only',
+            analysisVersion: 'fixture-v1',
+            ruleVersion: 'rules-v1.1.0',
+            promptVersion: 'fixture-v1',
+            model: 'fixture',
+            relevance: 'relevant' as const,
+            eventType: 'vague_intent' as const,
+            scope: 'Codex',
+            expectedWindow: { start: null, end: null, original: null },
+            confidence: 'low' as const,
+            translationZh: '也许该重置了。',
+            summaryZh: '表达重置意向，但没有承诺。',
+            evidence: ['Should we reset?'],
+            uncertainties: ['没有明确时间或行动承诺'],
+            sourceUrl: 'https://x.com/thsottiaux/status/vague-only',
+            responseHash: '5'.repeat(64),
+          },
+        })),
+      },
+      notifications: { dispatch: vi.fn(async () => []) },
+      evaluate: () => ({
+        candidate: true,
+        matchedRuleIds: ['vague'],
+        reasons: ['vague'],
+        inputHash: '6'.repeat(64),
+        ruleVersion: 'rules-v1.1.0',
+      }),
+      posts: sink<Post>(),
+      analyses: sink<Analysis>(),
+      events: sink(),
+      notificationRecords: sink(),
+      eventAutomation: automation,
+    })
+    const result = await pipeline.process(
+      {
+        schemaVersion: 1,
+        createdAt: '2026-08-12T06:21:00.000Z',
+        source: 'fixture',
+        contentHash: '6'.repeat(64),
+        postId: 'vague-only',
+        url: 'https://x.com/thsottiaux/status/vague-only',
+        author: 'thsottiaux',
+        text: 'Should we reset?',
+        postedAt: '2026-08-12T06:20:37.000Z',
+        kind: 'original',
+        parentPostId: null,
+        quotedPostId: null,
+      },
+      new AbortController().signal,
+    )
+
+    expect(result.event).toMatchObject({
+      status: 'candidate',
+      eventType: 'vague_intent',
+      expectedStart: null,
+      confirmedAt: null,
+    })
+    expect(automation.onEvent).not.toHaveBeenCalled()
+  })
+
+  it('passes resolved parent and quote text to rules and AI', async () => {
+    const analyze = {
+      run: vi.fn(async () => ({
+        status: 'skipped_not_candidate' as const,
+        analysis: null,
+      })),
+    }
+    const evaluate = vi.fn(() => ({
+      candidate: false,
+      matchedRuleIds: [],
+      reasons: [],
+      inputHash: '7'.repeat(64),
+      ruleVersion: 'rules-v1.1.0',
+    }))
+    const pipeline = new MonitoringPipeline({
+      analyze,
+      notifications: { dispatch: vi.fn(async () => []) },
+      resolveContext: async () => ({
+        parentText: 'When is the next reset?',
+        quotedText: 'Codex reset button in action',
+      }),
+      evaluate,
+      posts: sink<Post>(),
+      analyses: sink<Analysis>(),
+      events: sink(),
+      notificationRecords: sink(),
+    })
+    const postValue: Post = {
+      schemaVersion: 1,
+      createdAt: '2026-08-12T06:21:00.000Z',
+      source: 'fixture',
+      contentHash: '7'.repeat(64),
+      postId: 'contextual',
+      url: 'https://x.com/thsottiaux/status/contextual',
+      author: 'thsottiaux',
+      text: 'Quite soon actually.',
+      postedAt: '2026-08-12T06:20:37.000Z',
+      kind: 'reply',
+      parentPostId: 'parent',
+      quotedPostId: 'quote',
+    }
+    await pipeline.process(postValue, new AbortController().signal)
+
+    expect(evaluate).toHaveBeenCalledWith(
+      postValue,
+      expect.objectContaining({
+        parentText: 'When is the next reset?',
+        quotedText: 'Codex reset button in action',
+      }),
+    )
+    expect(analyze.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          parentText: 'When is the next reset?',
+          quotedText: 'Codex reset button in action',
+        }),
+      }),
+      expect.any(AbortSignal),
+    )
+  })
 })

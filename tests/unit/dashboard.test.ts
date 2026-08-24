@@ -48,15 +48,43 @@ describe('dashboard statistics', () => {
   })
 
   it('anchors the baseline to the latest observed reset plus seven days', () => {
-    expect(resetOverview(events)).toEqual({
+    expect(
+      resetOverview(events, Date.parse('2026-08-09T12:00:00.000Z')),
+    ).toEqual({
       lastObservedResetAt: '2026-08-09T00:30:00.000Z',
+      lastInferredResetAt: null,
+      baselinePreviousResetAt: '2026-08-09T00:30:00.000Z',
       baselineNextResetAt: '2026-08-16T00:30:00.000Z',
+    })
+  })
+
+  it('advances an elapsed baseline without inventing a new observed reset', () => {
+    expect(
+      resetOverview(events, Date.parse('2026-08-16T00:30:00.000Z')),
+    ).toEqual({
+      lastObservedResetAt: '2026-08-09T00:30:00.000Z',
+      lastInferredResetAt: null,
+      baselinePreviousResetAt: '2026-08-16T00:30:00.000Z',
+      baselineNextResetAt: '2026-08-23T00:30:00.000Z',
+    })
+  })
+
+  it('catches the baseline up across multiple silent cycles', () => {
+    expect(
+      resetOverview(events, Date.parse('2026-08-30T00:30:01.000Z')),
+    ).toEqual({
+      lastObservedResetAt: '2026-08-09T00:30:00.000Z',
+      lastInferredResetAt: null,
+      baselinePreviousResetAt: '2026-08-30T00:30:00.000Z',
+      baselineNextResetAt: '2026-09-06T00:30:00.000Z',
     })
   })
 
   it('does not anchor the baseline to future or candidate messages', () => {
     expect(resetOverview([events[2]])).toEqual({
       lastObservedResetAt: null,
+      lastInferredResetAt: null,
+      baselinePreviousResetAt: null,
       baselineNextResetAt: null,
     })
   })
@@ -70,7 +98,9 @@ describe('dashboard statistics', () => {
     expect(
       resetOverview([expected], Date.parse('2026-08-10T01:00:01.000Z')),
     ).toEqual({
-      lastObservedResetAt: '2026-08-10T01:00:00.000Z',
+      lastObservedResetAt: null,
+      lastInferredResetAt: '2026-08-10T01:00:00.000Z',
+      baselinePreviousResetAt: '2026-08-10T01:00:00.000Z',
       baselineNextResetAt: '2026-08-17T01:00:00.000Z',
     })
   })
@@ -83,12 +113,19 @@ describe('dashboard statistics', () => {
     }
     expect(
       resetOverview([expected], Date.parse('2026-08-10T00:59:59.000Z')),
-    ).toEqual({ lastObservedResetAt: null, baselineNextResetAt: null })
+    ).toEqual({
+      lastObservedResetAt: null,
+      lastInferredResetAt: null,
+      baselinePreviousResetAt: null,
+      baselineNextResetAt: null,
+    })
   })
 
   it('does not anchor the baseline to a banked reset', () => {
     expect(resetOverview([events[1]])).toEqual({
       lastObservedResetAt: null,
+      lastInferredResetAt: null,
+      baselinePreviousResetAt: null,
       baselineNextResetAt: null,
     })
   })

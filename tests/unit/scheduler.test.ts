@@ -77,6 +77,43 @@ describe('poll scheduler', () => {
     expect(onPosts).toHaveBeenCalledTimes(1)
   })
 
+  it('seeds stored posts before the first live poll', async () => {
+    const onPosts = vi.fn(async () => undefined)
+    const fetchLatest = vi.fn(async (cursor) => ({
+      posts: [
+        {
+          id: 'stored-latest',
+          url: 'u',
+          author: 'thsottiaux',
+          text: 'already stored',
+          createdAt: '2026-08-12T00:00:00.000Z',
+          kind: 'original' as const,
+          parentPostId: null,
+          quotedPostId: null,
+        },
+      ],
+      cursor,
+      notModified: false,
+    }))
+    const scheduler = new PollScheduler({
+      adapter: adapter(fetchLatest),
+      onPosts,
+      jitter: () => 0.5,
+    })
+    scheduler.seed([
+      { id: 'stored-latest', createdAt: '2026-08-12T00:00:00.000Z' },
+      { id: 'stored-old', createdAt: '2026-08-11T00:00:00.000Z' },
+    ])
+
+    await scheduler.pollNow()
+
+    expect(fetchLatest).toHaveBeenCalledWith(
+      expect.objectContaining({ lastPostId: 'stored-latest' }),
+      expect.any(AbortSignal),
+    )
+    expect(onPosts).not.toHaveBeenCalled()
+  })
+
   it('backs off for 429 and recovers to the normal interval', async () => {
     const fetchLatest = vi
       .fn()

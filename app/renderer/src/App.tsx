@@ -27,6 +27,8 @@ const emptyModel: DashboardModel = {
   pollingIntervalMinutes: 5,
   stale: true,
   lastObservedResetAt: null,
+  lastInferredResetAt: null,
+  baselinePreviousResetAt: null,
   baselineNextResetAt: null,
   signalPrediction: null,
   prediction24h: null,
@@ -436,7 +438,11 @@ function CycleRail({
         <div>
           <span>本周周期</span>
           <strong>
-            {prediction ? '已捕获新的重置信号' : '等待新的重置信号'}
+            {prediction
+              ? '已捕获新的重置信号'
+              : model.lastInferredResetAt
+                ? '预测窗口已到，等待确认'
+                : '等待新的重置信号'}
           </strong>
         </div>
         <small>所有时间均为中国时间</small>
@@ -450,12 +456,15 @@ function CycleRail({
       </div>
       <div className="cycle-points">
         <div>
-          <span>最近重置</span>
+          <span>最近确认重置</span>
           <strong>
             {model.lastObservedResetAt
               ? formatTime(model.lastObservedResetAt)
               : '尚未观测到'}
           </strong>
+          {model.lastInferredResetAt ? (
+            <small>推定重置：{formatTime(model.lastInferredResetAt)}</small>
+          ) : null}
         </div>
         <div className={prediction ? 'highlight' : ''}>
           <span>证据来源</span>
@@ -469,7 +478,13 @@ function CycleRail({
               ) : null}
             </>
           ) : (
-            <strong>{aiEnhanced ? '暂无预测证据' : 'AI 未接入'}</strong>
+            <strong>
+              {model.lastInferredResetAt
+                ? '尚未观测到确认帖或官方额度事实'
+                : aiEnhanced
+                  ? '暂无预测证据'
+                  : 'AI 未接入'}
+            </strong>
           )}
         </div>
         <div>

@@ -18,7 +18,10 @@ export interface PipelineInput {
 
 export type PipelineResult =
   | {
-      status: 'skipped_not_candidate' | 'manual_confirmation_required'
+      status:
+        | 'skipped_not_candidate'
+        | 'skipped_ai_disabled'
+        | 'manual_confirmation_required'
       analysis: null
     }
   | { status: 'cache_hit' | 'analyzed'; analysis: Analysis }

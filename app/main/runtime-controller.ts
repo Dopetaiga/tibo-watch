@@ -187,13 +187,16 @@ export class RuntimeController {
 
   #createPipeline(): MonitoringPipeline {
     return new MonitoringPipeline({
-      analyze: new AnalysisPipeline(this.#provider, this.#analysisCache),
+      analyze: this.#analysisRunner(),
       notifications: { dispatch: (message) => this.#dispatch(message) },
-      evaluate: (post) =>
+      resolveContext: (post) => this.#postContext(post),
+      evaluate: (post, context) =>
         evaluateRulesV1({
           postId: post.postId,
           excerpt: post.text,
           contentHash: post.contentHash,
+          parentContext: { excerpt: context.parentText },
+          quotedContext: { excerpt: context.quotedText },
         }),
       posts: this.#posts,
       analyses: this.#analyses,
@@ -204,6 +207,37 @@ export class RuntimeController {
           this.#autoResumeForEvent(event, triggerMode),
       },
     })
+  }
+
+  #analysisRunner(): Pick<AnalysisPipeline, 'run'> {
+    if (this.#aiConfigured)
+      return new AnalysisPipeline(this.#provider, this.#analysisCache)
+    return {
+      run: async () => ({
+        status: 'skipped_ai_disabled' as const,
+        analysis: null,
+      }),
+    }
+  }
+
+  async #postContext(post: Post): Promise<{
+    parentText: string | null
+    quotedText: string | null
+  }> {
+    const read = async (postId: string | null): Promise<string | null> => {
+      if (!postId) return null
+      try {
+        return (await this.#posts.get(postId)).text
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null
+        throw error
+      }
+    }
+    const [parentText, quotedText] = await Promise.all([
+      read(post.parentPostId),
+      read(post.quotedPostId),
+    ])
+    return { parentText, quotedText }
   }
 
   async restore(): Promise<void> {
@@ -248,6 +282,7 @@ export class RuntimeController {
     if (this.#enabled) {
       try {
         await this.#runInitialHistoryBackfill(sourceEndpoint)
+        await this.#seedSchedulerFromStoredPosts()
         await this.#scheduler.pollNow()
       } catch {
         this.#startupWarning = '数据源更新失败，当前使用现有本地历史'
@@ -259,7 +294,7 @@ export class RuntimeController {
           resultCount: 0,
         })
       }
-    }
+    } else await this.#seedSchedulerFromStoredPosts()
     this.#backgroundActivity = '正在更新监控判断'
     try {
       const result = await this.#initializeMonitorFromRecentHistory()
@@ -295,8 +330,10 @@ export class RuntimeController {
       )
     )
       return
-    const expected = deduplicateEventsByPost(await this.#events.list()).filter(
-      (event) => event.status === 'expected' && event.expectedStart,
+    const expected = currentExpectedEvents(
+      deduplicateEventsByPost(await this.#events.list()),
+      await this.#posts.list(),
+      Date.now(),
     )
     for (const event of expected)
       this.#schedulePredictionAutomation(event, 'rule+ai', settings)
@@ -304,7 +341,10 @@ export class RuntimeController {
 
   async setSourceEnabled(enabled: boolean): Promise<void> {
     this.#enabled = enabled
-    if (enabled) this.#scheduler.start()
+    if (enabled) {
+      await this.#seedSchedulerFromStoredPosts()
+      this.#scheduler.start()
+    }
     else this.#scheduler.stop()
     await this.#saveRuntimeState()
   }
@@ -317,7 +357,19 @@ export class RuntimeController {
     if (endpoint)
       await this.#credentials.set('source', 'custom-endpoint', endpoint)
     else await this.#credentials.delete('source', 'custom-endpoint')
-    if (this.#enabled) this.#scheduler.start()
+    if (this.#enabled) {
+      await this.#seedSchedulerFromStoredPosts()
+      this.#scheduler.start()
+    }
+  }
+
+  async #seedSchedulerFromStoredPosts(): Promise<void> {
+    this.#scheduler.seed(
+      (await this.#posts.list()).map((post) => ({
+        id: post.postId,
+        createdAt: post.postedAt,
+      })),
+    )
   }
 
   async sourceConfiguration(): Promise<{
@@ -372,9 +424,9 @@ export class RuntimeController {
       'configuration',
       JSON.stringify(config),
     )
+    this.#aiConfigured = true
     this.#provider = provider
     this.#pipeline = this.#createPipeline()
-    this.#aiConfigured = true
     this.#startupWarning = null
     this.#lastAiReviewSummary = null
   }
@@ -857,11 +909,18 @@ export class RuntimeController {
           : event.status === 'expected'
             ? ('expected' as const)
             : ('candidate' as const),
-      occurredAt: event.confirmedAt ?? event.expectedStart ?? event.createdAt,
+      occurredAt:
+        event.confirmedAt ??
+        (event.status === 'expected' ? event.expectedStart : null) ??
+        '',
       sourceUrl: postUrls.get(event.postId) ?? '',
     }))
     const overview = resetOverview(dashboardEvents)
-    const signalCandidate = selectLatestExpectedEvent(effectiveEvents, posts)
+    const signalCandidate = selectLatestExpectedEvent(
+      effectiveEvents,
+      posts,
+      Date.now(),
+    )
     const signalBoundary = signalCandidate
       ? (signalCandidate.expectedEnd ?? signalCandidate.expectedStart)
       : null
@@ -877,6 +936,10 @@ export class RuntimeController {
       ? posts.find((post) => post.postId === signal.postId)
       : undefined
     const resetCredits = summarizeResetCredits(rateLimits, [
+      {
+        start: overview.baselinePreviousResetAt,
+        end: overview.baselinePreviousResetAt,
+      },
       {
         start: overview.baselineNextResetAt,
         end: overview.baselineNextResetAt,
@@ -1032,8 +1095,8 @@ export class RuntimeController {
   }
 
   async #processPosts(sourcePosts: SourcePost[]): Promise<void> {
-    for (const source of sourcePosts) {
-      const post: Post = {
+    const posts = sourcePosts.map(
+      (source): Post => ({
         schemaVersion: 1,
         createdAt: new Date().toISOString(),
         source: 'fxtwitter',
@@ -1046,9 +1109,11 @@ export class RuntimeController {
         kind: source.kind,
         parentPostId: source.parentPostId,
         quotedPostId: source.quotedPostId,
-      }
+      }),
+    )
+    await Promise.all(posts.map((post) => this.#posts.put(post)))
+    for (const post of posts)
       await this.#pipeline.process(post, new AbortController().signal)
-    }
   }
 
   async #initializeMonitorFromRecentHistory(): Promise<{
@@ -1060,13 +1125,16 @@ export class RuntimeController {
     if (recentPosts.length === 0)
       return { analyzed: 0, failed: 0, firstError: null }
     const replayPipeline = new MonitoringPipeline({
-      analyze: new AnalysisPipeline(this.#provider, this.#analysisCache),
+      analyze: this.#analysisRunner(),
       notifications: { dispatch: async () => [] },
-      evaluate: (post) =>
+      resolveContext: (post) => this.#postContext(post),
+      evaluate: (post, context) =>
         evaluateRulesV1({
           postId: post.postId,
           excerpt: post.text,
           contentHash: post.contentHash,
+          parentContext: { excerpt: context.parentText },
+          quotedContext: { excerpt: context.quotedText },
         }),
       posts: this.#posts,
       analyses: this.#analyses,
@@ -1331,7 +1399,7 @@ export class RuntimeController {
     if (phase === 'after-reset' && !plan.afterResetEnabled) return
     if (phase === 'before-prediction' && !plan.beforePredictionEnabled) return
     const effectiveSettings = { ...settings, ...plan }
-    const resumeId = `${event.eventId}--${phase}--${threadId}`
+    const resumeId = `${automationCycleId(event, phase)}--${phase}--${threadId}`
     try {
       await this.#codexResumes.get(resumeId)
       return
@@ -1481,10 +1549,18 @@ function prediction(
   posts: Post[],
   hours: number,
 ): string | null {
-  const limit = Date.now() + hours * 60 * 60_000
-  const upcoming = currentExpectedEvents(events, posts).find(
-    (event) => event.expectedStart && Date.parse(event.expectedStart) <= limit,
-  )
+  const now = Date.now()
+  const limit = now + hours * 60 * 60_000
+  const upcoming = currentExpectedEvents(events, posts, now)
+    .filter(
+      (event) =>
+        event.expectedStart && Date.parse(event.expectedStart) <= limit,
+    )
+    .sort(
+      (left, right) =>
+        Date.parse(left.expectedStart ?? '') -
+        Date.parse(right.expectedStart ?? ''),
+    )[0]
   return upcoming ? upcoming.titleZh : null
 }
 
@@ -1531,11 +1607,12 @@ export function deduplicateEventsByPost(events: ResetEvent[]): ResetEvent[] {
 export function selectLatestExpectedEvent(
   events: ResetEvent[],
   posts: Post[],
+  now?: number,
 ): ResetEvent | undefined {
   const postedAtByPost = new Map(
     posts.map((post) => [post.postId, post.postedAt]),
   )
-  return currentExpectedEvents(events, posts).sort((left, right) => {
+  return currentExpectedEvents(events, posts, now).sort((left, right) => {
     const postedAtOrder = (
       postedAtByPost.get(right.postId) ?? ''
     ).localeCompare(postedAtByPost.get(left.postId) ?? '')
@@ -1551,6 +1628,7 @@ export function selectLatestExpectedEvent(
 export function currentExpectedEvents(
   events: ResetEvent[],
   posts: Post[],
+  now?: number,
 ): ResetEvent[] {
   const postedAtByPost = new Map(
     posts.map((post) => [post.postId, post.postedAt]),
@@ -1569,7 +1647,13 @@ export function currentExpectedEvents(
     .sort((left, right) => right.localeCompare(left))[0]
 
   return events.filter((event) => {
-    if (event.status !== 'expected') return false
+    if (event.status !== 'expected' || !event.expectedStart) return false
+    if (
+      now !== undefined &&
+      event.expectedEnd &&
+      Date.parse(event.expectedEnd) < now
+    )
+      return false
     if (!latestConfirmedAt) return true
     const signalPostedAt = postedAtByPost.get(event.postId) ?? event.createdAt
     return Date.parse(signalPostedAt) > Date.parse(latestConfirmedAt)
@@ -1680,6 +1764,23 @@ function resumeAudit(
     contentHash: contentHash(facts),
     ...facts,
   }
+}
+
+function automationCycleId(
+  event: ResetEvent,
+  phase: 'after-reset' | 'before-prediction',
+): string {
+  const timestamp =
+    phase === 'before-prediction'
+      ? (event.expectedStart ?? event.createdAt)
+      : (event.confirmedAt ?? event.createdAt)
+  const day = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(timestamp))
+  return `${event.resetKind}--${day}`
 }
 
 const automationEventTypes: AutomationEventType[] = [

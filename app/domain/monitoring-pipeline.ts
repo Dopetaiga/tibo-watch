@@ -15,7 +15,14 @@ export interface FactSink<T> {
 export interface MonitoringPipelineOptions {
   analyze: Pick<AnalysisPipeline, 'run'>
   notifications: Pick<NotificationDispatcher, 'dispatch'>
-  evaluate(post: Post): RuleResult
+  resolveContext?(post: Post): Promise<{
+    parentText: string | null
+    quotedText: string | null
+  }>
+  evaluate(
+    post: Post,
+    context: { parentText: string | null; quotedText: string | null },
+  ): RuleResult
   posts: FactSink<Post>
   analyses: FactSink<Analysis>
   events: FactSink<ResetEvent>
@@ -45,7 +52,11 @@ export class MonitoringPipeline {
     options: { manualAiReview?: boolean } = {},
   ): Promise<MonitoringResult> {
     await this.options.posts.put(post)
-    const ruleResult = this.options.evaluate(post)
+    const context = (await this.options.resolveContext?.(post)) ?? {
+      parentText: null,
+      quotedText: null,
+    }
+    const ruleResult = this.options.evaluate(post, context)
     const analysisResult = await this.options.analyze.run(
       {
         ruleResult,
@@ -56,8 +67,8 @@ export class MonitoringPipeline {
           postUrl: post.url,
           postedAt: post.postedAt,
           text: post.text,
-          parentText: null,
-          quotedText: null,
+          parentText: context.parentText,
+          quotedText: context.quotedText,
           ruleVersion: ruleResult.ruleVersion,
           matchedRuleIds: ruleResult.matchedRuleIds,
         },
@@ -130,7 +141,11 @@ export class MonitoringPipeline {
     const notificationMessage: NotificationMessage = {
       schemaVersion: 1,
       eventType:
-        analysis.eventType === 'completed' ? 'reset_observed' : 'ai_confirmed',
+        event.status === 'confirmed'
+          ? 'reset_observed'
+          : event.status === 'expected'
+            ? 'ai_confirmed'
+            : 'rule_candidate',
       eventId: event.eventId,
       semanticVersion: analysis.analysisVersion,
       title: event.titleZh,
@@ -185,7 +200,9 @@ function eventFromAnalysis(post: Post, analysis: Analysis): ResetEvent | null {
   const status =
     analysis.eventType === 'completed' || completedByRule
       ? 'confirmed'
-      : 'expected'
+      : analysis.eventType === 'explicit_future'
+        ? 'expected'
+        : 'candidate'
   const eventId = `${post.postId}--${analysis.analysisVersion}`
   const createdAt = new Date().toISOString()
   return {

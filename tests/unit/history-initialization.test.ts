@@ -168,6 +168,33 @@ describe('initial AI history selection', () => {
     ).toBeUndefined()
   })
 
+  it('expires an unconfirmed prediction after its window ends', () => {
+    const expected: ResetEvent = {
+      schemaVersion: 1,
+      createdAt: '2026-08-12T06:21:00.000Z',
+      source: 'monitoring-pipeline',
+      contentHash: 'expired-prediction'.padEnd(64, '0'),
+      eventId: 'expired-prediction',
+      postId: 'expired-prediction',
+      analysisVersion: 'fixture',
+      status: 'expected',
+      eventType: 'explicit_future',
+      resetKind: 'forced',
+      scope: 'Codex',
+      expectedStart: '2026-08-13T00:00:00.000Z',
+      expectedEnd: '2026-08-13T02:00:00.000Z',
+      confirmedAt: null,
+      titleZh: '预计重置',
+    }
+    expect(
+      selectLatestExpectedEvent(
+        [expected],
+        [post('expired-prediction', '2026-08-12T06:20:00.000Z', 'Soon.')],
+        Date.parse('2026-08-13T02:00:01.000Z'),
+      ),
+    ).toBeUndefined()
+  })
+
   it('keeps a genuinely newer prediction after the latest confirmed reset', () => {
     const makeEvent = (
       id: string,
