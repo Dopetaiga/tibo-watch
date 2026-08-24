@@ -1,6 +1,4 @@
-import type {
-  AiProviderConfig,
-} from '../../adapters/ai/multi-protocol'
+import type { AiProviderConfig } from '../../adapters/ai/multi-protocol'
 import type { CodexThreadSummary } from '../../adapters/codex/app-server'
 import type { AutomationEventType } from '../../adapters/notifications/types'
 import type { CodexThreadAutomationSettings } from '../../domain/codex-budget'
@@ -18,7 +16,6 @@ export type CodexBootstrap = {
   settings: Awaited<ReturnType<DashboardControls['codexResumeSettings']>>
   executable: string | null
 }
-
 
 export const notificationEvents: AutomationEventType[] = [
   'rule_candidate',
@@ -108,4 +105,3 @@ export interface DashboardControls {
   notificationPolicy(): Promise<NotificationPolicy>
   setNotificationPolicy(value: NotificationPolicy): Promise<void>
 }
-

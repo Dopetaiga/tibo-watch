@@ -163,4 +163,3 @@ export function HistoryPage({ model }: { model: DashboardModel }) {
     </>
   )
 }
-

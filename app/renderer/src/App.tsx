@@ -2,11 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { DashboardModel } from '../../domain/dashboard'
 import { NavButton } from './components/ui'
 import { serviceStatusLabel } from './lib/labels'
-import type {
-  CodexBootstrap,
-  DashboardControls,
-  Page,
-} from './controls'
+import type { CodexBootstrap, DashboardControls, Page } from './controls'
 
 export type { DashboardControls } from './controls'
 export type { DashboardDetail, DashboardModel } from '../../domain/dashboard'

@@ -129,6 +129,8 @@ test('packaged Windows dashboard starts with an isolated local profile', async (
     ).toContainText('5/5')
     await expect(window.getByText('明确的未来重置承诺')).toBeVisible()
     await expect(window.getByText('完全无关的简短回复不应入选')).toBeVisible()
+    // Storage quota lives behind the "数据与隐私" settings tab.
+    await window.getByRole('button', { name: '数据与隐私' }).click()
     await window.getByRole('button', { name: '查看占用' }).click()
     await expect(window.getByText(/当前占用/)).toBeVisible()
   } finally {

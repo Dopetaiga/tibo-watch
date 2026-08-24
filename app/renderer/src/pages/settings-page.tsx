@@ -7,12 +7,7 @@ import { DEEPSEEK_PROVIDER_PRESET } from '../../../adapters/ai/multi-protocol'
 import type { CodexThreadSummary } from '../../../adapters/codex/app-server'
 import type { SelfTestResult } from '../../../domain/self-test'
 import type { DashboardModel } from '../../../domain/dashboard'
-import {
-  Field,
-  PageHeader,
-  SettingSection,
-  Toggle,
-} from '../components/ui'
+import { Field, PageHeader, SettingSection, Toggle } from '../components/ui'
 import {
   aiEndpointPreview,
   eventTypeLabel,
@@ -171,7 +166,7 @@ export function SettingsPage({
               </button>
             </SettingSection>
           </div>
-          <div className="settings-pane" hidden={settingsTab !== 'developer'}>
+          <div className="settings-pane" hidden={settingsTab !== 'data'}>
             <SettingSection
               id="custom-source"
               title="自定义数据源"
@@ -223,7 +218,7 @@ export function SettingsPage({
               </Field>
             </SettingSection>
           </div>
-          <div className="settings-pane" hidden={settingsTab !== 'developer'}>
+          <div className="settings-pane" hidden={settingsTab !== 'general'}>
             <SettingSection
               id="diagnostics"
               title="基础自检"
@@ -532,119 +527,121 @@ export function SettingsPage({
             </SettingSection>
           </div>
           {legacyCodexSettingsVisible() && (
-            <SettingSection
-              id="codex"
-              title="Codex 账户与恢复"
-              description="账户授权与 AI 配置互不依赖。只有这里逐项勾选的线程可以恢复。"
-            >
-              <div className="notice safety">
-                额度阈值只阻止启动新的恢复。Tibo Watch
-                绝不暂停、终止或追加指令到正在运行的任务，也不会自动消耗 reset
-                credit。
-              </div>
-              <button
-                className="secondary"
-                disabled={!controls || codexBusy}
-                onClick={() => {
-                  setCodexBusy(true)
-                  void Promise.all([
-                    controls?.codexProbe(),
-                    controls?.codexThreads(),
-                    controls?.codexResumeSettings(),
-                  ])
-                    .then(([probe, threads, settings]) => {
-                      if (!probe || !threads || !settings) return
-                      setMessage(
-                        `${probe.message}${probe.rateLimit?.usedPercent !== null && probe.rateLimit?.usedPercent !== undefined ? ` · 已用 ${probe.rateLimit.usedPercent}%` : ''}`,
-                      )
-                      setCodexThreads(threads)
-                      setAuthorizedThreads(settings.authorizedThreadIds)
-                      setCodexEnabled(settings.enabled)
-                      setLowerBudget(settings.lowerUsedPercent)
-                      setUpperBudget(settings.upperUsedPercent)
-                    })
-                    .catch(showError(setMessage))
-                    .finally(() => setCodexBusy(false))
-                }}
+            <div className="settings-pane" hidden={settingsTab !== 'developer'}>
+              <SettingSection
+                id="codex"
+                title="Codex 账户与恢复"
+                description="账户授权与 AI 配置互不依赖。只有这里逐项勾选的线程可以恢复。"
               >
-                {codexBusy ? '正在探测…' : '探测 Codex 并读取任务'}
-              </button>
-              {codexThreads.length > 0 && (
-                <div className="thread-list">
-                  {codexThreads.map((thread) => (
-                    <label key={thread.id}>
-                      <input
-                        type="checkbox"
-                        checked={authorizedThreads.includes(thread.id)}
-                        onChange={(event) =>
-                          setAuthorizedThreads((current) =>
-                            event.target.checked
-                              ? [...new Set([...current, thread.id])]
-                              : current.filter((id) => id !== thread.id),
-                          )
-                        }
-                      />
-                      <span>
-                        <strong>{thread.name ?? '未命名任务'}</strong>
-                        <small>
-                          {thread.status.type} · {thread.cwd ?? '未知目录'}
-                        </small>
-                      </span>
-                    </label>
-                  ))}
+                <div className="notice safety">
+                  额度阈值只阻止启动新的恢复。Tibo Watch
+                  绝不暂停、终止或追加指令到正在运行的任务，也不会自动消耗 reset
+                  credit。
                 </div>
-              )}
-              <Toggle
-                label="允许自动恢复已勾选任务"
-                checked={codexEnabled}
-                onChange={setCodexEnabled}
-              />
-              <div className="budget-row">
-                <Field label="重新允许启动（已用 ≤ %）">
-                  <input
-                    type="number"
-                    min="0"
-                    max="99"
-                    value={lowerBudget}
-                    onChange={(event) =>
-                      setLowerBudget(Number(event.target.value))
-                    }
-                  />
-                </Field>
-                <Field label="阻止新恢复（已用 ≥ %）">
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={upperBudget}
-                    onChange={(event) =>
-                      setUpperBudget(Number(event.target.value))
-                    }
-                  />
-                </Field>
-              </div>
-              <button
-                className="primary"
-                disabled={!controls || lowerBudget >= upperBudget}
-                onClick={() =>
-                  void controls
-                    ?.codexResumeSettings()
-                    .then((current) =>
-                      controls.setCodexResumeSettings({
-                        ...current,
-                        enabled: codexEnabled,
-                        authorizedThreadIds: authorizedThreads,
-                        lowerUsedPercent: lowerBudget,
-                        upperUsedPercent: upperBudget,
-                      }),
-                    )
-                    .then(() => setMessage('Codex 恢复授权与额度门禁已保存'))
-                    .catch(showError(setMessage))
-                }
-              >
-                保存恢复设置
-              </button>
-            </SettingSection>
+                <button
+                  className="secondary"
+                  disabled={!controls || codexBusy}
+                  onClick={() => {
+                    setCodexBusy(true)
+                    void Promise.all([
+                      controls?.codexProbe(),
+                      controls?.codexThreads(),
+                      controls?.codexResumeSettings(),
+                    ])
+                      .then(([probe, threads, settings]) => {
+                        if (!probe || !threads || !settings) return
+                        setMessage(
+                          `${probe.message}${probe.rateLimit?.usedPercent !== null && probe.rateLimit?.usedPercent !== undefined ? ` · 已用 ${probe.rateLimit.usedPercent}%` : ''}`,
+                        )
+                        setCodexThreads(threads)
+                        setAuthorizedThreads(settings.authorizedThreadIds)
+                        setCodexEnabled(settings.enabled)
+                        setLowerBudget(settings.lowerUsedPercent)
+                        setUpperBudget(settings.upperUsedPercent)
+                      })
+                      .catch(showError(setMessage))
+                      .finally(() => setCodexBusy(false))
+                  }}
+                >
+                  {codexBusy ? '正在探测…' : '探测 Codex 并读取任务'}
+                </button>
+                {codexThreads.length > 0 && (
+                  <div className="thread-list">
+                    {codexThreads.map((thread) => (
+                      <label key={thread.id}>
+                        <input
+                          type="checkbox"
+                          checked={authorizedThreads.includes(thread.id)}
+                          onChange={(event) =>
+                            setAuthorizedThreads((current) =>
+                              event.target.checked
+                                ? [...new Set([...current, thread.id])]
+                                : current.filter((id) => id !== thread.id),
+                            )
+                          }
+                        />
+                        <span>
+                          <strong>{thread.name ?? '未命名任务'}</strong>
+                          <small>
+                            {thread.status.type} · {thread.cwd ?? '未知目录'}
+                          </small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <Toggle
+                  label="允许自动恢复已勾选任务"
+                  checked={codexEnabled}
+                  onChange={setCodexEnabled}
+                />
+                <div className="budget-row">
+                  <Field label="重新允许启动（已用 ≤ %）">
+                    <input
+                      type="number"
+                      min="0"
+                      max="99"
+                      value={lowerBudget}
+                      onChange={(event) =>
+                        setLowerBudget(Number(event.target.value))
+                      }
+                    />
+                  </Field>
+                  <Field label="阻止新恢复（已用 ≥ %）">
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={upperBudget}
+                      onChange={(event) =>
+                        setUpperBudget(Number(event.target.value))
+                      }
+                    />
+                  </Field>
+                </div>
+                <button
+                  className="primary"
+                  disabled={!controls || lowerBudget >= upperBudget}
+                  onClick={() =>
+                    void controls
+                      ?.codexResumeSettings()
+                      .then((current) =>
+                        controls.setCodexResumeSettings({
+                          ...current,
+                          enabled: codexEnabled,
+                          authorizedThreadIds: authorizedThreads,
+                          lowerUsedPercent: lowerBudget,
+                          upperUsedPercent: upperBudget,
+                        }),
+                      )
+                      .then(() => setMessage('Codex 恢复授权与额度门禁已保存'))
+                      .catch(showError(setMessage))
+                  }
+                >
+                  保存恢复设置
+                </button>
+              </SettingSection>
+            </div>
           )}
           <div className="settings-pane" hidden={settingsTab !== 'data'}>
             <SettingSection
@@ -724,4 +721,3 @@ export function SettingsPage({
     </>
   )
 }
-

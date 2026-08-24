@@ -104,7 +104,13 @@ export function SectionTitle({
     </header>
   )
 }
-export function Count({ value, label }: { value: number | string; label: string }) {
+export function Count({
+  value,
+  label,
+}: {
+  value: number | string
+  label: string
+}) {
   return (
     <div>
       <strong>{value}</strong>

@@ -1,14 +1,14 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CodexThreadSummary } from '../../../adapters/codex/app-server'
 import type { CodexThreadAutomationSettings } from '../../../domain/codex-budget'
 import type { DashboardModel } from '../../../domain/dashboard'
-import { Empty, Field, PageHeader, SectionTitle, Toggle } from '../components/ui'
+import {
+  Empty,
+  Field,
+  PageHeader,
+  SectionTitle,
+  Toggle,
+} from '../components/ui'
 import {
   automationSummary,
   formatTime,
@@ -779,4 +779,3 @@ export function CodexPage({
     </>
   )
 }
-

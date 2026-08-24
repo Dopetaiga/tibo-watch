@@ -57,7 +57,9 @@ export function dataStatusLabel(value: DashboardModel['dataStatus']) {
     disabled: '数据源已关闭',
   }[value]
 }
-export function relevanceLabel(value: DashboardModel['posts'][number]['relevance']) {
+export function relevanceLabel(
+  value: DashboardModel['posts'][number]['relevance'],
+) {
   return {
     candidate: '规则候选',
     relevant: '有效信号',
@@ -126,7 +128,10 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / 1024 ** 2).toFixed(1)} MB`
 }
 
-export function aiEndpointPreview(baseUrl: string, protocol: AiProtocol): string {
+export function aiEndpointPreview(
+  baseUrl: string,
+  protocol: AiProtocol,
+): string {
   const suffix = {
     'anthropic-messages': 'messages',
     'openai-responses': 'responses',
@@ -143,4 +148,3 @@ export function formatWindow(start: string | null, end: string | null) {
     .filter(Boolean)
     .join(' — ')
 }
-
