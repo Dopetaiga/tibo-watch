@@ -1527,10 +1527,6 @@ button:disabled {
   .status-strip {
     grid-template-columns: 1fr;
   }
-  .metric {
-    border-right: 0;
-    border-bottom: 1px solid #eee;
-  }
   .setting-section {
     grid-template-columns: 1fr;
   }
@@ -1649,10 +1645,6 @@ body {
 .metric {
   min-height: 64px;
   padding: 10px 16px;
-}
-
-.metric:first-child {
-  padding-left: 0;
 }
 
 .metric strong {
