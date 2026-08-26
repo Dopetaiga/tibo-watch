@@ -82,4 +82,21 @@ describe('learnedPropagationDelayHours', () => {
       ),
     ).toBeNull()
   })
+
+  it('uses the weekly series so routine 5h rollovers do not pollute delays', () => {
+    const events = [confirmedEvent('2026-08-23T02:00:00.000Z')]
+    // Primary series has routine 5h rollover drops (03:00, 08:00); the
+    // weekly series only drops once at 04:00 — the real forced reset.
+    const rows = [
+      { iso: '2026-08-23T01:00:00.000Z', primary: 70, secondary: 40 },
+      { iso: '2026-08-23T03:00:00.000Z', primary: 5, secondary: 41 },
+      { iso: '2026-08-23T04:00:00.000Z', primary: 30, secondary: 3 },
+      { iso: '2026-08-23T08:00:00.000Z', primary: 8, secondary: 4 },
+    ]
+    const observations = rows.map((row) => ({
+      ...observation(row.iso, row.primary),
+      secondaryUsedPercent: row.secondary,
+    }))
+    expect(learnedPropagationDelayHours(events, observations, now)).toBe(2)
+  })
 })
