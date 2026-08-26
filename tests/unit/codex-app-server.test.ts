@@ -22,6 +22,58 @@ describe('Codex App Server client', () => {
     )
   })
 
+  it('parses the dual-window 5h+weekly payload with credits and plan metadata', async () => {
+    const rpc = transport({
+      'account/rateLimits/read': {
+        rateLimits: {
+          limitId: 'codex',
+          planType: 'plus',
+          spendControlReached: false,
+          credits: { hasCredits: false, unlimited: false, balance: '0' },
+          primary: {
+            usedPercent: 4,
+            windowDurationMins: 300,
+            resetsAt: 1787748401, // seconds → normalized to ms
+          },
+          secondary: {
+            usedPercent: 1,
+            windowDurationMins: 10080,
+            resetsAt: 1788335201,
+          },
+        },
+        rateLimitsByLimitId: {},
+      },
+    })
+    const client = new CodexAppServerClient(rpc)
+    await expect(client.rateLimits()).resolves.toMatchObject({
+      usedPercent: 4,
+      windowDurationMins: 300,
+      resetsAt: 1787748401_000,
+      secondary: {
+        usedPercent: 1,
+        windowDurationMins: 10080,
+        resetsAt: 1788335201_000,
+      },
+      creditsBalance: '0',
+      unlimited: false,
+      spendControlReached: false,
+      planType: 'plus',
+    })
+  })
+
+  it('keeps secondary null on legacy single-window payloads', async () => {
+    const rpc = transport({
+      'account/rateLimits/read': {
+        rateLimits: { primary: { usedPercent: 10 } },
+      },
+    })
+    const client = new CodexAppServerClient(rpc)
+    const snapshot = await client.rateLimits()
+    expect(snapshot.secondary).toBeNull()
+    expect(snapshot.unlimited).toBeNull()
+    expect(snapshot.usedPercent).toBe(10)
+  })
+
   it('performs the required initialization handshake', async () => {
     const rpc = transport({ initialize: {} })
     const client = new CodexAppServerClient(rpc)

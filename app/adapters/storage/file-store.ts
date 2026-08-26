@@ -97,7 +97,15 @@ export class JsonRecordStore<T extends FactRecord> {
       // O(1) index append instead of a full O(n) rebuild on every write.
       // Duplicate ids are legal after content-hash updates; readers take the
       // last occurrence and ensureIndexIntact() compacts when counts drift.
-      await this.#appendIndexEntry(id, record.createdAt, record.contentHash)
+      try {
+        await this.#appendIndexEntry(id, record.createdAt, record.contentHash)
+      } catch {
+        // The record replacement is already durable. Rebuild the auxiliary
+        // index before reporting success, and invalidate the cache first so a
+        // failed repair can never leave list() serving the previous record.
+        this.#cache = null
+        await this.#rebuildIndex()
+      }
       if (this.#cache) this.#cache.set(id, record)
       return { created: true, record }
     })
@@ -147,6 +155,10 @@ export class JsonRecordStore<T extends FactRecord> {
   }
 
   async rebuildIndex(): Promise<number> {
+    return this.#queue.run(() => this.#rebuildIndex())
+  }
+
+  async #rebuildIndex(): Promise<number> {
     // Force a disk pass so externally drifted state (files added/removed
     // outside this process) is picked up and the cache resynchronized.
     const records = await this.#readAllFromDisk()
@@ -265,7 +277,7 @@ export class JsonRecordStore<T extends FactRecord> {
           if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
         }
       }
-      if (deleted > 0) await this.rebuildIndex()
+      if (deleted > 0) await this.#rebuildIndex()
       return deleted
     })
   }

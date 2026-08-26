@@ -83,9 +83,9 @@ import {
 } from '../adapters/codex/app-server.js'
 import { CodexConnectionManager } from '../adapters/codex/connection.js'
 import {
-  mayStartNewResume,
-  mayStartAutomation,
-  nextBudgetGate,
+  mayStartDualWindow,
+  isPredictionPlanExpired,
+  predictionPlannedAt,
   traceAutomation,
   validateAutomationSettings,
   validateBudgetPolicy,
@@ -338,7 +338,11 @@ export class RuntimeController {
       this.#startupComplete = true
     }
     this.#backgroundActivity = shouldEnable ? '正在更新数据源' : null
-    void this.#finishBackgroundInitialization(sourceEndpoint)
+    void this.#finishBackgroundInitialization(sourceEndpoint).catch((error) => {
+      this.#startupWarning = `后台初始化失败：${shortError(error)}`
+      this.#backgroundActivity = null
+      if (this.#enabled) this.#scheduler.start()
+    })
   }
 
   async #finishBackgroundInitialization(
@@ -643,12 +647,33 @@ export class RuntimeController {
         latest.availableResetCredits !== rateLimit.availableResetCredits ||
         JSON.stringify(latest.resetCredits) !==
           JSON.stringify(rateLimit.resetCredits)
-      if (age < 30 * 60_000 && usedDelta < 5 && !creditsChanged) return
+      const secondaryChanged =
+        (rateLimit.secondary?.usedPercent ?? null) !==
+        (latest.secondaryUsedPercent ?? null)
+      if (
+        age < 30 * 60_000 &&
+        usedDelta < 5 &&
+        !creditsChanged &&
+        !secondaryChanged
+      )
+        return
     }
     const facts = {
       observationId: String(Date.now()),
       observedAt,
-      ...rateLimit,
+      usedPercent: rateLimit.usedPercent,
+      resetsAt: rateLimit.resetsAt,
+      windowDurationMins: rateLimit.windowDurationMins,
+      secondaryUsedPercent: rateLimit.secondary?.usedPercent ?? null,
+      secondaryResetsAt: rateLimit.secondary?.resetsAt ?? null,
+      secondaryWindowDurationMins:
+        rateLimit.secondary?.windowDurationMins ?? null,
+      creditsBalance: rateLimit.creditsBalance,
+      unlimited: rateLimit.unlimited,
+      spendControlReached: rateLimit.spendControlReached,
+      planType: rateLimit.planType,
+      availableResetCredits: rateLimit.availableResetCredits,
+      resetCredits: rateLimit.resetCredits,
     }
     await this.#codexRateLimits.put({
       schemaVersion: 1,
@@ -759,7 +784,7 @@ export class RuntimeController {
     const usedPercent =
       [...observations]
         .sort((a, b) => b.observedAt.localeCompare(a.observedAt))
-        .at(-1)?.usedPercent ?? null
+        .at(0)?.usedPercent ?? null
     const shared = {
       event: {
         status: event.status as string,
@@ -823,17 +848,17 @@ export class RuntimeController {
         if (account.authenticated) {
           const rate = await client.rateLimits()
           await this.#recordCodexRateLimit(rate)
-          this.#budgetGate = nextBudgetGate(
+          const decision = mayStartDualWindow({
+            fiveHourUsedPercent: rate.usedPercent,
+            weeklyUsedPercent: rate.secondary?.usedPercent ?? null,
+            creditsUnlimited: rate.unlimited,
+            spendControlReached: rate.spendControlReached,
+            currentGate: this.#budgetGate,
             settings,
-            this.#budgetGate,
-            rate.usedPercent,
-          )
-          if (!mayStartNewResume(this.#budgetGate))
-            throw new Error('当前额度达到用户设置的上限，已阻止新的恢复任务')
-          if (!mayStartAutomation(rate.usedPercent, settings))
-            throw new Error(
-              '当前额度不足以满足单轮目标消耗和保留额度，已阻止启动',
-            )
+          })
+          this.#budgetGate = decision.nextGate
+          if (!decision.ok)
+            throw new Error(decision.reason ?? '已阻止启动新的恢复任务')
         } else if (settings.action === 'accelerate') {
           throw new Error('无法读取账户额度时，不执行自动加速消耗')
         }
@@ -1118,7 +1143,9 @@ export class RuntimeController {
         const result = await this.#processWithTimeout(post)
         this.#trackAiFailureForRetry(post, result.analysisResult.status)
       } catch {
-        // Keep the entry; it will be retried on a future cycle.
+        // Exceptions count toward the same bounded retry budget as an
+        // explicit failed result; otherwise a poisoned post retries forever.
+        this.#trackAiFailureForRetry(post, 'failed')
       }
     }
   }
@@ -1256,7 +1283,7 @@ export class RuntimeController {
         )
       else await this.#credentials.delete('source', 'history-backfill-cursor')
       const state = {
-        complete: exhausted || page === 2,
+        complete: exhausted,
         pagesFetched,
         postsStored,
       }
@@ -1267,7 +1294,7 @@ export class RuntimeController {
       )
       if (state.complete) return state
     }
-    return { complete: true, pagesFetched, postsStored }
+    return { complete: false, pagesFetched, postsStored }
   }
 
   async #saveRuntimeState(): Promise<void> {
@@ -1389,8 +1416,11 @@ export class RuntimeController {
     for (const threadId of settings.authorizedThreadIds) {
       const plan = settings.threadSettings[threadId] ?? settings
       if (!plan.beforePredictionEnabled) continue
-      const runAt =
-        Date.parse(event.expectedStart) - plan.beforePredictionHours * 3_600_000
+      const runAt = predictionPlannedAt(
+        event.expectedStart,
+        plan.beforePredictionHours,
+      )
+      if (runAt === null || isPredictionPlanExpired(runAt)) continue
       const delay = Math.max(0, runAt - Date.now())
       const timerId = `${event.eventId}--${threadId}`
       const existing = this.#predictionTimers.get(timerId)
@@ -1406,6 +1436,7 @@ export class RuntimeController {
       }
       const timer = setTimeout(() => {
         this.#predictionTimers.delete(timerId)
+        if (isPredictionPlanExpired(runAt)) return
         void this.#runCodexAutomationForThread(
           event,
           triggerMode,

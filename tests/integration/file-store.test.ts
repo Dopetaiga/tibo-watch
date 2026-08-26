@@ -141,6 +141,22 @@ describe('JSON record store', () => {
     expect(await store.ensureIndexIntact()).toBe(false)
   })
 
+  it('serializes index maintenance with concurrent writes', async () => {
+    const { rootDirectory, store } = await createStore()
+    for (let index = 0; index < 200; index += 1)
+      await store.put(post('seed-' + index))
+
+    await Promise.all([store.rebuildIndex(), store.put(post('during-rebuild'))])
+
+    const index = await readFile(
+      path.join(rootDirectory, 'indexes', 'posts.jsonl'),
+      'utf8',
+    )
+    expect(index).toContain('during-rebuild')
+    expect(
+      (await store.list()).some(({ postId }) => postId === 'during-rebuild'),
+    ).toBe(true)
+  })
   it('recreates a missing index during self-heal', async () => {
     const { rootDirectory, store } = await createStore()
     await store.put(post('only'))

@@ -114,6 +114,44 @@ describe('poll scheduler', () => {
     expect(onPosts).not.toHaveBeenCalled()
   })
 
+  it('retries the same posts and cursor when processing fails', async () => {
+    const cursors: Array<Record<string, unknown>> = []
+    const fetchLatest = vi.fn(async (cursor) => {
+      cursors.push({ ...cursor })
+      return {
+        posts: [
+          {
+            id: 'retry-me',
+            url: 'u',
+            author: 'thsottiaux',
+            text: 'reset',
+            createdAt: '2026-08-12T00:00:00.000Z',
+            kind: 'original' as const,
+            parentPostId: null,
+            quotedPostId: null,
+          },
+        ],
+        cursor: { lastPostId: 'retry-me' },
+        notModified: false,
+      }
+    })
+    const onPosts = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('storage failed'))
+      .mockResolvedValueOnce(undefined)
+    const scheduler = new PollScheduler({
+      adapter: adapter(fetchLatest),
+      onPosts,
+      jitter: () => 0.5,
+    })
+
+    expect(await scheduler.pollNow()).toMatchObject({
+      sourceStatus: 'degraded',
+    })
+    expect(await scheduler.pollNow()).toMatchObject({ sourceStatus: 'healthy' })
+    expect(onPosts).toHaveBeenCalledTimes(2)
+    expect(cursors).toEqual([{}, {}])
+  })
   it('backs off for 429 and recovers to the normal interval', async () => {
     const fetchLatest = vi
       .fn()

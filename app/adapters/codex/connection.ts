@@ -25,6 +25,8 @@ export class CodexConnectionManager {
     connect?(executable: string): Promise<CodexAppServerClient>
   }
   #client: CodexAppServerClient | null = null
+  #connecting: Promise<CodexAppServerClient> | null = null
+  #generation = 0
   #leases = 0
   #idleTimer: NodeJS.Timeout | null = null
 
@@ -51,31 +53,58 @@ export class CodexConnectionManager {
   }
 
   invalidate(): void {
+    this.#generation += 1
     const client = this.#client
     this.#client = null
     client?.close()
   }
 
   async closeNow(): Promise<void> {
+    if (this.#idleTimer) {
+      globalThis.clearTimeout(this.#idleTimer)
+      this.#idleTimer = null
+    }
     this.invalidate()
   }
 
   async #pooledOrNew(): Promise<CodexAppServerClient> {
-    if (this.#client && (await this.#healthy(this.#client))) return this.#client
+    const pooled = this.#client
+    const pooledGeneration = this.#generation
+    if (
+      pooled &&
+      (await this.#healthy(pooled)) &&
+      pooledGeneration === this.#generation &&
+      this.#client === pooled
+    )
+      return pooled
+    if (this.#connecting) return this.#connecting
     this.#client?.close()
     this.#client = null
-    const executable = await this.#options.executable()
-    const connect =
-      this.#options.connect ??
-      ((exe: string) => CodexAppServerClient.connect(exe))
+    const generation = this.#generation
+    const connecting = (async () => {
+      const executable = await this.#options.executable()
+      const connect =
+        this.#options.connect ??
+        ((exe: string) => CodexAppServerClient.connect(exe))
+      let client: CodexAppServerClient
+      try {
+        client = await connect(executable ?? 'codex')
+      } catch {
+        client = await connect(executable ?? 'codex')
+      }
+      if (generation !== this.#generation) {
+        client.close()
+        throw new Error('Codex connection was invalidated')
+      }
+      this.#client = client
+      return client
+    })()
+    this.#connecting = connecting
     try {
-      this.#client = await connect(executable ?? 'codex')
-    } catch (error) {
-      // One rebuild attempt: the previous child may have died between calls.
-      this.#client = await connect(executable ?? 'codex')
-      void error
+      return await connecting
+    } finally {
+      if (this.#connecting === connecting) this.#connecting = null
     }
-    return this.#client
   }
 
   async #healthy(client: CodexAppServerClient): Promise<boolean> {

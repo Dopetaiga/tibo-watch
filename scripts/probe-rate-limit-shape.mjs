@@ -25,6 +25,7 @@ function request(method, params) {
     child.stdin.write(`${JSON.stringify(frame)}\n`)
   })
 }
+const clearPendingTimer = (timer) => globalThis.clearTimeout(timer)
 createInterface({ input: child.stdout }).on('line', (line) => {
   let frame
   try {
@@ -35,7 +36,7 @@ createInterface({ input: child.stdout }).on('line', (line) => {
   if (typeof frame.id === 'number') {
     const entry = pending.get(frame.id)
     if (!entry) return
-    clearTimeout(entry.timer)
+    clearPendingTimer(entry.timer)
     pending.delete(frame.id)
     if (frame.error) entry.reject(new Error(frame.error.message))
     else entry.resolve(frame.result)

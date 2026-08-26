@@ -12,6 +12,12 @@ describe('Electron security baseline', () => {
     expect(source).toContain("webContents.on('will-navigate'")
   })
 
+  it('quits immediately when the single-instance lock is unavailable', () => {
+    const source = readFileSync('app/main/index.ts', 'utf8')
+    expect(source).toMatch(
+      /if \(!hasSingleInstanceLock\) \{[\s\S]*?app\.quit\(\)[\s\S]*?return/,
+    )
+  })
   it('uses a strict CSP without inline script or evaluation', () => {
     const html = readFileSync('app/renderer/index.html', 'utf8')
     expect(html).toContain("object-src 'none'")
