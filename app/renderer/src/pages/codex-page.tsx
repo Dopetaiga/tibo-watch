@@ -225,34 +225,36 @@ export function CodexPage({
   const detect = useCallback(() => {
     if (!controls) return
     setBusy(true)
-    void Promise.all([
+    void Promise.allSettled([
       controls.codexProbe(),
       controls.codexThreads(),
       controls.codexResumeSettings(),
       controls.codexExecutableHint(),
-    ])
-      .then(([probe, listed, settings, path]) => {
+    ]).then(([probe, listed, settings, path]) => {
+      if (probe.status === 'fulfilled')
         setMessage(
-          `${probe.message}${probe.rateLimit?.usedPercent !== null && probe.rateLimit?.usedPercent !== undefined ? ` · 已用 ${probe.rateLimit.usedPercent}%` : ''}`,
+          `${probe.value.message}${probe.value.rateLimit?.usedPercent !== null && probe.value.rateLimit?.usedPercent !== undefined ? ` · 已用 ${probe.value.rateLimit.usedPercent}%` : ''}`,
         )
-        setThreads(listed)
-        setAuthorized(settings.authorizedThreadIds)
-        setEnabled(settings.enabled)
-        setLower(settings.lowerUsedPercent)
-        setUpper(settings.upperUsedPercent)
-        setAfterReset(settings.afterResetEnabled)
-        setBeforePrediction(settings.beforePredictionEnabled)
-        setBeforeHours(settings.beforePredictionHours)
-        setMaximumRuns(settings.maximumRunsPerCycle)
-        setTargetSpend(settings.targetSpendPercent)
-        setMinimumRemaining(settings.minimumRemainingPercent)
-        setAction(settings.action)
-        setAccelerationPrompt(settings.accelerationPrompt)
-        setThreadSettings(settings.threadSettings)
-        setExecutable(path)
-      })
-      .catch(showError(setMessage))
-      .finally(() => setBusy(false))
+      else showError(setMessage)(probe.reason)
+      if (listed.status === 'fulfilled') setThreads(listed.value)
+      if (settings.status === 'fulfilled') {
+        setAuthorized(settings.value.authorizedThreadIds)
+        setEnabled(settings.value.enabled)
+        setLower(settings.value.lowerUsedPercent)
+        setUpper(settings.value.upperUsedPercent)
+        setAfterReset(settings.value.afterResetEnabled)
+        setBeforePrediction(settings.value.beforePredictionEnabled)
+        setBeforeHours(settings.value.beforePredictionHours)
+        setMaximumRuns(settings.value.maximumRunsPerCycle)
+        setTargetSpend(settings.value.targetSpendPercent)
+        setMinimumRemaining(settings.value.minimumRemainingPercent)
+        setAction(settings.value.action)
+        setAccelerationPrompt(settings.value.accelerationPrompt)
+        setThreadSettings(settings.value.threadSettings)
+      }
+      if (path.status === 'fulfilled') setExecutable(path.value)
+      setBusy(false)
+    })
   }, [controls])
 
   useEffect(() => {

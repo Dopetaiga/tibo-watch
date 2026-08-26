@@ -26,6 +26,8 @@ export interface CodexAutomationSettings extends CodexBudgetPolicy {
   accelerationPrompt: string
   /** Upper bound for waiting on a started turn; optional additive field. */
   turnTimeoutMinutes?: number
+  /** Weekly-window hard ceiling; defaults to upperUsedPercent when absent. */
+  weeklyUpperUsedPercent?: number
   threadSettings: Record<string, CodexThreadAutomationSettings>
 }
 
@@ -76,6 +78,13 @@ export function validateAutomationSettings(
       settings.turnTimeoutMinutes > 120)
   )
     throw new Error('Turn 等待超时必须位于 5–120 分钟')
+  if (
+    settings.weeklyUpperUsedPercent !== undefined &&
+    (!Number.isFinite(settings.weeklyUpperUsedPercent) ||
+      settings.weeklyUpperUsedPercent < 0 ||
+      settings.weeklyUpperUsedPercent > 100)
+  )
+    throw new Error('周窗上限必须位于 0–100%')
   for (const [threadId, thread] of Object.entries(settings.threadSettings)) {
     if (!/^[A-Za-z0-9_-]{3,200}$/.test(threadId))
       throw new Error('Codex 单任务配置包含无效任务 ID')
@@ -150,6 +159,86 @@ export function mayStartNewResume(state: BudgetGateState): boolean {
   return state === 'allow-new-resumes'
 }
 
+export interface DualWindowInput {
+  /** 5h rolling window usage (legacy primary). */
+  fiveHourUsedPercent: number | null
+  /** Weekly window usage; null on older codex builds. */
+  weeklyUsedPercent: number | null
+  creditsUnlimited?: boolean | null
+  spendControlReached?: boolean | null
+  currentGate: BudgetGateState
+  settings: Pick<
+    CodexAutomationSettings,
+    | 'lowerUsedPercent'
+    | 'upperUsedPercent'
+    | 'weeklyUpperUsedPercent'
+    | 'targetSpendPercent'
+    | 'minimumRemainingPercent'
+  >
+}
+
+export interface DualWindowDecision {
+  ok: boolean
+  reason: string | null
+  nextGate: BudgetGateState
+}
+
+/**
+ * Window-aware start decision for the 5h+weekly era:
+ *  - credits.unlimited short-circuits to allow;
+ *  - spendControlReached blocks unconditionally;
+ *  - the 5h window keeps the hysteresis gate AND must absorb targetSpend;
+ *  - the weekly window acts only as a hard ceiling (block, never release).
+ */
+export function mayStartDualWindow(input: DualWindowInput): DualWindowDecision {
+  const { settings } = input
+  if (input.creditsUnlimited === true)
+    return { ok: true, reason: null, nextGate: 'allow-new-resumes' }
+  if (input.spendControlReached === true)
+    return {
+      ok: false,
+      reason: '消费控制已触发，已阻止启动',
+      nextGate: 'block-new-resumes',
+    }
+
+  const nextFiveHour = nextBudgetGate(
+    settings,
+    input.currentGate,
+    input.fiveHourUsedPercent,
+  )
+  if (!mayStartNewResume(nextFiveHour))
+    return {
+      ok: false,
+      reason: '5 小时窗口达到用户设置的上限，已阻止新的恢复任务',
+      nextGate: nextFiveHour,
+    }
+  if (
+    input.fiveHourUsedPercent !== null &&
+    !mayStartAutomation(input.fiveHourUsedPercent, {
+      minimumRemainingPercent: settings.minimumRemainingPercent,
+      targetSpendPercent: settings.targetSpendPercent,
+    })
+  )
+    return {
+      ok: false,
+      reason: `当前 5 小时窗口不足以满足单轮目标消耗（${input.fiveHourUsedPercent}%），已阻止启动`,
+      nextGate: nextFiveHour,
+    }
+
+  const weeklyCeiling =
+    settings.weeklyUpperUsedPercent ?? settings.upperUsedPercent
+  if (
+    input.weeklyUsedPercent !== null &&
+    input.weeklyUsedPercent >= weeklyCeiling
+  )
+    return {
+      ok: false,
+      reason: `周窗口达到上限（${input.weeklyUsedPercent}% ≥ ${weeklyCeiling}%），已阻止启动`,
+      nextGate: nextFiveHour,
+    }
+  return { ok: true, reason: null, nextGate: nextFiveHour }
+}
+
 export interface AutomationTrace {
   gateState: BudgetGateState
   /** Human-readable reason when the run would be blocked; null otherwise. */
@@ -201,12 +290,14 @@ export function traceAutomation(input: {
         blockReason: '事件缺少预测开始时间',
         plannedAt: null,
       }
-    const plannedAt =
-      Date.parse(event.expectedStart) - plan.beforePredictionHours * 3_600_000
-    if (!Number.isFinite(plannedAt))
+    const plannedAt = predictionPlannedAt(
+      event.expectedStart,
+      plan.beforePredictionHours,
+    )
+    if (plannedAt === null)
       return { ...base, blockReason: '预测时间无法解析', plannedAt: null }
     base.plannedAt = new Date(Math.max(0, plannedAt)).toISOString()
-    if (plannedAt < nowMs)
+    if (isPredictionPlanExpired(plannedAt, nowMs))
       return {
         ...base,
         blockReason: '计划时刻已过，等待下次事件',
@@ -236,4 +327,19 @@ export function traceAutomation(input: {
   if (usedPercent === null && plan.action === 'accelerate')
     return { ...base, blockReason: '无法读取额度时不执行自动加速消耗' }
   return base
+}
+export function predictionPlannedAt(
+  expectedStart: string,
+  beforePredictionHours: number,
+): number | null {
+  const value = Date.parse(expectedStart) - beforePredictionHours * 3_600_000
+  return Number.isFinite(value) ? value : null
+}
+
+export function isPredictionPlanExpired(
+  plannedAt: number,
+  now = Date.now(),
+  graceMs = 60_000,
+): boolean {
+  return plannedAt < now - graceMs
 }

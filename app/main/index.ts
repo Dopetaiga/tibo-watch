@@ -57,7 +57,10 @@ function createWindow(): void {
 }
 
 void app.whenReady().then(async () => {
-  if (!hasSingleInstanceLock) return
+  if (!hasSingleInstanceLock) {
+    app.quit()
+    return
+  }
   try {
     const dataRoot = path.join(app.getPath('userData'), 'data')
     await ensureV2MigrationBackup(dataRoot)
@@ -67,7 +70,7 @@ void app.whenReady().then(async () => {
       new Notification({ title, body }).show()
     })
     registerIpc(runtime)
-    void runtime.restore()
+    await runtime.restore()
     createWindow()
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()

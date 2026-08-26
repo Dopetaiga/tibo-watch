@@ -110,6 +110,14 @@ export interface CodexRateLimitObservation extends FactRecord {
     title: string | null
     description: string | null
   }> | null
+  /** Optional additive dual-window fields (schemaVersion stays 1). */
+  secondaryUsedPercent?: number | null
+  secondaryResetsAt?: number | null
+  secondaryWindowDurationMins?: number | null
+  creditsBalance?: string | null
+  unlimited?: boolean | null
+  spendControlReached?: boolean | null
+  planType?: string | null
 }
 
 export type StoredRecord =

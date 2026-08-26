@@ -73,16 +73,29 @@ export function App({
     if (!controls || codexBootstrapStarted.current) return
     codexBootstrapStarted.current = true
     let active = true
-    void Promise.all([
+    void Promise.allSettled([
       controls.codexProbe(),
       controls.codexThreads(),
       controls.codexResumeSettings(),
       controls.codexExecutableHint(),
-    ])
-      .then(([probe, threads, settings, executable]) => {
-        if (active) setCodexBootstrap({ probe, threads, settings, executable })
+    ]).then(([probe, threads, settings, executable]) => {
+      if (!active || settings.status !== 'fulfilled') return
+      setCodexBootstrap({
+        probe:
+          probe.status === 'fulfilled'
+            ? probe.value
+            : {
+                available: false,
+                authenticated: false,
+                accountType: null,
+                rateLimit: null,
+                message: 'Codex 尚不可用',
+              },
+        threads: threads.status === 'fulfilled' ? threads.value : [],
+        settings: settings.value,
+        executable: executable.status === 'fulfilled' ? executable.value : null,
       })
-      .catch(() => undefined)
+    })
     return () => {
       active = false
     }

@@ -30,10 +30,22 @@ export interface CodexUsageSnapshot {
   dailyUsageBuckets: Array<{ startDate: string; tokens: number }>
 }
 
-export interface CodexRateLimitSnapshot {
+export interface CodexWindowSnapshot {
   usedPercent: number | null
   resetsAt: number | null
   windowDurationMins: number | null
+}
+
+export interface CodexRateLimitSnapshot {
+  /** Legacy primary-window fields (5h rolling window since 2026-08). */
+  usedPercent: number | null
+  resetsAt: number | null
+  windowDurationMins: number | null
+  secondary: CodexWindowSnapshot | null
+  creditsBalance: string | null
+  unlimited: boolean | null
+  spendControlReached: boolean | null
+  planType: string | null
   availableResetCredits: number | null
   resetCredits: CodexResetCredit[] | null
 }
@@ -93,11 +105,22 @@ export class CodexAppServerClient {
   async rateLimits(): Promise<CodexRateLimitSnapshot> {
     const result = await this.transport.request<{
       rateLimits?: {
+        planType?: string
+        spendControlReached?: boolean
+        credits?: {
+          unlimited?: boolean
+          balance?: string | null
+        } | null
         primary?: {
           usedPercent?: number
           resetsAt?: number
           windowDurationMins?: number
         }
+        secondary?: {
+          usedPercent?: number
+          resetsAt?: number
+          windowDurationMins?: number
+        } | null
       }
       rateLimitResetCredits?: {
         availableCount?: number
@@ -112,11 +135,46 @@ export class CodexAppServerClient {
         }> | null
       } | null
     }>('account/rateLimits/read')
-    const primary = result.rateLimits?.primary
+    const envelope = result.rateLimits ?? {}
+    const primary = envelope.primary
+    const secondary = envelope.secondary ?? null
+    const windowOf = (
+      source:
+        | {
+            usedPercent?: number
+            resetsAt?: number
+            windowDurationMins?: number
+          }
+        | null
+        | undefined,
+    ): CodexWindowSnapshot => ({
+      usedPercent:
+        typeof source?.usedPercent === 'number' ? source.usedPercent : null,
+      resetsAt: toMilliseconds(source?.resetsAt),
+      windowDurationMins:
+        typeof source?.windowDurationMins === 'number'
+          ? source.windowDurationMins
+          : null,
+    })
     return {
       usedPercent: primary?.usedPercent ?? null,
       resetsAt: toMilliseconds(primary?.resetsAt),
       windowDurationMins: primary?.windowDurationMins ?? null,
+      secondary: secondary ? windowOf(secondary) : null,
+      creditsBalance:
+        typeof envelope.credits?.balance === 'string'
+          ? envelope.credits.balance
+          : null,
+      unlimited:
+        typeof envelope.credits?.unlimited === 'boolean'
+          ? envelope.credits.unlimited
+          : null,
+      spendControlReached:
+        typeof envelope.spendControlReached === 'boolean'
+          ? envelope.spendControlReached
+          : null,
+      planType:
+        typeof envelope.planType === 'string' ? envelope.planType : null,
       availableResetCredits:
         result.rateLimitResetCredits?.availableCount ?? null,
       resetCredits:
@@ -235,15 +293,21 @@ export class CodexAppServerClient {
           ? (read.thread?.status?.activeFlags as string[])
           : undefined,
       })
-      return Boolean(type && type !== 'active' && type !== 'notLoaded')
+      if (!type || type === 'active' || type === 'notLoaded') return false
+      if (/failed|error|cancelled|canceled|interrupted/i.test(type))
+        throw new Error(`Codex turn failed: ${turnId} (${type})`)
+      return true
     }
 
     // Server pushes turn/thread lifecycle notifications; use them to skip
     // sleep intervals instead of relying purely on the 1s poll cadence.
     let resolvePush: (() => void) | null = null
-    const pushPromise = new Promise<'push'>((resolve) => {
-      resolvePush = () => resolve('push')
-    })
+    let pushFailure: Error | null = null
+    const armPush = (): Promise<'push'> =>
+      new Promise((resolve) => {
+        resolvePush = () => resolve('push')
+      })
+    let notified = armPush()
     const unsubscribe =
       this.transport.onNotification?.((method, params) => {
         const payload = (params ?? {}) as {
@@ -251,16 +315,17 @@ export class CodexAppServerClient {
           turnId?: string
           status?: { type?: string } | string
         }
-        if (payload.threadId && payload.threadId !== threadId) return
-        if (
-          /^turn\//.test(method) &&
-          payload.turnId &&
-          payload.turnId !== turnId
-        )
+        if (/^turn\//.test(method)) {
+          if (payload.threadId !== threadId || payload.turnId !== turnId) return
+          if (/turn\/(failed|error)/i.test(method))
+            pushFailure = new Error(`Codex turn failed: ${turnId}`)
+          if (/turn\/(completed|failed|error)/i.test(method)) resolvePush?.()
           return
-        if (/turn\/(completed|failed)|turn\/error/i.test(method))
-          resolvePush?.()
-        else if (method === 'thread/status/changed') {
+        }
+        if (
+          method === 'thread/status/changed' &&
+          payload.threadId === threadId
+        ) {
           const status = payload.status
           const type =
             typeof status === 'string'
@@ -269,16 +334,12 @@ export class CodexAppServerClient {
           if (typeof type === 'string' && type !== 'active') resolvePush?.()
         }
       }) ?? null
-    const notified = pushPromise.catch(() => 'push' as const)
 
     try {
       while (Date.now() < deadline) {
         if (await pollFinished()) return
         const remaining = Math.max(0, deadline - Date.now())
         if (remaining === 0) break
-        // A pushed terminal lifecycle event is authoritative: the server has
-        // already settled the turn, so do not let a racing read extend the
-        // wait. Polling remains the fallback for transports without push.
         const how = await Promise.race([
           notified,
           new Promise<'tick'>((resolve) =>
@@ -286,13 +347,14 @@ export class CodexAppServerClient {
           ).then(() => 'tick' as const),
         ])
         if (how === 'push') {
-          options.onStatus?.({ type: 'completed' })
-          return
+          notified = armPush()
+          if (pushFailure) throw pushFailure
+          if (await pollFinished()) return
         }
       }
       // Authoritative final check so a slow-but-finished turn is not misread.
       if (await pollFinished()) return
-      throw new Error(`Codex turn 等待超时：${turnId}`)
+      throw new Error(`Codex turn timed out: ${turnId}`)
     } finally {
       unsubscribe?.()
     }

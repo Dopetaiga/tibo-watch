@@ -117,10 +117,11 @@ export class PollScheduler {
         this.#cursor,
         controller.signal,
       )
-      this.#cursor = result.cursor
       const newPosts = result.posts.filter(
         ({ id }) => !this.#seenPostIds.has(id),
       )
+      if (newPosts.length) await this.#options.onPosts?.(newPosts)
+      this.#cursor = result.cursor
       const newIds = newPosts.map(({ id }) => id)
       newIds.forEach((id) => {
         this.#seenPostIds.add(id)
@@ -130,7 +131,6 @@ export class PollScheduler {
         const oldest = this.#seenPostOrder.shift()
         if (oldest) this.#seenPostIds.delete(oldest)
       }
-      if (newPosts.length) await this.#options.onPosts?.(newPosts)
       const baseDelay =
         this.#options.now() < this.#activeUntil
           ? this.#options.activeIntervalMs

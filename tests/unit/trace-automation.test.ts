@@ -92,6 +92,28 @@ describe('traceAutomation', () => {
     expect(withoutQuota.blockReason).toContain('无法读取额度')
   })
 
+  it('allows timer jitter but blocks genuinely stale prediction plans', () => {
+    const settings = {
+      ...baseSettings,
+      beforePredictionEnabled: true,
+      beforePredictionHours: 0,
+    }
+    const run = (offsetMs: number) =>
+      traceAutomation({
+        event: {
+          status: 'expected',
+          expectedStart: new Date(now + offsetMs).toISOString(),
+        },
+        phase: 'before-prediction',
+        threadId: 'thread-1',
+        settings,
+        currentGate: 'allow-new-resumes',
+        usedPercent: 30,
+        now,
+      })
+    expect(run(-30_000).blockReason).toBeNull()
+    expect(run(-61_000).blockReason).toContain('已过')
+  })
   it('computes plannedAt for before-prediction and flags stale schedules', () => {
     const expectedStart = new Date(now + 6 * 3_600_000).toISOString()
     const settings = {
