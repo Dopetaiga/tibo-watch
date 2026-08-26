@@ -136,6 +136,30 @@ export class DashboardService {
       monitorMode: state.aiConfigured ? 'ai-enhanced' : 'rule-only',
       serviceStatus: !state.startupComplete ? 'starting' : 'running',
       savings: computeResetWindowSavings(events, rateLimits),
+      quotaWindows: (() => {
+        const latest =
+          [...rateLimits].sort((a, b) =>
+            b.observedAt.localeCompare(a.observedAt),
+          )[0] ?? null
+        if (!latest) return null
+        const nowMs = Date.now()
+        return {
+          fiveHour: {
+            usedPercent: latest.usedPercent,
+            resetsInMs:
+              typeof latest.resetsAt === 'number'
+                ? Math.max(0, latest.resetsAt - nowMs)
+                : null,
+          },
+          weekly: {
+            usedPercent: latest.secondaryUsedPercent ?? null,
+            resetsInMs:
+              typeof latest.secondaryResetsAt === 'number'
+                ? Math.max(0, latest.secondaryResetsAt - nowMs)
+                : null,
+          },
+        }
+      })(),
       codexRuns: (() => {
         const cutoff = new Date(Date.now() - 28 * 86_400_000).toISOString()
         const counts = { completed28d: 0, failed28d: 0, blocked28d: 0 }

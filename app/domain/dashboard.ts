@@ -65,6 +65,10 @@ export interface DashboardModel {
     savedQuotaPercent: number
     equivalentFullWindows: number
   } | null
+  quotaWindows: {
+    fiveHour: { usedPercent: number | null; resetsInMs: number | null }
+    weekly: { usedPercent: number | null; resetsInMs: number | null }
+  } | null
   codexRuns: {
     completed28d: number
     failed28d: number

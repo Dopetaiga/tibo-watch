@@ -11,6 +11,11 @@ export interface ResetWindowSavings {
   savedQuotaPercent: number
   /** savedQuotaPercent expressed in whole-window equivalents. */
   equivalentFullWindows: number
+  /** Attribution split between Tibo-forced and routine rolling windows. */
+  byKind: {
+    tibo: { windows: number; savedQuotaPercent: number }
+    rolling: { windows: number; savedQuotaPercent: number }
+  }
 }
 
 export interface ResetSavingsOptions {
@@ -21,6 +26,7 @@ export interface ResetSavingsOptions {
 
 interface WindowAnchor {
   at: number
+  kind: 'tibo' | 'rolling'
 }
 
 /**
@@ -63,12 +69,26 @@ export function computeResetWindowSavings(
     const dayKey = `${event.status}:${new Date(at).toISOString().slice(0, 10)}`
     if (seenAnchorDays.has(dayKey)) continue
     seenAnchorDays.add(dayKey)
-    anchors.push({ at })
+    anchors.push({ at, kind: 'tibo' })
   }
+  // Routine rolling boundaries are recoverable from stored resetsAt values
+  // (each observation records its own window's end).
+  const rollingBoundaries = new Set<number>()
+  for (const observation of sortedObservations) {
+    for (const value of [observation.resetsAt, observation.secondaryResetsAt]) {
+      if (typeof value === 'number' && value > cutoff && value <= now)
+        rollingBoundaries.add(value)
+    }
+  }
+  for (const at of rollingBoundaries) anchors.push({ at, kind: 'rolling' })
   anchors.sort((a, b) => a.at - b.at)
 
   let windows = 0
   let savedQuotaPercent = 0
+  const byKind: ResetWindowSavings['byKind'] = {
+    tibo: { windows: 0, savedQuotaPercent: 0 },
+    rolling: { windows: 0, savedQuotaPercent: 0 },
+  }
   let searchFrom = 0 // observations index cursor; anchors are chronological
 
   for (const anchor of anchors) {
@@ -106,6 +126,8 @@ export function computeResetWindowSavings(
     if (replenishedAt === -1) continue
     windows += 1
     savedQuotaPercent += consumption
+    byKind[anchor.kind].windows += 1
+    byKind[anchor.kind].savedQuotaPercent += consumption
     searchFrom = replenishedAt
   }
 
@@ -113,5 +135,16 @@ export function computeResetWindowSavings(
     windows,
     savedQuotaPercent: Math.round(savedQuotaPercent * 10) / 10,
     equivalentFullWindows: Math.round(savedQuotaPercent) / 100,
+    byKind: {
+      tibo: {
+        windows: byKind.tibo.windows,
+        savedQuotaPercent: Math.round(byKind.tibo.savedQuotaPercent * 10) / 10,
+      },
+      rolling: {
+        windows: byKind.rolling.windows,
+        savedQuotaPercent:
+          Math.round(byKind.rolling.savedQuotaPercent * 10) / 10,
+      },
+    },
   }
 }
