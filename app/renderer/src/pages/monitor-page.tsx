@@ -10,6 +10,7 @@ import {
   PageHeader,
   PostRow,
   SectionTitle,
+  TickGauge,
 } from '../components/ui'
 import {
   dataStatusLabel,
@@ -111,24 +112,31 @@ export function MonitorPage({
         <Metric label="监控模式" value={aiEnhanced ? 'AI 增强' : '仅规则'} />
         {model.quotaWindows ? (
           <>
-            <Metric
-              label="5h 窗口"
-              value={`${
-                model.quotaWindows.fiveHour.usedPercent ?? '—'
-              }% · 刷新 ${
-                model.quotaWindows.fiveHour.resetsInMs !== null
-                  ? `${Math.max(1, Math.round(model.quotaWindows.fiveHour.resetsInMs / 60_000))}m`
-                  : '—'
-              }`}
-            />
-            <Metric
-              label="周窗"
-              value={`${model.quotaWindows.weekly.usedPercent ?? '—'}% · 刷新 ${
-                model.quotaWindows.weekly.resetsInMs !== null
-                  ? `${Math.max(1, Math.round(model.quotaWindows.weekly.resetsInMs / 3_600_000))}h`
-                  : '—'
-              }`}
-            />
+            <div className="metric">
+              <small>5h 窗口</small>
+              <TickGauge
+                value={model.quotaWindows.fiveHour.usedPercent ?? 0}
+                tone="meter"
+              />
+              <strong>{model.quotaWindows.fiveHour.usedPercent ?? '—'}%</strong>
+              <span>
+                刷新{' '}
+                {model.quotaWindows.fiveHour.resetsInMs !== null
+                  ? `T-${Math.max(1, Math.round(model.quotaWindows.fiveHour.resetsInMs / 60_000))}m`
+                  : '—'}
+              </span>
+            </div>
+            <div className="metric">
+              <small>周窗</small>
+              <TickGauge value={model.quotaWindows.weekly.usedPercent ?? 0} />
+              <strong>{model.quotaWindows.weekly.usedPercent ?? '—'}%</strong>
+              <span>
+                刷新{' '}
+                {model.quotaWindows.weekly.resetsInMs !== null
+                  ? `T-${Math.max(1, Math.round(model.quotaWindows.weekly.resetsInMs / 3_600_000))}h`
+                  : '—'}
+              </span>
+            </div>
           </>
         ) : null}
         <Metric

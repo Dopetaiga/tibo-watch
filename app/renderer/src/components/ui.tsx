@@ -140,6 +140,42 @@ export const PostRow = memo(function PostRow({
     </a>
   )
 })
+/**
+ * 余量刻度尺 — the app's signature device. Renders a percentage as 20
+ * seismograph-style ticks instead of a progress bar. tone: primary (default)
+ * | meter (5h window) | danger.
+ */
+export const TickGauge = memo(function TickGauge({
+  value,
+  tone = 'primary',
+}: {
+  value: number
+  tone?: 'primary' | 'meter' | 'danger'
+}) {
+  const clamped = Math.max(0, Math.min(100, Math.round(value)))
+  const filled = Math.round((clamped / 100) * 20)
+  return (
+    <span
+      className="tick-gauge"
+      data-tone={tone}
+      role="img"
+      aria-label={`${clamped}%`}
+      title={`${clamped}%`}
+    >
+      {Array.from({ length: 20 }, (_, index) => (
+        <i
+          key={index}
+          className={index < filled ? 'on' : ''}
+          style={{
+            height: `${10 + ((index * 7) % 12)}px`,
+            ['--tick-index' as string]: index,
+          }}
+        />
+      ))}
+    </span>
+  )
+})
+
 export function Empty({
   children,
   compact,
