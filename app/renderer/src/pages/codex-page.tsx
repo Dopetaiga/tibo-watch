@@ -263,8 +263,18 @@ export function CodexPage({
     detect()
   }, [controls, detect])
 
+  const accountBlocked = model.codexAccount ? !model.codexAccount.linked : false
+  const accountExpired = model.codexAccount?.expired ?? false
+
   return (
     <>
+      {accountBlocked && (
+        <div className="notice gate" role="status">
+          {accountExpired
+            ? 'Codex 授权已失效，请重新登录后继续使用以下功能。'
+            : '需要链接到 Codex 账号后才能使用本页功能。'}
+        </div>
+      )}
       <PageHeader
         eyebrow="Codex"
         title="Codex"
@@ -295,7 +305,7 @@ export function CodexPage({
           <div className="codex-connection-actions">
             <button
               className="secondary"
-              disabled={!controls}
+              disabled={accountBlocked || !controls}
               onClick={() =>
                 void controls
                   ?.chooseCodexExecutable()
@@ -312,7 +322,7 @@ export function CodexPage({
             </button>
             <button
               className="primary"
-              disabled={!controls || busy}
+              disabled={accountBlocked || !controls || busy}
               onClick={detect}
             >
               {busy ? '扫描中…' : threads.length ? '重新扫描' : '扫描任务'}
@@ -458,7 +468,7 @@ export function CodexPage({
                     <small>按真实门禁推演两条触发路径，不下发任何指令。</small>
                     <button
                       className="secondary"
-                      disabled={!controls || dryRunBusy}
+                      disabled={accountBlocked || !controls || dryRunBusy}
                       onClick={() => {
                         if (!controls) return
                         setDryRunBusy(true)
@@ -593,7 +603,7 @@ export function CodexPage({
                     ) : null}
                     <button
                       className="primary"
-                      disabled={!controls || saving}
+                      disabled={accountBlocked || !controls || saving}
                       onClick={() =>
                         saveSettings(authorized, '此任务的设置已保存')
                       }

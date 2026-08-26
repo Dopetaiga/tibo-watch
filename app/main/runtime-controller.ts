@@ -127,6 +127,8 @@ export class RuntimeController {
   #codexRateLimitTimer: NodeJS.Timeout | null = null
   readonly #predictionTimers = new Map<string, NodeJS.Timeout>()
   #processingWarning: string | null = null
+  #codexAccount: { linked: boolean; expired: boolean } | null = null
+  #hadCodexAccount = false
   readonly #dashboardService: DashboardService
   readonly #notificationHub: NotificationHub
   readonly #codexConnections = new CodexConnectionManager({
@@ -231,6 +233,7 @@ export class RuntimeController {
         }),
         schedulerState: () => this.#scheduler.snapshot(),
         requestLogs: this.#requestLogs,
+        codexAccount: () => this.#codexAccount,
       },
     )
     this.#scheduler = this.#createScheduler()
@@ -573,6 +576,7 @@ export class RuntimeController {
   async codexProbe(): Promise<{
     available: boolean
     authenticated: boolean
+    requiresOpenaiAuth: boolean
     accountType: string | null
     rateLimit: Awaited<ReturnType<CodexAppServerClient['rateLimits']>> | null
     message: string
@@ -587,6 +591,7 @@ export class RuntimeController {
       return {
         available: true,
         authenticated: account.authenticated,
+        requiresOpenaiAuth: account.requiresOpenaiAuth,
         accountType: account.accountType,
         rateLimit,
         message: account.authenticated
@@ -597,6 +602,7 @@ export class RuntimeController {
       return {
         available: false,
         authenticated: false,
+        requiresOpenaiAuth: false,
         accountType: null,
         rateLimit: null,
         message: error instanceof Error ? error.message : 'Codex 探测失败',
@@ -619,6 +625,11 @@ export class RuntimeController {
     const lease = await this.#codexConnections.acquire()
     try {
       const account = await lease.client.account()
+      this.#codexAccount = {
+        linked: account.authenticated,
+        expired: !account.authenticated && this.#hadCodexAccount,
+      }
+      if (account.authenticated) this.#hadCodexAccount = true
       if (!account.authenticated) return
       const rate = await lease.client.rateLimits()
       await this.#recordCodexRateLimit(rate)
@@ -845,6 +856,8 @@ export class RuntimeController {
       try {
         const client = lease.client
         const account = await client.account()
+        if (!account.authenticated)
+          throw new Error('需要链接到 Codex 账号后再使用自动恢复')
         if (account.authenticated) {
           const rate = await client.rateLimits()
           await this.#recordCodexRateLimit(rate)

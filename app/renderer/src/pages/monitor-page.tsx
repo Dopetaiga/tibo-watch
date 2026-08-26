@@ -111,15 +111,21 @@ export function MonitorPage({
           }
         />
         <Metric label="监控模式" value={aiEnhanced ? 'AI 增强' : '仅规则'} />
-        {model.quotaWindows ? (
+        {model.quotaWindows && model.codexAccount?.linked !== false ? (
           <>
             <div className="metric">
-              <small>5h 窗口</small>
-              <TickGauge
-                value={model.quotaWindows.fiveHour.usedPercent ?? 0}
-                tone="meter"
-              />
-              <strong>{model.quotaWindows.fiveHour.usedPercent ?? '—'}%</strong>
+              <small>本时段剩余</small>
+              <div className="gauge-row">
+                <TickGauge
+                  value={100 - (model.quotaWindows.fiveHour.usedPercent ?? 0)}
+                  tone="meter"
+                />
+                <strong>
+                  {model.quotaWindows.fiveHour.usedPercent === null
+                    ? '—'
+                    : `${100 - model.quotaWindows.fiveHour.usedPercent}%`}
+                </strong>
+              </div>
               <span>
                 {model.quotaWindows.fiveHour.resetsInMs !== null
                   ? `${formatCountdown(model.quotaWindows.fiveHour.resetsInMs)}刷新`
@@ -127,9 +133,17 @@ export function MonitorPage({
               </span>
             </div>
             <div className="metric">
-              <small>周窗</small>
-              <TickGauge value={model.quotaWindows.weekly.usedPercent ?? 0} />
-              <strong>{model.quotaWindows.weekly.usedPercent ?? '—'}%</strong>
+              <small>总额度剩余</small>
+              <div className="gauge-row">
+                <TickGauge
+                  value={100 - (model.quotaWindows.weekly.usedPercent ?? 0)}
+                />
+                <strong>
+                  {model.quotaWindows.weekly.usedPercent === null
+                    ? '—'
+                    : `${100 - model.quotaWindows.weekly.usedPercent}%`}
+                </strong>
+              </div>
               <span>
                 {model.quotaWindows.weekly.resetsInMs !== null
                   ? `${formatCountdown(model.quotaWindows.weekly.resetsInMs)}刷新`
@@ -137,7 +151,13 @@ export function MonitorPage({
               </span>
             </div>
           </>
-        ) : null}
+        ) : (
+          <div className="metric">
+            <small>剩余额度</small>
+            <strong>—</strong>
+            <span>需要链接到 Codex 账号</span>
+          </div>
+        )}
         <Metric
           label="可用重置卡"
           value={
