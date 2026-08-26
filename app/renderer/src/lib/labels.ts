@@ -114,6 +114,26 @@ export function resumeStatusLabel(value: string): string {
     }[value] ?? value
   )
 }
+/** 单一量位的相对倒计时：42 分钟后 / 3 小时后 / 2 天后。 */
+export function formatCountdown(milliseconds: number): string {
+  const minutes = Math.max(1, Math.round(milliseconds / 60_000))
+  if (minutes < 60) return `${minutes} 分钟后`
+  const hours = Math.round(minutes / 60)
+  if (hours < 48) return `${hours} 小时后`
+  return `${Math.round(hours / 24)} 天后`
+}
+
+/** 相对时间：刚刚 / N 分钟前 / N 小时前，超过一天退回绝对时间。 */
+export function formatRelative(value: string): string {
+  const at = new Date(value).getTime()
+  if (Number.isNaN(at)) return '—'
+  const delta = Date.now() - at
+  if (delta < 60_000) return '刚刚'
+  if (delta < 3_600_000) return `${Math.floor(delta / 60_000)} 分钟前`
+  if (delta < 86_400_000) return `${Math.floor(delta / 3_600_000)} 小时前`
+  return formatTime(value)
+}
+
 export function formatTime(value: string) {
   return new Intl.DateTimeFormat('zh-CN', {
     dateStyle: 'medium',

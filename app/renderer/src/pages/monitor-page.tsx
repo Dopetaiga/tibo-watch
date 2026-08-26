@@ -14,6 +14,7 @@ import {
 } from '../components/ui'
 import {
   dataStatusLabel,
+  formatCountdown,
   formatTime,
   resetCreditSourceLabel,
   showError,
@@ -120,9 +121,8 @@ export function MonitorPage({
               />
               <strong>{model.quotaWindows.fiveHour.usedPercent ?? '—'}%</strong>
               <span>
-                刷新{' '}
                 {model.quotaWindows.fiveHour.resetsInMs !== null
-                  ? `T-${Math.max(1, Math.round(model.quotaWindows.fiveHour.resetsInMs / 60_000))}m`
+                  ? `${formatCountdown(model.quotaWindows.fiveHour.resetsInMs)}刷新`
                   : '—'}
               </span>
             </div>
@@ -131,9 +131,8 @@ export function MonitorPage({
               <TickGauge value={model.quotaWindows.weekly.usedPercent ?? 0} />
               <strong>{model.quotaWindows.weekly.usedPercent ?? '—'}%</strong>
               <span>
-                刷新{' '}
                 {model.quotaWindows.weekly.resetsInMs !== null
-                  ? `T-${Math.max(1, Math.round(model.quotaWindows.weekly.resetsInMs / 3_600_000))}h`
+                  ? `${formatCountdown(model.quotaWindows.weekly.resetsInMs)}刷新`
                   : '—'}
               </span>
             </div>

@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import type { DashboardModel } from '../../../domain/dashboard'
 import {
+  formatRelative,
   formatTime,
   formatWindow,
   relevanceLabel,
@@ -133,7 +134,7 @@ export const PostRow = memo(function PostRow({
       <div>
         <strong>{post.excerpt}</strong>
         <small>
-          {formatTime(post.postedAt)} · {relevanceLabel(post.relevance)}
+          {formatRelative(post.postedAt)} · {relevanceLabel(post.relevance)}
         </small>
       </div>
       <span>↗</span>

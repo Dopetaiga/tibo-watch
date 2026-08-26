@@ -8,7 +8,7 @@ import { Empty, PageHeader, PostRow } from '../components/ui'
 import {
   chainStageLabel,
   detailName,
-  formatTime,
+  formatRelative,
   formatUtc,
   resetKindLabel,
 } from '../lib/labels'
@@ -24,9 +24,9 @@ const ResetChainCard = memo(function ResetChainCard({
         <div>
           <strong>{resetKindLabel(chain.kind)}</strong>
           <small>
-            {formatTime(chain.startedAt)}
+            {formatRelative(chain.startedAt)}
             {chain.completedAt
-              ? ` — ${formatTime(chain.completedAt)}`
+              ? ` — ${formatRelative(chain.completedAt)}`
               : ' — 跟踪中'}
           </small>
         </div>
@@ -37,7 +37,7 @@ const ResetChainCard = memo(function ResetChainCard({
       <ol>
         {chain.items.map((item) => (
           <li key={item.eventId}>
-            <time>{formatTime(item.postedAt)}</time>
+            <time>{formatRelative(item.postedAt)}</time>
             <div>
               <strong>{chainStageLabel(item.status, chain.kind)}</strong>
               <p>{item.text}</p>

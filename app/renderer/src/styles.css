@@ -80,7 +80,7 @@ a:focus-visible {
   height: 32px;
   display: grid;
   place-items: center;
-  border-radius: 9px;
+  border-radius: 8px;
   background: #0f2a5f;
   color: white;
   font-size: 12px;
@@ -259,22 +259,16 @@ a:focus-visible {
 }
 .status-strip {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
   margin-bottom: 18px;
-  overflow: hidden;
-  border: 1px solid #e3e9f4;
-  border-radius: 12px;
-  background: white;
 }
-.metric {
-  min-height: 84px;
-  display: grid;
-  align-content: space-between;
-  padding: 16px 18px;
-  border-right: 1px solid #e3e9f4;
-}
-.metric:last-child {
-  border: 0;
+.status-strip .metric {
+  min-height: 96px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel, 12px);
+  background: var(--surface);
 }
 .metric span {
   color: #8593ad;
@@ -490,7 +484,7 @@ a:focus-visible {
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #e3ecfd;
   color: #a9b4c9;
   font-size: 9px;
@@ -533,7 +527,7 @@ a:focus-visible {
   display: flex;
   padding: 3px;
   border: 1px solid #d3dcec;
-  border-radius: 9px;
+  border-radius: 8px;
   background: #e3e9f4;
 }
 .segmented button,
@@ -570,7 +564,7 @@ a:focus-visible {
 .reset-chain {
   padding: 16px;
   border: 1px solid #e3e9f4;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 .reset-chain > header {
   display: flex;
@@ -705,7 +699,7 @@ a:focus-visible {
   gap: 4px;
   padding: 5px;
   border: 1px solid #e3e9f4;
-  border-radius: 9px;
+  border-radius: 8px;
   background: #fffffff2;
   backdrop-filter: blur(12px);
 }
@@ -1286,7 +1280,7 @@ a:focus-visible {
   width: 100%;
   padding: 9px 10px;
   border: 1px solid #d3dcec;
-  border-radius: 7px;
+  border-radius: 8px;
   background: #fff;
   color: #222;
   font-size: 11px;
@@ -1304,7 +1298,7 @@ button.primary,
 button.secondary {
   width: max-content;
   padding: 8px 11px;
-  border-radius: 7px;
+  border-radius: 8px;
   font-size: 11px;
   cursor: pointer;
 }
@@ -1591,7 +1585,7 @@ body {
 .brand > span {
   width: 30px;
   height: 30px;
-  border-radius: 9px 9px 9px 3px;
+  border-radius: 8px;
   background: var(--signal);
   font-size: 11px;
 }
@@ -1668,7 +1662,7 @@ body {
 .surface,
 .setting-section {
   border-color: var(--line);
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: none;
 }
 
@@ -1846,13 +1840,13 @@ body {
 
 .segmented {
   padding: 2px;
-  border-radius: 7px;
+  border-radius: 8px;
   background: #f4f7fc;
 }
 
 .segmented button,
 .audit-tabs button {
-  border-radius: 5px;
+  border-radius: 6px;
 }
 
 .segmented button.active,
