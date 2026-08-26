@@ -79,6 +79,7 @@ import { runBasicSelfTest, type SelfTestResult } from '../domain/self-test.js'
 import {
   CodexAppServerClient,
   resolveCodexExecutable,
+  type CodexRateLimitSnapshot,
   type CodexThreadSummary,
 } from '../adapters/codex/app-server.js'
 import { CodexConnectionManager } from '../adapters/codex/connection.js'
@@ -622,6 +623,7 @@ export class RuntimeController {
       if (!account.authenticated) return
       authenticated = true
       await this.#recordCodexRateLimit(await lease.client.rateLimits())
+      this.#maybeExtendFastForResetsAt(await lease.client.rateLimits())
     } catch {
       // Codex is optional; monitoring continues with the last local snapshot.
     } finally {
@@ -1367,11 +1369,33 @@ export class RuntimeController {
   #codexSamplingFast = false
 
   /**
+   * The API reports exact window boundaries: enter dense sampling for the
+   * tail of whichever window (5h or weekly) resets next, so burn before a
+   * refresh is never sampled at the coarse 5-minute cadence.
+   */
+  #maybeExtendFastForResetsAt(rate: CodexRateLimitSnapshot): void {
+    const now = Date.now()
+    const candidates = [rate.resetsAt, rate.secondary?.resetsAt].filter(
+      (value): value is number => typeof value === 'number' && value > now,
+    )
+    if (candidates.length === 0) return
+    const nearest = Math.min(...candidates)
+    if (nearest - now <= 30 * 60_000)
+      this.#armDenseQuotaSampling(nearest + 30 * 60_000)
+  }
+
+  /**
    * Around a confirmed reset the replenishment curve is most informative:
    * sample every minute for ±2h instead of the normal 5-minute cadence.
+   * An explicit untilMs (e.g. derived from API resetsAt) extends the window.
    */
-  #armDenseQuotaSampling(): void {
-    this.#codexSampleFastUntil = Date.now() + 2 * 3_600_000
+  #armDenseQuotaSampling(untilMs?: number): void {
+    const fallback = Date.now() + 2 * 3_600_000
+    this.#codexSampleFastUntil = Math.max(
+      this.#codexSampleFastUntil,
+      untilMs ?? fallback,
+      fallback,
+    )
     if (this.#codexSamplingFast) return
     this.#codexSamplingFast = true
     if (this.#codexRateLimitTimer) clearInterval(this.#codexRateLimitTimer)
