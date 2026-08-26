@@ -114,7 +114,7 @@ export function MonitorPage({
         {model.quotaWindows && model.codexAccount?.linked !== false ? (
           <>
             <div className="metric">
-              <small>本时段剩余</small>
+              <small>5 小时额度</small>
               <div className="gauge-row">
                 <TickGauge
                   value={100 - (model.quotaWindows.fiveHour.usedPercent ?? 0)}
@@ -133,7 +133,7 @@ export function MonitorPage({
               </span>
             </div>
             <div className="metric">
-              <small>总额度剩余</small>
+              <small>月度额度</small>
               <div className="gauge-row">
                 <TickGauge
                   value={100 - (model.quotaWindows.weekly.usedPercent ?? 0)}
