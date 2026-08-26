@@ -53,6 +53,7 @@ describe('dashboard:get contract', () => {
         'requestLogs',
         'resetChains',
         'savings',
+        'codexAccount',
         'quotaWindows',
         'codexRuns',
         'resetCredits',

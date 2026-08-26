@@ -44,6 +44,7 @@ export interface DashboardServiceOptions {
   readState(): DashboardServiceLiveState
   schedulerState(): SchedulerState
   requestLogs: RequestLogEntry[]
+  codexAccount(): { linked: boolean; expired: boolean } | null
 }
 
 /**
@@ -136,6 +137,7 @@ export class DashboardService {
       monitorMode: state.aiConfigured ? 'ai-enhanced' : 'rule-only',
       serviceStatus: !state.startupComplete ? 'starting' : 'running',
       savings: computeResetWindowSavings(events, rateLimits),
+      codexAccount: this.#options.codexAccount(),
       quotaWindows: (() => {
         const latest =
           [...rateLimits].sort((a, b) =>
