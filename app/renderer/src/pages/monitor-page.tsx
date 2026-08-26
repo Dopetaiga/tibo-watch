@@ -109,6 +109,28 @@ export function MonitorPage({
           }
         />
         <Metric label="监控模式" value={aiEnhanced ? 'AI 增强' : '仅规则'} />
+        {model.quotaWindows ? (
+          <>
+            <Metric
+              label="5h 窗口"
+              value={`${
+                model.quotaWindows.fiveHour.usedPercent ?? '—'
+              }% · 刷新 ${
+                model.quotaWindows.fiveHour.resetsInMs !== null
+                  ? `${Math.max(1, Math.round(model.quotaWindows.fiveHour.resetsInMs / 60_000))}m`
+                  : '—'
+              }`}
+            />
+            <Metric
+              label="周窗"
+              value={`${model.quotaWindows.weekly.usedPercent ?? '—'}% · 刷新 ${
+                model.quotaWindows.weekly.resetsInMs !== null
+                  ? `${Math.max(1, Math.round(model.quotaWindows.weekly.resetsInMs / 3_600_000))}h`
+                  : '—'
+              }`}
+            />
+          </>
+        ) : null}
         <Metric
           label="可用重置卡"
           value={

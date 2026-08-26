@@ -31,6 +31,7 @@ const emptyModel: DashboardModel = {
   pollingIntervalMinutes: 5,
   stale: true,
   savings: null,
+  quotaWindows: null,
   codexRuns: { completed28d: 0, failed28d: 0, blocked28d: 0 },
   lastObservedResetAt: null,
   lastInferredResetAt: null,
