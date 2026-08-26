@@ -1,6 +1,6 @@
 {
   "name": "tibo-watch",
-  "version": "0.3.0-alpha.1",
+  "version": "0.3.0-alpha.2",
   "private": true,
   "description": "Local-first Windows assistant for monitoring public Tibo reset signals.",
   "license": "MIT",
