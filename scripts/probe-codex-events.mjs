@@ -34,17 +34,16 @@ const managed = localAppData
 const executable =
   managed && existsSync(managed)
     ? managed
-    : process.env.TIBO_PROBE_CODEX ?? null
+    : (process.env.TIBO_PROBE_CODEX ?? null)
 if (!executable || !existsSync(executable)) {
   console.error('codex executable not found for probe')
   process.exit(2)
 }
 
-const child = spawn(
-  executable,
-  ['app-server', '--listen', 'stdio://'],
-  { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] },
-)
+const child = spawn(executable, ['app-server', '--listen', 'stdio://'], {
+  windowsHide: true,
+  stdio: ['pipe', 'pipe', 'pipe'],
+})
 
 let nextId = 1
 const pending = new Map()
@@ -84,7 +83,10 @@ createInterface({ input: child.stdout }).on('line', (line) => {
   // server -> client notification or request (has method, no id)
   notifications.push({
     method: frame.method,
-    paramsPreview: JSON.stringify(frame.params ?? frame.result ?? {}).slice(0, 300),
+    paramsPreview: JSON.stringify(frame.params ?? frame.result ?? {}).slice(
+      0,
+      300,
+    ),
   })
   console.log('[server-frame]', frame.method ?? '(no method)')
 })
@@ -163,7 +165,9 @@ async function main() {
       console.log('[turn/start]', JSON.stringify(started).slice(0, 200))
     } catch (error) {
       console.log('[turn/start error]', String(error.message ?? error))
-      if (/approval|sandbox|unrecognized|invalid|unknown/i.test(String(error))) {
+      if (
+        /approval|sandbox|unrecognized|invalid|unknown/i.test(String(error))
+      ) {
         console.log('[Q3 hint] parameter rejection observed')
       }
     }
@@ -180,11 +184,17 @@ async function main() {
 
   const methods = [...new Set(notifications.map((n) => n.method))]
   console.log('\n=== VERDICT ===')
-  console.log(JSON.stringify({
-    q1_notificationMethods: methods,
-    q1_count: notifications.length,
-    q3_overridesTested: process.env.TIBO_PROBE_OVERRIDES ?? '(not set)',
-  }, null, 2))
+  console.log(
+    JSON.stringify(
+      {
+        q1_notificationMethods: methods,
+        q1_count: notifications.length,
+        q3_overridesTested: process.env.TIBO_PROBE_OVERRIDES ?? '(not set)',
+      },
+      null,
+      2,
+    ),
+  )
 }
 
 main()

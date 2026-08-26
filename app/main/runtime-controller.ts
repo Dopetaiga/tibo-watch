@@ -616,20 +616,18 @@ export class RuntimeController {
   }
 
   async #refreshCodexRateLimit(): Promise<void> {
-    let authenticated = false
     const lease = await this.#codexConnections.acquire()
     try {
       const account = await lease.client.account()
       if (!account.authenticated) return
-      authenticated = true
-      await this.#recordCodexRateLimit(await lease.client.rateLimits())
-      this.#maybeExtendFastForResetsAt(await lease.client.rateLimits())
+      const rate = await lease.client.rateLimits()
+      await this.#recordCodexRateLimit(rate)
+      this.#maybeExtendFastForResetsAt(rate)
     } catch {
       // Codex is optional; monitoring continues with the last local snapshot.
     } finally {
       lease.release()
     }
-    void authenticated
   }
 
   async #recordCodexRateLimit(
